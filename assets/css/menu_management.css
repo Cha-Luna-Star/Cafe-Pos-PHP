@@ -1,0 +1,209 @@
+* {
+    box-sizing: border-box;
+}
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    color: #333;
+}
+.page-header {
+    background: white;
+    padding: 25px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+}
+.page-header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+button {
+    padding: 10px 15px;
+    background: #76543b;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.menu-management {
+    padding: 30px;
+}
+.toolbar {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+.toolbar input,
+.toolbar select {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+}
+.toolbar input {
+    flex: 1;
+}
+.table-wrapper {
+    background: white;
+    border-radius: 10px;
+    overflow-x: auto;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th,
+td {
+    padding: 16px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+th {
+    background: #fafafa;
+}
+.status {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+.status.available {
+    background: #e5f5e9;
+    color: #237a3b;
+}
+.status.unavailable {
+    background: #fff1d6;
+    color: #946200;
+}
+.status.archived {
+    background: #eee;
+    color: #666;
+}
+tr[hidden] {
+    display: none;
+}
+@media (max-width: 800px) {
+    .toolbar {
+        flex-direction: column;
+    }
+}
+
+#item-dialog {
+    width: min(450px, 95%);
+    border: none;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.2);
+}
+#item-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+}
+#item-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+#item-form h2 {
+    margin: 0 0 10px;
+}
+#item-form input:not([type="checkbox"]),
+#item-form select {
+    width: 100%;
+    padding: 11px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+#temp-option-row[hidden] {
+    display: none;
+}
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+}
+.archive-btn {
+    background: #777;
+    margin-left: 5px;
+}
+#item-message {
+    color: #b42318;
+    margin: 0;
+}
+
+#confirm-dialog {
+    width: min(420px, 90%);
+    border: none;
+    border-radius: 14px;
+    padding: 30px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+#confirm-dialog::backdrop {
+    background: rgba(20, 20, 20, 0.45);
+}
+.confirm-content {
+    text-align: center;
+}
+.confirm-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 54px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    background: #fff0e8;
+    color: #b45309;
+    font-size: 28px;
+    font-weight: bold;
+}
+.confirm-content h2 {
+    margin: 0 0 12px;
+    font-size: 21px;
+    color: #222;
+}
+.confirm-content p {
+    margin: 0 0 25px;
+    color: #666;
+    font-size: 14px;
+    line-height: 1.6;
+}
+.confirm-actions {
+    display: flex;
+    gap: 12px;
+}
+.confirm-actions button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+#confirm-cancel {
+    background: #f1f1f1;
+    color: #444;
+}
+#confirm-cancel:hover {
+    background: #e5e5e5;
+}
+.confirm-danger {
+    background: #b42318;
+    color: white;
+}
+.confirm-danger:hover {
+    background: #912018;
+}
+.confirm-success {
+    background: #237a3b;
+    color: white;
+}
+.confirm-success:hover {
+    background: #19612e;
+}

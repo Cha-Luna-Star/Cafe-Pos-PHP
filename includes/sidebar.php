@@ -19,8 +19,8 @@ $role = $_SESSION['role'] ?? 'Cashier';
             Order History
         </a>
 
-        <a href="#">Menu Management</a>
-        <a href="#">Inventory</a>
+        <a href="menu_management.php" class="<?= $currentPage === 'menu_management.php' ? 'active' : '' ?>">Menu Management</a>
+        <a href="inventory.php" class="<?= $currentPage === 'inventory.php' ? 'active' : '' ?>">Inventory</a>
         <a href="#">Sales Reports</a>
 
         <?php if (in_array($role, ['Admin', 'Manager'], true)): ?>
