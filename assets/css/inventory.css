@@ -226,3 +226,62 @@ th {
     background: #fee2e2;
     color: #991b1b;
 }
+.inventory-filters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.inventory-filters input,
+.inventory-filters select {
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    font: inherit;
+    font-size: 14px;
+}
+.inventory-filters input {
+    flex: 1;
+    min-width: 200px;
+}
+.inventory-filters select {
+    min-width: 160px;
+}
+.inventory-filters button {
+    background: #777;
+}
+.inventory-filters button:hover {
+    background: #555;
+}
+.stock-row[hidden],
+#batch-history-body tr[hidden] {
+    display: none;
+}
+@media (max-width: 600px) {
+    .inventory-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .inventory-filters input,
+    .inventory-filters select,
+    .inventory-filters button {
+        width: 100%;
+    }
+}
+
+.stock-details[hidden] {
+    display: none;
+}
+
+.no-results {
+    padding: 30px;
+    text-align: center;
+    color: #777;
+    font-size: 14px;
+}
+#stock-no-results[hidden],
+#batch-no-results[hidden] {
+    display: none;
+}

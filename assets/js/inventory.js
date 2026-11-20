@@ -176,7 +176,90 @@ document.querySelectorAll(".stock-row").forEach(row => {
             `.stock-details[data-parent="${row.dataset.key}"]`
         );
 
+        if (row.hidden || !details) return;
+
         details.hidden = !details.hidden;
         row.classList.toggle("expanded", !details.hidden);
     });
+});
+function filterCurrentStock() {
+    const search = document.getElementById("stock-search").value.trim().toLowerCase();
+    const type = document.getElementById("stock-type-filter").value;
+    const status = document.getElementById("stock-status-filter").value;
+
+    document.querySelectorAll("#current-stock-body .stock-row").forEach(row => {
+        const itemType = row.cells[0].textContent.trim();
+        const itemName = row.cells[1].textContent.toLowerCase();
+        const itemStatus = row.querySelector(".stock-status");
+
+        const matchesSearch = itemName.includes(search);
+        const matchesType = !type || itemType === type;
+        const matchesStatus = !status || itemStatus?.classList.contains(status);
+
+        const visible = matchesSearch && matchesType && matchesStatus;
+        row.hidden = !visible;
+
+        const details = document.querySelector(
+            `.stock-details[data-parent="${row.dataset.key}"]`
+        );
+
+        if (details) {
+            details.hidden = !visible || !row.classList.contains("expanded");
+        }
+    });
+    const hasResults = Array.from(
+        document.querySelectorAll("#current-stock-body .stock-row")
+    ).some(row => !row.hidden);
+
+    document.getElementById("stock-no-results").hidden = hasResults;
+}
+
+function filterBatchHistory() {
+    const search = document.getElementById("batch-search").value.trim().toLowerCase();
+    const type = document.getElementById("batch-type-filter").value;
+    const expiration = document.getElementById("batch-expiration-filter").value;
+
+    document.querySelectorAll("#batch-history-body tr").forEach(row => {
+        const itemType = row.cells[0].textContent.trim();
+        const itemName = row.cells[1].textContent.toLowerCase();
+        const expirationStatus = row.querySelector(".expiration-status");
+
+        const matchesSearch = itemName.includes(search);
+        const matchesType = !type || itemType === type;
+        const matchesExpiration = !expiration ||
+            expirationStatus?.classList.contains(expiration);
+
+        row.hidden = !(matchesSearch && matchesType && matchesExpiration);
+    });
+    const hasResults = Array.from(
+        document.querySelectorAll("#batch-history-body tr")
+    ).some(row => !row.hidden);
+
+    document.getElementById("batch-no-results").hidden = hasResults;
+}
+
+["stock-search", "stock-type-filter", "stock-status-filter"].forEach(id => {
+    const element = document.getElementById(id);
+    element.addEventListener("input", filterCurrentStock);
+    element.addEventListener("change", filterCurrentStock);
+});
+
+["batch-search", "batch-type-filter", "batch-expiration-filter"].forEach(id => {
+    const element = document.getElementById(id);
+    element.addEventListener("input", filterBatchHistory);
+    element.addEventListener("change", filterBatchHistory);
+});
+
+document.getElementById("clear-stock-filters").addEventListener("click", () => {
+    document.getElementById("stock-search").value = "";
+    document.getElementById("stock-type-filter").value = "";
+    document.getElementById("stock-status-filter").value = "";
+    filterCurrentStock();
+});
+
+document.getElementById("clear-batch-filters").addEventListener("click", () => {
+    document.getElementById("batch-search").value = "";
+    document.getElementById("batch-type-filter").value = "";
+    document.getElementById("batch-expiration-filter").value = "";
+    filterBatchHistory();
 });

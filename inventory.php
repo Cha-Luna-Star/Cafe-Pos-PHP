@@ -38,6 +38,21 @@ require_once __DIR__ . '/controllers/inventory.php';
     <div class="inventory-heading">
         <h2>Current Stock</h2>
     </div>
+    <div class="inventory-filters">
+        <input type="search" id="stock-search" placeholder="Search items...">
+        <select id="stock-type-filter">
+            <option value="">All Types</option>
+            <option value="Product">Product</option>
+            <option value="Ingredient">Ingredient</option>
+        </select>
+        <select id="stock-status-filter">
+            <option value="">All Stock Statuses</option>
+            <option value="in-stock">In Stock</option>
+            <option value="low-stock">Low Stock</option>
+            <option value="out-of-stock">Out of Stock</option>
+        </select>
+        <button type="button" id="clear-stock-filters">Clear</button>
+    </div>
 
     <div class="inventory-table">
         <table>
@@ -148,11 +163,34 @@ require_once __DIR__ . '/controllers/inventory.php';
                     </tr>
                 <?php endforeach; ?>
             </tbody>
+            <tbody id="stock-no-results" hidden>
+                <tr>
+                    <td colspan="5" class="no-results">No matching items found.</td>
+                </tr>
+            </tbody>
         </table>
     </div>
 
     <div class="inventory-heading">
         <h2>Batch History</h2>
+    </div>
+
+    <div class="inventory-filters">
+        <input type="search" id="batch-search" placeholder="Search batches...">
+        <select id="batch-type-filter">
+            <option value="">All Types</option>
+            <option value="Product">Product</option>
+            <option value="Ingredient">Ingredient</option>
+        </select>
+        <select id="batch-expiration-filter">
+            <option value="">All Expiration Statuses</option>
+            <option value="valid">Valid</option>
+            <option value="expiring-soon">Expiring Soon</option>
+            <option value="expired">Expired</option>
+            <option value="no-expiration">No Expiration</option>
+            <option value="invalid-date">Invalid Date</option>
+        </select>
+        <button type="button" id="clear-batch-filters">Clear</button>
     </div>
 
     <div class="inventory-table">
@@ -166,7 +204,7 @@ require_once __DIR__ . '/controllers/inventory.php';
                 <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="4" data-type="date">Received <span>⇅</span></button></th>
                 <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="5" data-type="date">Expiration <span>⇅</span></button></th>
                 <th>Status</th>
-                <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="6" data-type="text">Supplier <span>⇅</span></button></th>
+                <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="7" data-type="text">Supplier <span>⇅</span></button></th>
             </tr>
         </thead>
             <tbody id="batch-history-body">
@@ -215,6 +253,55 @@ require_once __DIR__ . '/controllers/inventory.php';
                         <td><?= htmlspecialchars((string)($batch['supplier'] ?? 'N/A')) ?></td>
                         </tr>
                         <?php endforeach; ?>
+            </tbody>
+            <tbody id="batch-no-results" hidden>
+                <tr>
+                    <td colspan="8" class="no-results">No matching batches found.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="inventory-heading">
+        <h2>Stock Movement History</h2>
+    </div>
+
+    <div class="inventory-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Item</th>
+                    <th>Movement</th>
+                    <th>Quantity</th>
+                    <th>Batch</th>
+                    <th>User</th>
+                    <th>Date</th>
+                    <th>Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($movements as $movement): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($movement['item_type']) ?></td>
+                        <td><?= htmlspecialchars($movement['item_name'] ?? 'Unknown') ?></td>
+                        <td>
+                            <span class="movement-badge <?= strtolower(str_replace(' ', '-', $movement['movement_type'])) ?>">
+                                <?= htmlspecialchars($movement['movement_type']) ?>
+                            </span>
+                        </td>
+                        <td><?= number_format((float)$movement['quantity'], 2) ?></td>
+                        <td><?= $movement['batch_id'] !== null ? '#' . (int)$movement['batch_id'] : 'N/A' ?></td>
+                        <td><?= htmlspecialchars($movement['username'] ?? 'System') ?></td>
+                        <td><?= htmlspecialchars((string)$movement['created_at']) ?></td>
+                        <td><?= htmlspecialchars($movement['remarks'] ?? '') ?></td>
+                    </tr>
+                <?php endforeach; ?>
+
+                <?php if (!$movements): ?>
+                    <tr>
+                        <td colspan="8">No stock movements recorded.</td>
+                    </tr>
+                <?php endif; ?>
             </tbody>
         </table>
     </div>

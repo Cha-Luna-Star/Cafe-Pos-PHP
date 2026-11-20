@@ -43,3 +43,27 @@ $batches = $connection->query("
     FROM dbo.product_batches b
     JOIN dbo.menu_items m ON b.menu_item_id = m.id
 ")->fetchAll(PDO::FETCH_ASSOC);
+
+$movements = $connection->query("
+    SELECT
+        sm.id,
+        sm.item_type,
+        CASE
+            WHEN sm.item_type = 'Ingredient' THEN i.name
+            WHEN sm.item_type = 'Product' THEN m.name
+        END AS item_name,
+        sm.movement_type,
+        sm.quantity,
+        sm.batch_id,
+        sm.remarks,
+        sm.created_at,
+        u.username
+    FROM dbo.stock_movements sm
+    LEFT JOIN dbo.ingredients i
+        ON sm.item_type = 'Ingredient' AND sm.item_id = i.id
+    LEFT JOIN dbo.menu_items m
+        ON sm.item_type = 'Product' AND sm.item_id = m.id
+    LEFT JOIN dbo.users u
+        ON sm.user_id = u.id
+    ORDER BY sm.created_at DESC, sm.id DESC
+")->fetchAll(PDO::FETCH_ASSOC);
