@@ -173,3 +173,56 @@ th {
 .sort-header[data-direction="desc"] span {
     color: #76543b;
 }
+
+.stock-status {
+    display: inline-block;
+    min-width: 110px;
+    padding: 7px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+}
+.stock-status.in-stock {
+    background: #dcfce7;
+    color: #166534;
+}
+.stock-status.low-stock {
+    background: #fef3c7;
+    color: #92400e;
+}
+.stock-status.out-of-stock {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.expiration-status {
+    display: inline-block;
+    min-width: 115px;
+    padding: 7px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+}
+.expiration-status.expired {
+    background: #fee2e2;
+    color: #991b1b;
+}
+.expiration-status.expiring-soon {
+    background: #fef3c7;
+    color: #92400e;
+}
+.expiration-status.valid {
+    background: #dcfce7;
+    color: #166534;
+}
+.expiration-status.no-expiration {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.expiration-status.invalid-date {
+    background: #fee2e2;
+    color: #991b1b;
+}

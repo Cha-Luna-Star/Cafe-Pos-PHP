@@ -37,13 +37,6 @@ require_once __DIR__ . '/controllers/inventory.php';
 <main class="inventory-page">
     <div class="inventory-heading">
         <h2>Current Stock</h2>
-        <select id="current-stock-sort">
-            <option value="name-asc">Name (A-Z)</option>
-            <option value="name-desc">Name (Z-A)</option>
-            <option value="stock-asc">Stock (Lowest First)</option>
-            <option value="stock-desc">Stock (Highest First)</option>
-            <option value="type">Item Type</option>
-        </select>
     </div>
 
     <div class="inventory-table">
@@ -54,6 +47,7 @@ require_once __DIR__ . '/controllers/inventory.php';
                     <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="1" data-type="text">Item <span>⇅</span></button></th>
                     <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="2" data-type="number">Stock <span>⇅</span></button></th>
                     <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="3" data-type="text">Unit <span>⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="4" data-type="text">Status <span>⇅</span></button></th>
                 </tr>
             </thead>
             <tbody id="current-stock-body">
@@ -66,7 +60,8 @@ require_once __DIR__ . '/controllers/inventory.php';
                         'id' => (int)$item['id'],
                         'name' => $item['name'],
                         'stock' => (float)$item['stock_qty'],
-                        'unit' => $item['unit']
+                        'unit' => $item['unit'],
+                        'threshold' => (float)$item['low_stock_threshold']
                     ];
                 }
 
@@ -76,7 +71,8 @@ require_once __DIR__ . '/controllers/inventory.php';
                         'id' => (int)$item['id'],
                         'name' => $item['name'],
                         'stock' => (float)$item['stock_qty'],
-                        'unit' => 'pcs'
+                        'unit' => 'pcs',
+                        'threshold' => 10
                     ];
                 }
 
@@ -88,10 +84,28 @@ require_once __DIR__ . '/controllers/inventory.php';
                         <td><?= htmlspecialchars($item['name']) ?></td>
                         <td><?= number_format($item['stock'], 2) ?></td>
                         <td><?= htmlspecialchars($item['unit']) ?></td>
+                        <?php
+                        if ($item['stock'] <= 0) {
+                            $stockStatus = 'Out of Stock';
+                            $statusClass = 'out-of-stock';
+                        } elseif ($item['stock'] <= $item['threshold']) {
+                            $stockStatus = 'Low Stock';
+                            $statusClass = 'low-stock';
+                        } else {
+                            $stockStatus = 'In Stock';
+                            $statusClass = 'in-stock';
+                        }
+                        ?>
+
+                        <td>
+                            <span class="stock-status <?= $statusClass ?>">
+                                <?= $stockStatus ?>
+                            </span>
+                        </td>
                     </tr>
 
                     <tr class="stock-details" data-parent="<?= htmlspecialchars($key) ?>" hidden>
-                        <td colspan="4">
+                        <td colspan="5">
                             <div class="batch-details">
                                 <strong>Stock Batches</strong>
                                 <table>
@@ -139,15 +153,6 @@ require_once __DIR__ . '/controllers/inventory.php';
 
     <div class="inventory-heading">
         <h2>Batch History</h2>
-        <select id="batch-sort">
-            <option value="newest">Newest Delivery</option>
-            <option value="oldest">Oldest Delivery</option>
-            <option value="name-asc">Name (A-Z)</option>
-            <option value="name-desc">Name (Z-A)</option>
-            <option value="quantity-asc">Quantity (Lowest First)</option>
-            <option value="quantity-desc">Quantity (Highest First)</option>
-            <option value="expiration">Expiration (Nearest First)</option>
-        </select>
     </div>
 
     <div class="inventory-table">
@@ -160,6 +165,7 @@ require_once __DIR__ . '/controllers/inventory.php';
                 <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="3" data-type="number">Cost/Unit <span>⇅</span></button></th>
                 <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="4" data-type="date">Received <span>⇅</span></button></th>
                 <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="5" data-type="date">Expiration <span>⇅</span></button></th>
+                <th>Status</th>
                 <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="6" data-type="text">Supplier <span>⇅</span></button></th>
             </tr>
         </thead>
@@ -172,9 +178,43 @@ require_once __DIR__ . '/controllers/inventory.php';
                         <td>₱<?= number_format((float)$batch['cost_per_unit'], 2) ?></td>
                         <td><?= htmlspecialchars((string)$batch['received_date']) ?></td>
                         <td><?= htmlspecialchars((string)($batch['expiration_date'] ?? 'N/A')) ?></td>
+                        <?php
+                        $expiration = $batch['expiration_date'] ?? null;
+                        $today = new DateTimeImmutable('today');
+
+                        $expirationStatus = 'No Expiration';
+                        $expirationClass = 'no-expiration';
+
+                        if (!empty($expiration)) {
+                            try {
+                                $expiryDate = new DateTimeImmutable((string)$expiration);
+                                $daysRemaining = (int)$today->diff($expiryDate)->format('%r%a');
+
+                                if ($daysRemaining < 0) {
+                                    $expirationStatus = 'Expired';
+                                    $expirationClass = 'expired';
+                                } elseif ($daysRemaining <= 7) {
+                                    $expirationStatus = 'Expiring Soon';
+                                    $expirationClass = 'expiring-soon';
+                                } else {
+                                    $expirationStatus = 'Valid';
+                                    $expirationClass = 'valid';
+                                }
+                            } catch (Exception $e) {
+                                $expirationStatus = 'Invalid Date';
+                                $expirationClass = 'invalid-date';
+                            }
+                        }
+                        ?>
+
+                        <td>
+                            <span class="expiration-status <?= $expirationClass ?>">
+                                <?= $expirationStatus ?>
+                            </span>
+                        </td>
                         <td><?= htmlspecialchars((string)($batch['supplier'] ?? 'N/A')) ?></td>
-                    </tr>
-                <?php endforeach; ?>
+                        </tr>
+                        <?php endforeach; ?>
             </tbody>
         </table>
     </div>

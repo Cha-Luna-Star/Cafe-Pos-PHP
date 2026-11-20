@@ -465,6 +465,21 @@ $validatedItems[] = [
             ");
             $update->execute([$deduct, $batch['id']]);
 
+            $movement = $connection->prepare("
+                INSERT INTO dbo.stock_movements
+                (item_type, item_id, batch_id, movement_type,
+                quantity, remarks, user_id)
+                VALUES ('Ingredient', ?, ?, 'Sale', ?, ?, ?)
+            ");
+
+            $movement->execute([
+                $ingredientId,
+                $batch['id'],
+                $deduct,
+                'Order #' . $orderId,
+                $_SESSION['user_id']
+            ]);
+
             $remaining -= $deduct;
         }
 
