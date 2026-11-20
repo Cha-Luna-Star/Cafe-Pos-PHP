@@ -22,24 +22,9 @@ function addToCart(item) {
     }
 
     let selectedSize = "Regular";
-    let temperature = null;
 
-    if (item.has_temp_option) {
-        const choice = prompt(
-            "Choose temperature:\n1. Hot\n2. Iced"
-        );
+    let temperature = item.has_temp_option ? "Hot" : null;
 
-        if (choice === null) return;
-
-        if (choice === "1") {
-            temperature = "Hot";
-        } else if (choice === "2") {
-            temperature = "Iced";
-        } else {
-            alert("Invalid temperature.");
-            return;
-        }
-    }
     let adjustment = 0;
 
     if (item.has_sizes && item.sizes.length > 0) {
@@ -147,7 +132,43 @@ function renderCart() {
         plus.onclick = () => changeQuantity(index, 1);
 
         controls.append(minus, quantity, plus);
-        row.append(details, price, controls);
+        row.append(details);
+
+    if (item.temperature !== null) {
+        const temperatureSelect = document.createElement("select");
+        temperatureSelect.className = "temperature-select";
+
+        ["Hot", "Iced"].forEach(temp => {
+            const option = document.createElement("option");
+            option.value = temp;
+            option.textContent = temp;
+            option.selected = item.temperature === temp;
+            temperatureSelect.appendChild(option);
+        });
+
+        temperatureSelect.addEventListener("change", () => {
+            item.temperature = temperatureSelect.value;
+
+            const duplicate = cart.find(
+                entry =>
+                    entry !== item &&
+                    entry.id === item.id &&
+                    entry.size === item.size &&
+                    entry.temperature === item.temperature
+            );
+
+            if (duplicate) {
+                duplicate.quantity += item.quantity;
+                cart.splice(cart.indexOf(item), 1);
+            }
+
+            renderCart();
+        });
+
+        row.appendChild(temperatureSelect);
+    }
+
+    row.append(price, controls);
         container.appendChild(row);
     });
 
@@ -169,7 +190,7 @@ function renderCart() {
         `₱${discountedTotal.toFixed(2)}`;
 
     document.getElementById("checkout-btn").disabled =
-        cart.length === 0;
+        cart.length === 0 || checkoutBusy;
 }
 
 
@@ -235,19 +256,19 @@ checkoutForm.addEventListener("submit", async (event) => {
             throw new Error(result.error || "Checkout failed.");
         }
 
-        checkoutMessage.textContent =
-            `Order #${result.order_id} completed. Total: ₱${Number(result.total).toFixed(2)}. Change: ₱${Number(result.change).toFixed(2)}`;
+        showReceipt(result, data);
 
         cart = [];
-        renderCart();
         checkoutForm.reset();
         paymentMethod.dispatchEvent(new Event("change"));
+        checkoutMessage.textContent = "";
+        renderCart();
 
     } catch (error) {
         checkoutMessage.textContent = error.message;
     } finally {
         checkoutBusy = false;
-        checkoutButton.disabled = cart.length === 0;
+        renderCart();
     }
 });
 
@@ -255,3 +276,67 @@ document.getElementById("discount-type").addEventListener(
     "change",
     renderCart
 );
+
+
+function showReceipt(result, orderData) {
+    const modal = document.getElementById("receipt-modal");
+    const money = value => `₱${Number(value).toFixed(2)}`;
+
+    const subtotal = cart.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+    );
+
+    const total = Number(result.total);
+    const discount = subtotal - total;
+
+    document.getElementById("receipt-order").textContent =
+        result.order_id;
+
+    document.getElementById("receipt-date").textContent =
+        new Date().toLocaleString();
+
+    document.getElementById("receipt-payment").textContent =
+        orderData.payment_method;
+
+    document.getElementById("receipt-subtotal").textContent =
+        money(subtotal);
+
+    document.getElementById("receipt-discount").textContent =
+        money(discount);
+
+    document.getElementById("receipt-tax").textContent =
+        money(result.tax);
+
+    document.getElementById("receipt-total").textContent =
+        money(total);
+
+    document.getElementById("receipt-paid").textContent =
+        money(
+            orderData.payment_method === "Cash"
+                ? orderData.amount_tendered
+                : total
+        );
+
+    document.getElementById("receipt-change").textContent =
+        money(result.change);
+
+    const itemsContainer = document.getElementById("receipt-items");
+    itemsContainer.replaceChildren();
+
+    cart.forEach(item => {
+        const row = document.createElement("p");
+
+        row.textContent =
+            `${item.quantity}x ${item.name} (${item.size}${item.temperature ? ", " + item.temperature : ""}) - ${money(item.price * item.quantity)}`;
+
+        itemsContainer.appendChild(row);
+    });
+
+    modal.showModal();
+}
+
+function closeReceipt() {
+    document.getElementById("receipt-modal").close();
+    document.getElementById("checkout-message").textContent = "";
+}

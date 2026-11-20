@@ -145,3 +145,69 @@ button:disabled {
 #checkout-message {
     font-size: 14px;
 }
+
+.temperature-select {
+    width: 100%;
+    padding: 8px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: white;
+    font-size: 14px;
+}
+
+#receipt-modal {
+    width: 400px;
+    max-width: 95%;
+    max-height: 90vh;
+    margin: auto;
+    padding: 25px;
+    border: none;
+    border-radius: 10px;
+}
+#receipt-modal::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+}
+.receipt {
+    font-family: Arial, sans-serif;
+}
+.receipt h2,
+.receipt > p:first-of-type {
+    text-align: center;
+}
+.receipt hr {
+    margin: 15px 0;
+    border: none;
+    border-top: 1px dashed #aaa;
+}
+.receipt p {
+    margin: 10px 0;
+}
+.receipt h3 {
+    margin: 20px 0;
+}
+.receipt-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+.receipt-actions button {
+    flex: 1;
+}
+@media print {
+    body > header,
+    main,
+    .receipt-actions {
+        display: none !important;
+    }
+    #receipt-modal {
+        position: static;
+        width: 100%;
+        max-height: none;
+        padding: 0;
+        box-shadow: none;
+    }
+    .receipt {
+        display: block;
+    }
+}

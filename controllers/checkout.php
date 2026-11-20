@@ -159,7 +159,7 @@ try {
 
         $adjustment = 0;
 
-        if ((int)$menu['has_sizes'] === 1) {
+        if ((int)$menu['has_sizes'] === 1 && $size !== 'Regular') {
             $stmt = $connection->prepare("
                 SELECT price_adjustment
                 FROM dbo.size_modifiers

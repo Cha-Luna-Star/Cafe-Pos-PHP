@@ -63,7 +63,7 @@ try {
     <nav>
         <a href="dashboard.php" class="active">Dashboard</a>
         <a href="pos.php">New Order</a>
-        <a href="#">Orders</a>
+        <a href="orders.php">Orders</a>
         <a href="#">Menu Management</a>
         <a href="#">Inventory</a>
         <a href="#">Sales Reports</a>

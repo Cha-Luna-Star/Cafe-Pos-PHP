@@ -147,5 +147,37 @@ require_once __DIR__ . '/controllers/pos.php';
     </aside>
 </main>
 
+<dialog id="receipt-modal">
+    <div class="receipt">
+        <h2>Cafe POS</h2>
+        <p>Order Receipt</p>
+        <hr>
+
+        <p>Order #: <span id="receipt-order"></span></p>
+        <p>Date: <span id="receipt-date"></span></p>
+        <p>Payment: <span id="receipt-payment"></span></p>
+
+        <hr>
+
+        <div id="receipt-items"></div>
+
+        <hr>
+
+        <p>Subtotal: <span id="receipt-subtotal"></span></p>
+        <p>Discount: <span id="receipt-discount"></span></p>
+        <p>VAT Included: <span id="receipt-tax"></span></p>
+
+        <h3>Total: <span id="receipt-total"></span></h3>
+
+        <p>Amount Paid: <span id="receipt-paid"></span></p>
+        <p>Change: <span id="receipt-change"></span></p>
+
+        <div class="receipt-actions">
+            <button type="button" onclick="window.print()">Print</button>
+            <button type="button" onclick="closeReceipt()">Close</button>
+        </div>
+    </div>
+</dialog>
+
 </body>
 </html>
