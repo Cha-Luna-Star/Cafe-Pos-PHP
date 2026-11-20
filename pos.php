@@ -2,6 +2,10 @@
 <?php
 session_start();
 
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit;
@@ -18,6 +22,7 @@ require_once __DIR__ . '/controllers/pos.php';
     <title>Cafe POS | New Order</title>
     <link rel="stylesheet" href="assets/css/pos.css">
     <script src="assets/js/pos.js" defer></script>
+    <meta name="csrf-token" content="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body>
 
@@ -58,6 +63,7 @@ require_once __DIR__ . '/controllers/pos.php';
                     'price' => (float)$item['price'],
                     'discount' => (float)$item['discount'],
                     'has_sizes' => (int)$item['has_sizes'],
+                    'has_temp_option' => (int)$item['has_temp_option'],
                     'sizes' => $itemSizes
                 ];
 
@@ -99,9 +105,44 @@ require_once __DIR__ . '/controllers/pos.php';
             <strong id="cart-total">₱0.00</strong>
         </div>
 
-        <button type="button" id="checkout-btn" disabled>
-            Checkout
-        </button>
+        <form id="checkout-form">
+            <label for="order-type">Order Type</label>
+            <select id="order-type" required>
+                <option value="Dine In">Dine In</option>
+                <option value="Take Out">Take Out</option>
+            </select>
+
+            <label for="discount-type">Discount</label>
+            <select id="discount-type">
+                <option value="None">None</option>
+                <option value="PWD">PWD (20%)</option>
+                <option value="Student">Student (10%)</option>
+                <option value="Senior Citizen">Senior Citizen (20%)</option>
+            </select>
+
+            <label for="payment-method">Payment Method</label>
+            <select id="payment-method">
+                <option value="Cash">Cash</option>
+                <option value="Card">Card</option>
+                <option value="E-Wallet">E-Wallet</option>
+            </select>
+
+            <div id="cash-fields">
+                <label for="amount-tendered">Amount Tendered</label>
+                <input type="number" id="amount-tendered" min="0" step="0.01">
+            </div>
+
+            <div id="reference-fields" hidden>
+                <label for="ref-number">Reference Number</label>
+                <input type="text" id="ref-number" maxlength="100">
+            </div>
+
+            <p id="checkout-message" role="status"></p>
+
+            <button type="submit" id="checkout-btn" disabled>
+                Checkout
+            </button>
+        </form>
     </aside>
 </main>
 

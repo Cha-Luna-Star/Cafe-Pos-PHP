@@ -12,7 +12,25 @@ function filterCategory(categoryId) {
 }
 
 function addToCart(item) {
-    let selectedSize = null;
+    let selectedSize = "Regular";
+    let temperature = null;
+
+    if (item.has_temp_option) {
+        const choice = prompt(
+            "Choose temperature:\n1. Hot\n2. Iced"
+        );
+
+        if (choice === null) return;
+
+        if (choice === "1") {
+            temperature = "Hot";
+        } else if (choice === "2") {
+            temperature = "Iced";
+        } else {
+            alert("Invalid temperature.");
+            return;
+        }
+    }
     let adjustment = 0;
 
     if (item.has_sizes && item.sizes.length > 0) {
@@ -48,7 +66,8 @@ function addToCart(item) {
     const existing = cart.find(
         entry =>
             entry.id === item.id &&
-            entry.size === selectedSize
+            entry.size === selectedSize &&
+            entry.temperature === temperature
     );
 
     if (existing) {
@@ -58,6 +77,7 @@ function addToCart(item) {
             id: item.id,
             name: item.name,
             size: selectedSize,
+            temperature: temperature,
             price: unitPrice,
             quantity: 1
         });
@@ -127,3 +147,82 @@ function renderCart() {
     document.getElementById("checkout-btn").disabled =
         cart.length === 0;
 }
+
+
+const checkoutForm = document.getElementById("checkout-form");
+const paymentMethod = document.getElementById("payment-method");
+const cashFields = document.getElementById("cash-fields");
+const referenceFields = document.getElementById("reference-fields");
+const checkoutMessage = document.getElementById("checkout-message");
+const checkoutButton = document.getElementById("checkout-btn");
+
+let checkoutBusy = false;
+
+paymentMethod.addEventListener("change", () => {
+    const isCash = paymentMethod.value === "Cash";
+
+    cashFields.hidden = !isCash;
+    referenceFields.hidden = isCash;
+
+    document.getElementById("amount-tendered").required = isCash;
+    document.getElementById("ref-number").required = !isCash;
+});
+
+paymentMethod.dispatchEvent(new Event("change"));
+
+checkoutForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (checkoutBusy || cart.length === 0) {
+        return;
+    }
+
+    checkoutBusy = true;
+    checkoutButton.disabled = true;
+    checkoutMessage.textContent = "Processing checkout...";
+
+    const data = {
+        items: cart.map(item => ({
+            id: item.id,
+            quantity: item.quantity,
+            size: item.size ?? "Regular",
+            temperature: item.temperature
+        })),
+        order_type: document.getElementById("order-type").value,
+        discount_type: document.getElementById("discount-type").value,
+        payment_method: paymentMethod.value,
+        amount_tendered: document.getElementById("amount-tendered").value,
+        ref_number: document.getElementById("ref-number").value
+    };
+
+    try {
+        const response = await fetch("controllers/checkout.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            throw new Error(result.error || "Checkout failed.");
+        }
+
+        checkoutMessage.textContent =
+            `Order #${result.order_id} completed. Total: ₱${Number(result.total).toFixed(2)}. Change: ₱${Number(result.change).toFixed(2)}`;
+
+        cart = [];
+        renderCart();
+        checkoutForm.reset();
+        paymentMethod.dispatchEvent(new Event("change"));
+
+    } catch (error) {
+        checkoutMessage.textContent = error.message;
+    } finally {
+        checkoutBusy = false;
+        checkoutButton.disabled = cart.length === 0;
+    }
+});

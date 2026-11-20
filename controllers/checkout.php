@@ -1,0 +1,405 @@
+
+<?php
+session_start();
+header('Content-Type: application/json');
+
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Please log in.']);
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['error' => 'Method not allowed.']);
+    exit;
+}
+
+$csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+
+if (
+    empty($_SESSION['csrf_token']) ||
+    !is_string($csrfToken) ||
+    !hash_equals($_SESSION['csrf_token'], $csrfToken)
+) {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Invalid security token. Refresh the page.'
+    ]);
+    exit;
+}
+
+require_once __DIR__ . '/../config/database.php';
+
+function failCheckout(string $message): void {
+    throw new RuntimeException($message);
+}
+
+try {
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    if (!is_array($data)) {
+        failCheckout('Invalid request.');
+    }
+
+    $items = $data['items'] ?? [];
+    $orderType = $data['order_type'] ?? '';
+    $payment = $data['payment_method'] ?? '';
+    $discountType = $data['discount_type'] ?? 'None';
+    $tendered = $data['amount_tendered'] ?? 0;
+    $reference = trim((string)($data['ref_number'] ?? ''));
+
+    if (!is_array($items) || count($items) === 0 || count($items) > 100) {
+        failCheckout('Invalid cart.');
+    }
+
+    if (!in_array($orderType, ['Dine In', 'Take Out'], true)) {
+        failCheckout('Invalid order type.');
+    }
+
+    if (!in_array($payment, ['Cash', 'Card', 'E-Wallet'], true)) {
+        failCheckout('Invalid payment method.');
+    }
+
+    $discounts = [
+        'None' => 0,
+        'PWD' => 0.20,
+        'Student' => 0.10,
+        'Senior Citizen' => 0.20
+    ];
+
+    if (!array_key_exists($discountType, $discounts)) {
+        failCheckout('Invalid discount.');
+    }
+
+    if (!is_numeric($tendered) || !is_finite((float)$tendered) || (float)$tendered < 0) {
+        failCheckout('Invalid payment amount.');
+    }
+
+    if (strlen($reference) > 100) {
+        failCheckout('Payment reference is too long.');
+    }
+
+    if ($payment !== 'Cash' && $reference === '') {
+        failCheckout('Payment reference is required.');
+    }
+
+    $connection->beginTransaction();
+
+    $validatedItems = [];
+    $menuQuantities = [];
+    $ingredientNeeds = [];
+    $subtotal = 0;
+
+    $stmt = $connection->query("
+        SELECT id, name
+        FROM dbo.ingredients
+        WHERE name IN ('Cups (Hot)', 'Cups (Cold)', 'Ice')
+    ");
+
+    $specialIngredients = [];
+
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $ingredient) {
+        $specialIngredients[$ingredient['name']] = (int)$ingredient['id'];
+    }
+
+    $hotCupId = $specialIngredients['Cups (Hot)'] ?? null;
+    $coldCupId = $specialIngredients['Cups (Cold)'] ?? null;
+    $iceId = $specialIngredients['Ice'] ?? null;
+
+    foreach ($items as $item) {
+        if (!is_array($item)) {
+            failCheckout('Invalid cart item.');
+        }
+
+        $id = filter_var($item['id'] ?? null, FILTER_VALIDATE_INT);
+        $quantity = filter_var($item['quantity'] ?? null, FILTER_VALIDATE_INT);
+        $size = $item['size'] ?? 'Regular';
+        $temperature = $item['temperature'] ?? null;
+
+        if (
+            $temperature !== null &&
+            !in_array($temperature, ['Hot', 'Iced'], true)
+        ) {
+            failCheckout('Invalid temperature.');
+        }
+
+        if (!$id || $id <= 0 || !$quantity || $quantity < 1 || $quantity > 100) {
+            failCheckout('Invalid item or quantity.');
+        }
+
+        if (!is_string($size)) {
+            failCheckout('Invalid size.');
+        }
+
+        $stmt = $connection->prepare("
+            SELECT id, name, price, stock_qty, has_sizes, has_temp_option
+            FROM dbo.menu_items WITH (UPDLOCK, HOLDLOCK)
+            WHERE id = ?
+              AND available = 1
+              AND is_archived = 0
+        ");
+        $stmt->execute([$id]);
+        $menu = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ((int)$menu['has_temp_option'] === 1) {
+            if (!in_array($temperature, ['Hot', 'Iced'], true)) {
+                failCheckout('Please select a temperature.');
+            }
+        } elseif ($temperature !== null) {
+            failCheckout('Temperature is not available for this item.');
+        }
+
+        if (!$menu) {
+            failCheckout('A menu item is unavailable.');
+        }
+
+        $adjustment = 0;
+
+        if ((int)$menu['has_sizes'] === 1) {
+            $stmt = $connection->prepare("
+                SELECT price_adjustment
+                FROM dbo.size_modifiers
+                WHERE menu_item_id = ? AND name = ?
+            ");
+            $stmt->execute([$id, $size]);
+            $modifier = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$modifier) {
+                failCheckout('Invalid size selection.');
+            }
+
+            $adjustment = (float)$modifier['price_adjustment'];
+        } elseif (!in_array($size, ['Regular', 'Hot', 'Iced'], true)) {
+            failCheckout('Invalid item option.');
+        }
+
+        $unitPrice = round((float)$menu['price'] + $adjustment, 2);
+
+        if ($unitPrice < 0) {
+            failCheckout('Invalid menu price.');
+        }
+
+        $menuQuantities[$id] = ($menuQuantities[$id] ?? 0) + $quantity;
+
+        if ($menuQuantities[$id] > (int)$menu['stock_qty']) {
+            failCheckout($menu['name'] . ' has insufficient stock.');
+        }
+
+        $lineTotal = round($unitPrice * $quantity, 2);
+        $subtotal += $lineTotal;
+
+        $validatedItems[] = [
+            'id' => $id,
+            'quantity' => $quantity,
+            'size' => $temperature === null
+                ? $size
+                : ($size === 'Regular' ? $temperature : $size . ' - ' . $temperature),
+            'subtotal' => $lineTotal
+        ];
+
+        $stmt = $connection->prepare("
+            SELECT ingredient_id, quantity_needed
+            FROM dbo.recipe_items
+            WHERE menu_item_id = ?
+        ");
+        $stmt->execute([$id]);
+
+        $iceRequired = false;
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $recipe) {
+            $ingredientId = (int)$recipe['ingredient_id'];
+            $needed = (float)$recipe['quantity_needed'] * $quantity;
+
+            if (
+                $temperature === 'Iced' &&
+                $hotCupId !== null &&
+                $coldCupId !== null &&
+                $ingredientId === $hotCupId
+            ) {
+                $ingredientId = $coldCupId;
+                $iceRequired = true;
+            }
+
+            $ingredientNeeds[$ingredientId] =
+                ($ingredientNeeds[$ingredientId] ?? 0) + $needed;
+        }
+
+        if ($iceRequired && $iceId !== null) {
+            $ingredientNeeds[$iceId] =
+                ($ingredientNeeds[$iceId] ?? 0) + (100 * $quantity);
+        }
+    }
+
+    $subtotal = round($subtotal, 2);
+    $total = round($subtotal * (1 - $discounts[$discountType]), 2);
+    $tax = round($total - ($total / 1.12), 2);
+
+    if ($payment === 'Cash') {
+        $tendered = round((float)$tendered, 2);
+
+        if ($tendered < $total) {
+            failCheckout('Insufficient payment.');
+        }
+
+        $change = round($tendered - $total, 2);
+        $reference = '';
+    } else {
+        $tendered = $total;
+        $change = 0;
+    }
+
+    $stmt = $connection->prepare("
+        INSERT INTO dbo.orders
+        (
+            order_type, status, total, created_by,
+            created_at, payment_method, amount_tendered,
+            change_amount, tax, ref_number
+        )
+        OUTPUT INSERTED.id
+        VALUES (?, 'Pending', ?, ?, SYSDATETIME(), ?, ?, ?, ?, ?)
+    ");
+
+    $stmt->execute([
+        $orderType,
+        $total,
+        $_SESSION['user_id'],
+        $payment,
+        $tendered,
+        $change,
+        $tax,
+        $reference
+    ]);
+
+    $orderId = (int)$stmt->fetchColumn();
+    $stmt->closeCursor();
+
+    $insertItem = $connection->prepare("
+        INSERT INTO dbo.order_items
+        (order_id, menu_item_id, quantity, size, subtotal)
+        VALUES (?, ?, ?, ?, ?)
+    ");
+
+    foreach ($validatedItems as $item) {
+        $insertItem->execute([
+            $orderId,
+            $item['id'],
+            $item['quantity'],
+            $item['size'],
+            $item['subtotal']
+        ]);
+    }
+
+    foreach ($menuQuantities as $id => $quantity) {
+        $stmt = $connection->prepare("
+            UPDATE dbo.menu_items
+            SET stock_qty = stock_qty - ?
+            WHERE id = ? AND stock_qty >= ?
+        ");
+        $stmt->execute([$quantity, $id, $quantity]);
+
+        if ($stmt->rowCount() !== 1) {
+            failCheckout('Insufficient menu stock.');
+        }
+    }
+
+    ksort($ingredientNeeds);
+
+    foreach ($ingredientNeeds as $ingredientId => $needed) {
+        if ($needed <= 0) {
+            continue;
+        }
+
+        $stmt = $connection->prepare("
+            UPDATE dbo.ingredients
+            SET stock_qty = stock_qty - ?
+            WHERE id = ? AND stock_qty >= ?
+        ");
+        $stmt->execute([$needed, $ingredientId, $needed]);
+
+        if ($stmt->rowCount() !== 1) {
+            failCheckout('Insufficient ingredient stock.');
+        }
+
+        $stmt = $connection->prepare("
+            INSERT INTO dbo.ingredient_usage
+            (ingredient_id, quantity_used, order_id, created_at)
+            VALUES (?, ?, ?, SYSDATETIME())
+        ");
+        $stmt->execute([$ingredientId, $needed, $orderId]);
+
+        $stmt = $connection->prepare("
+            SELECT id, quantity
+            FROM dbo.inventory_batches WITH (UPDLOCK, HOLDLOCK)
+            WHERE ingredient_id = ? AND quantity > 0
+            ORDER BY received_date ASC, id ASC
+        ");
+        $stmt->execute([$ingredientId]);
+        $batches = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $remaining = $needed;
+
+        foreach ($batches as $batch) {
+            if ($remaining <= 0.000001) {
+                break;
+            }
+
+            $deduct = min((float)$batch['quantity'], $remaining);
+
+            $update = $connection->prepare("
+                UPDATE dbo.inventory_batches
+                SET quantity = quantity - ?
+                WHERE id = ?
+            ");
+            $update->execute([$deduct, $batch['id']]);
+
+            $remaining -= $deduct;
+        }
+
+        if ($remaining > 0.000001) {
+            failCheckout('Insufficient inventory batch stock.');
+        }
+    }
+
+    $stmt = $connection->prepare("
+        INSERT INTO dbo.audit_log
+        (user_id, username, action, details, created_at)
+        VALUES (?, ?, ?, ?, SYSDATETIME())
+    ");
+
+    $stmt->execute([
+        $_SESSION['user_id'],
+        $_SESSION['username'] ?? '',
+        'CREATE_ORDER',
+        'Created order #' . $orderId
+    ]);
+
+    $connection->commit();
+
+    echo json_encode([
+        'success' => true,
+        'order_id' => $orderId,
+        'total' => $total,
+        'tax' => $tax,
+        'change' => $change
+    ]);
+
+} catch (Throwable $e) {
+    if ($connection->inTransaction()) {
+        $connection->rollBack();
+    }
+
+    http_response_code(400);
+
+    echo json_encode([
+        'success' => false,
+        'error' => $e instanceof RuntimeException
+            ? $e->getMessage()
+            : 'Checkout failed. Check the server logs.'
+    ]);
+
+    if (!($e instanceof RuntimeException)) {
+        error_log($e->getMessage());
+    }
+}
