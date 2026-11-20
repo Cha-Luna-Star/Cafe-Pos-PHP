@@ -171,8 +171,8 @@ try {
             }
 
             $adjustment = (float)$modifier['price_adjustment'];
-        } elseif (!in_array($size, ['Regular', 'Hot', 'Iced'], true)) {
-            failCheckout('Invalid item option.');
+        } elseif ($size !== 'Regular') {
+            failCheckout('Invalid item size.');
         }
 
         $unitPrice = round((float)$menu['price'] + $adjustment, 2);
@@ -190,12 +190,18 @@ try {
         $lineTotal = round($unitPrice * $quantity, 2);
         $subtotal += $lineTotal;
 
+        $displaySize = $size;
+
+        if ($temperature !== null) {
+            $displaySize = $size === 'Regular'
+                ? $temperature
+                : $size . ' - ' . $temperature;
+        }
+
         $validatedItems[] = [
             'id' => $id,
             'quantity' => $quantity,
-            'size' => $temperature === null
-                ? $size
-                : ($size === 'Regular' ? $temperature : $size . ' - ' . $temperature),
+            'size' => $displaySize,
             'subtotal' => $lineTotal
         ];
 

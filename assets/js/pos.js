@@ -60,7 +60,7 @@ function addToCart(item) {
 
     const unitPrice = Math.max(
         0,
-        Number(item.price) + adjustment - Number(item.discount)
+        Number(item.price) + adjustment
     );
 
     const existing = cart.find(
@@ -141,8 +141,22 @@ function renderCart() {
         container.appendChild(row);
     });
 
+    const discountRates = {
+        None: 0,
+        PWD: 0.20,
+        Student: 0.10,
+        "Senior Citizen": 0.20
+    };
+
+    const discountType = document.getElementById("discount-type").value;
+    const discountRate = discountRates[discountType] ?? 0;
+
+    const discountedTotal = Math.round(
+        total * (1 - discountRate) * 100
+    ) / 100;
+
     document.getElementById("cart-total").textContent =
-        `₱${total.toFixed(2)}`;
+        `₱${discountedTotal.toFixed(2)}`;
 
     document.getElementById("checkout-btn").disabled =
         cart.length === 0;
@@ -226,3 +240,8 @@ checkoutForm.addEventListener("submit", async (event) => {
         checkoutButton.disabled = cart.length === 0;
     }
 });
+
+document.getElementById("discount-type").addEventListener(
+    "change",
+    renderCart
+);
