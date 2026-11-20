@@ -11,47 +11,8 @@ body {
     color: #333;
 }
 
-.sidebar {
-    position: fixed;
-    width: 240px;
-    height: 100vh;
-    background: #29221e;
-    padding: 25px 20px;
-    display: flex;
-    flex-direction: column;
-}
-
-.sidebar h2 {
-    color: white;
-    margin-bottom: 35px;
-}
-
-.sidebar nav {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.sidebar a {
-    color: #ddd;
-    text-decoration: none;
-    padding: 13px;
-    border-radius: 6px;
-}
-
-.sidebar a:hover,
-.sidebar a.active {
-    background: #76543b;
-    color: white;
-}
-
-.sidebar .logout {
-    margin-top: auto;
-    background: #49352a;
-}
-
 .main-content {
-    margin-left: 240px;
+    margin-left: 0;
     padding: 35px;
 }
 

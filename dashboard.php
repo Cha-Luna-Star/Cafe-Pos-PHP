@@ -54,27 +54,11 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cafe POS | Dashboard</title>
     <link rel="stylesheet" href="assets/css/dashboard.css">
+    <link rel="stylesheet" href="assets/css/sidebar.css">
 </head>
 <body>
 
-<div class="sidebar">
-    <h2>Cafe POS</h2>
-
-    <nav>
-        <a href="dashboard.php" class="active">Dashboard</a>
-        <a href="pos.php">New Order</a>
-        <a href="orders.php">Orders</a>
-        <a href="#">Menu Management</a>
-        <a href="#">Inventory</a>
-        <a href="#">Sales Reports</a>
-
-        <?php if ($role === 'Admin' || $role === 'Manager'): ?>
-            <a href="#">User Management</a>
-        <?php endif; ?>
-    </nav>
-
-    <a href="logout.php" class="logout">Logout</a>
-</div>
+<?php require __DIR__ . '/includes/sidebar.php'; ?>
 
 <div class="main-content">
     <header>

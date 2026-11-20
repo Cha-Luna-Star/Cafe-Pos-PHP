@@ -1,0 +1,32 @@
+<?php
+$currentPage = basename($_SERVER['PHP_SELF']);
+$role = $_SESSION['role'] ?? 'Cashier';
+?>
+
+<aside class="sidebar">
+    <h2>Cafe POS</h2>
+
+    <nav>
+        <a href="dashboard.php" class="<?= $currentPage === 'dashboard.php' ? 'active' : '' ?>">
+            Dashboard
+        </a>
+
+        <a href="pos.php" class="<?= $currentPage === 'pos.php' ? 'active' : '' ?>">
+            New Order
+        </a>
+
+        <a href="orders.php" class="<?= in_array($currentPage, ['orders.php', 'order_details.php']) ? 'active' : '' ?>">
+            Order History
+        </a>
+
+        <a href="#">Menu Management</a>
+        <a href="#">Inventory</a>
+        <a href="#">Sales Reports</a>
+
+        <?php if (in_array($role, ['Admin', 'Manager'], true)): ?>
+            <a href="#">User Management</a>
+        <?php endif; ?>
+    </nav>
+
+    <a href="logout.php" class="logout">Logout</a>
+</aside>

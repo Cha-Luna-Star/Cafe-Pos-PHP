@@ -32,8 +32,10 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cafe POS | Order History</title>
     <link rel="stylesheet" href="assets/css/orders.css">
+    <link rel="stylesheet" href="assets/css/sidebar.css">
 </head>
 <body>
+<?php require __DIR__ . '/includes/sidebar.php'; ?>
 
 <header>
     <h1>Order History</h1>

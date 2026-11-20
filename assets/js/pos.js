@@ -28,28 +28,12 @@ function addToCart(item) {
     let adjustment = 0;
 
     if (item.has_sizes && item.sizes.length > 0) {
-        const options = item.sizes.map(
-            (size, index) =>
-                `${index + 1}. ${size.name} (+₱${Number(size.price_adjustment).toFixed(2)})`
-        ).join("\n");
+        const defaultSize =
+            item.sizes.find(size => size.name === "Medium") ??
+            item.sizes[0];
 
-        const choice = prompt(
-            `Choose a size:\n${options}`
-        );
-
-        if (choice === null) return;
-
-        const index = Number(choice) - 1;
-
-        if (!Number.isInteger(index) ||
-            index < 0 ||
-            index >= item.sizes.length) {
-            alert("Invalid size.");
-            return;
-        }
-
-        selectedSize = item.sizes[index].name;
-        adjustment = Number(item.sizes[index].price_adjustment);
+        selectedSize = defaultSize.name;
+        adjustment = Number(defaultSize.price_adjustment);
     }
 
     const unitPrice = Math.max(
@@ -71,6 +55,8 @@ function addToCart(item) {
             id: item.id,
             name: item.name,
             size: selectedSize,
+            sizes: item.sizes,
+            basePrice: Number(item.price),
             temperature: temperature,
             is_addon: item.is_addon,
             price: unitPrice,
@@ -111,8 +97,96 @@ function renderCart() {
         row.className = "cart-item";
 
         const details = document.createElement("div");
-        details.textContent =
-            `${item.name}${item.size ? " (" + item.size + ")" : ""}`;
+        details.textContent = item.name;
+
+        const optionsRow = document.createElement("div");
+        optionsRow.className = "cart-options";
+        optionsRow.style.display = "flex";
+        optionsRow.style.gap = "10px";
+        optionsRow.style.margin = "10px 0";
+
+        if (item.sizes && item.sizes.length > 0) {
+            const sizeSelect = document.createElement("select");
+            sizeSelect.className = "size-select";
+            sizeSelect.style.flex = "1";
+            sizeSelect.style.width = "0";
+            sizeSelect.style.minWidth = "0";
+
+            item.sizes.forEach(size => {
+                const option = document.createElement("option");
+                option.value = size.name;
+                option.textContent =
+                    `${size.name} (${Number(size.price_adjustment) >= 0 ? "+" : ""}₱${Number(size.price_adjustment).toFixed(2)})`;
+                option.selected = item.size === size.name;
+                sizeSelect.appendChild(option);
+            });
+
+            sizeSelect.addEventListener("change", () => {
+                const selected = item.sizes.find(
+                    size => size.name === sizeSelect.value
+                );
+
+                if (!selected) return;
+
+                item.size = selected.name;
+                item.price = Math.max(
+                    0,
+                    item.basePrice + Number(selected.price_adjustment)
+                );
+
+                const duplicate = cart.find(entry =>
+                    entry !== item &&
+                    entry.id === item.id &&
+                    entry.size === item.size &&
+                    entry.temperature === item.temperature
+                );
+
+                if (duplicate) {
+                    duplicate.quantity += item.quantity;
+                    cart.splice(cart.indexOf(item), 1);
+                }
+
+                renderCart();
+            });
+
+            optionsRow.appendChild(sizeSelect);
+        }
+
+        if (item.temperature !== null && item.temperature !== undefined) {
+            const temperatureSelect = document.createElement("select");
+            temperatureSelect.className = "temperature-select";
+            temperatureSelect.style.flex = "1";
+            temperatureSelect.style.width = "0";
+            temperatureSelect.style.minWidth = "0";
+
+            ["Hot", "Iced"].forEach(temp => {
+                const option = document.createElement("option");
+                option.value = temp;
+                option.textContent = temp;
+                option.selected = item.temperature === temp;
+                temperatureSelect.appendChild(option);
+            });
+
+            temperatureSelect.addEventListener("change", () => {
+                item.temperature = temperatureSelect.value;
+
+                const duplicate = cart.find(entry =>
+                    entry !== item &&
+                    entry.id === item.id &&
+                    entry.size === item.size &&
+                    entry.temperature === item.temperature
+                );
+
+                if (duplicate) {
+                    duplicate.quantity += item.quantity;
+                    cart.splice(cart.indexOf(item), 1);
+                }
+
+                renderCart();
+            });
+
+            optionsRow.appendChild(temperatureSelect);
+        }
 
         const price = document.createElement("p");
         price.textContent = `₱${subtotal.toFixed(2)}`;
@@ -132,43 +206,14 @@ function renderCart() {
         plus.onclick = () => changeQuantity(index, 1);
 
         controls.append(minus, quantity, plus);
-        row.append(details);
 
-    if (item.temperature !== null) {
-        const temperatureSelect = document.createElement("select");
-        temperatureSelect.className = "temperature-select";
+        row.appendChild(details);
 
-        ["Hot", "Iced"].forEach(temp => {
-            const option = document.createElement("option");
-            option.value = temp;
-            option.textContent = temp;
-            option.selected = item.temperature === temp;
-            temperatureSelect.appendChild(option);
-        });
+        if (optionsRow.children.length > 0) {
+            row.appendChild(optionsRow);
+        }
 
-        temperatureSelect.addEventListener("change", () => {
-            item.temperature = temperatureSelect.value;
-
-            const duplicate = cart.find(
-                entry =>
-                    entry !== item &&
-                    entry.id === item.id &&
-                    entry.size === item.size &&
-                    entry.temperature === item.temperature
-            );
-
-            if (duplicate) {
-                duplicate.quantity += item.quantity;
-                cart.splice(cart.indexOf(item), 1);
-            }
-
-            renderCart();
-        });
-
-        row.appendChild(temperatureSelect);
-    }
-
-    row.append(price, controls);
+        row.append(price, controls);
         container.appendChild(row);
     });
 
@@ -192,7 +237,6 @@ function renderCart() {
     document.getElementById("checkout-btn").disabled =
         cart.length === 0 || checkoutBusy;
 }
-
 
 const checkoutForm = document.getElementById("checkout-form");
 const paymentMethod = document.getElementById("payment-method");

@@ -21,10 +21,12 @@ require_once __DIR__ . '/controllers/pos.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cafe POS | New Order</title>
     <link rel="stylesheet" href="assets/css/pos.css">
+    <link rel="stylesheet" href="assets/css/sidebar.css">
     <script src="assets/js/pos.js" defer></script>
     <meta name="csrf-token" content="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body>
+<?php require __DIR__ . '/includes/sidebar.php'; ?>
 
 <header>
     <h1>New Order</h1>
@@ -54,7 +56,11 @@ require_once __DIR__ . '/controllers/pos.php';
                 $itemSizes = array_values(array_filter(
                     $sizes,
                     fn($size) =>
-                        $size['menu_item_id'] == $item['id']
+                        $item['has_sizes'] == 1 &&
+                        (
+                            $size['menu_item_id'] === null ||
+                            $size['menu_item_id'] == $item['id']
+                        )
                 ));
 
                 $itemData = [

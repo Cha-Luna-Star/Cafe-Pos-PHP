@@ -161,11 +161,13 @@ try {
 
         if ((int)$menu['has_sizes'] === 1 && $size !== 'Regular') {
             $stmt = $connection->prepare("
-                SELECT price_adjustment
+                SELECT TOP 1 price_adjustment
                 FROM dbo.size_modifiers
-                WHERE menu_item_id = ? AND name = ?
+                WHERE name = ?
+                AND (menu_item_id = ? OR menu_item_id IS NULL)
+                ORDER BY CASE WHEN menu_item_id = ? THEN 0 ELSE 1 END
             ");
-            $stmt->execute([$id, $size]);
+            $stmt->execute([$size, $id, $id]);
             $modifier = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$modifier) {

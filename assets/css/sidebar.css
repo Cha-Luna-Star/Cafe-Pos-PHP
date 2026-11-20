@@ -1,0 +1,48 @@
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 240px;
+    height: 100vh;
+    background: #29221e;
+    padding: 25px 20px;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    overflow-y: auto;
+}
+.sidebar h2 {
+    color: white;
+    margin-bottom: 35px;
+}
+.sidebar nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.sidebar a {
+    color: #ddd;
+    text-decoration: none;
+    padding: 13px;
+    border-radius: 6px;
+}
+.sidebar a:hover,
+.sidebar a.active {
+    background: #76543b;
+    color: white;
+}
+.sidebar .logout {
+    margin-top: auto;
+    background: #49352a;
+}
+body {
+    padding-left: 240px;
+}
+@media (max-width: 600px) {
+    .sidebar {
+        width: 180px;
+    }
+    body {
+        padding-left: 180px;
+    }
+}
