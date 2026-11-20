@@ -10,8 +10,8 @@ $categories = $connection->query("
 
 $menuItems = $connection->query("
     SELECT id, name, price, category_id,
-           available, stock_qty, discount,
-           has_temp_option, has_sizes
+        available, stock_qty, discount,
+        has_temp_option, has_sizes
     FROM dbo.menu_items
     WHERE is_archived = 0
       AND available = 1

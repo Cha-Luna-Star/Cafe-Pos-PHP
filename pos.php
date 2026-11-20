@@ -64,6 +64,7 @@ require_once __DIR__ . '/controllers/pos.php';
                     'discount' => (float)$item['discount'],
                     'has_sizes' => (int)$item['has_sizes'],
                     'has_temp_option' => (int)$item['has_temp_option'],
+                    'is_addon' => (int)$item['category_id'] === 4,
                     'sizes' => $itemSizes
                 ];
 

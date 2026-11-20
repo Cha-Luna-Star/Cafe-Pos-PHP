@@ -90,6 +90,7 @@ try {
     $validatedItems = [];
     $menuQuantities = [];
     $ingredientNeeds = [];
+    $menuStock = [];
     $subtotal = 0;
 
     $stmt = $connection->query("
@@ -154,6 +155,7 @@ try {
         if (!$menu) {
             failCheckout('A menu item is unavailable.');
         }
+        $menuStock[$id] = (int)$menu['stock_qty'];
 
         $adjustment = 0;
 
@@ -183,7 +185,7 @@ try {
 
         $menuQuantities[$id] = ($menuQuantities[$id] ?? 0) + $quantity;
 
-        if ($menuQuantities[$id] > (int)$menu['stock_qty']) {
+        if ($menuQuantities[$id] > $menuStock[$id]) {
             failCheckout($menu['name'] . ' has insufficient stock.');
         }
 
@@ -192,18 +194,18 @@ try {
 
         $displaySize = $size;
 
-        if ($temperature !== null) {
-            $displaySize = $size === 'Regular'
-                ? $temperature
-                : $size . ' - ' . $temperature;
-        }
+if ($temperature !== null) {
+    $displaySize = $size === 'Regular'
+        ? $temperature
+        : $size . ' - ' . $temperature;
+}
 
-        $validatedItems[] = [
-            'id' => $id,
-            'quantity' => $quantity,
-            'size' => $displaySize,
-            'subtotal' => $lineTotal
-        ];
+$validatedItems[] = [
+    'id' => $id,
+    'quantity' => $quantity,
+    'size' => $displaySize,
+    'subtotal' => $lineTotal
+];
 
         $stmt = $connection->prepare("
             SELECT ingredient_id, quantity_needed
@@ -235,6 +237,41 @@ try {
         if ($iceRequired && $iceId !== null) {
             $ingredientNeeds[$iceId] =
                 ($ingredientNeeds[$iceId] ?? 0) + (100 * $quantity);
+        }
+    }
+
+    ksort($ingredientNeeds);
+
+    foreach ($ingredientNeeds as $ingredientId => $needed) {
+        if ($needed <= 0) {
+            continue;
+        }
+
+        $stmt = $connection->prepare("
+            SELECT stock_qty
+            FROM dbo.ingredients WITH (UPDLOCK, HOLDLOCK)
+            WHERE id = ?
+        ");
+        $stmt->execute([$ingredientId]);
+
+        $stock = $stmt->fetchColumn();
+
+        if ($stock === false || (float)$stock + 0.000001 < $needed) {
+            failCheckout('Insufficient ingredient stock.');
+        }
+
+        $stmt = $connection->prepare("
+            SELECT COALESCE(SUM(quantity), 0)
+            FROM dbo.inventory_batches WITH (UPDLOCK, HOLDLOCK)
+            WHERE ingredient_id = ?
+            AND quantity > 0
+        ");
+        $stmt->execute([$ingredientId]);
+
+        $batchStock = (float)$stmt->fetchColumn();
+
+        if ($batchStock + 0.000001 < $needed) {
+            failCheckout('Insufficient inventory batch stock.');
         }
     }
 

@@ -12,6 +12,15 @@ function filterCategory(categoryId) {
 }
 
 function addToCart(item) {
+    if (item.is_addon) {
+        const hasMainItem = cart.some(entry => !entry.is_addon);
+
+        if (!hasMainItem) {
+            alert("Add a regular menu item before selecting an add-on.");
+            return;
+        }
+    }
+
     let selectedSize = "Regular";
     let temperature = null;
 
@@ -78,6 +87,7 @@ function addToCart(item) {
             name: item.name,
             size: selectedSize,
             temperature: temperature,
+            is_addon: item.is_addon,
             price: unitPrice,
             quantity: 1
         });
