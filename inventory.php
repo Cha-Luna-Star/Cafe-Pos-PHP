@@ -30,13 +30,99 @@ require_once __DIR__ . '/controllers/inventory.php';
 <header class="page-header">
     <h1>Inventory Management</h1>
     <?php if (in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)): ?>
-        <button type="button" id="stock-in-btn">+ Stock In</button>
+        <div class="inventory-actions">
+            <button type="button" id="stock-in-btn">+ Stock In</button>
+            <button type="button" id="adjust-stock-btn">Adjust Stock</button>
+        </div>
     <?php endif; ?>
 </header>
 
 <main class="inventory-page">
+    <?php
+    $totalItems = count($ingredients) + count($products);
+    $lowStockCount = 0;
+    $outOfStockCount = 0;
+    $expiringSoonCount = 0;
+    $expiredCount = 0;
+
+    foreach ($ingredients as $item) {
+        $stock = (float)$item['stock_qty'];
+        $threshold = (float)$item['low_stock_threshold'];
+
+        if ($stock <= 0) {
+            $outOfStockCount++;
+        } elseif ($stock <= $threshold) {
+            $lowStockCount++;
+        }
+    }
+
+    foreach ($products as $item) {
+        $stock = (float)$item['stock_qty'];
+
+        if ($stock <= 0) {
+            $outOfStockCount++;
+        } elseif ($stock <= 10) {
+            $lowStockCount++;
+        }
+    }
+
+    $today = new DateTimeImmutable('today');
+
+    foreach ($batches as $batch) {
+        if ((float)$batch['quantity'] <= 0) {
+            continue;
+        }
+
+        $expiration = $batch['expiration_date'] ?? null;
+
+        if (empty($expiration)) {
+            continue;
+        }
+
+        try {
+            $expiryDate = new DateTimeImmutable((string)$expiration);
+            $daysRemaining = (int)$today->diff($expiryDate)->format('%r%a');
+
+            if ($daysRemaining < 0) {
+                $expiredCount++;
+            } elseif ($daysRemaining <= 7) {
+                $expiringSoonCount++;
+            }
+        } catch (Exception $e) {
+            continue;
+        }
+    }
+    ?>
+
+    <section class="inventory-summary">
+        <div class="summary-card">
+            <span>Total Items</span>
+            <strong><?= $totalItems ?></strong>
+        </div>
+
+        <div class="summary-card low-stock-card">
+            <span>Low Stock</span>
+            <strong><?= $lowStockCount ?></strong>
+        </div>
+
+        <div class="summary-card out-of-stock-card">
+            <span>Out of Stock</span>
+            <strong><?= $outOfStockCount ?></strong>
+        </div>
+
+        <div class="summary-card expiring-card">
+            <span>Expiring Soon</span>
+            <strong><?= $expiringSoonCount ?></strong>
+        </div>
+
+        <div class="summary-card expired-card">
+            <span>Expired</span>
+            <strong><?= $expiredCount ?></strong>
+        </div>
+    </section>
     <div class="inventory-heading">
         <h2>Current Stock</h2>
+        <button type="button" class="export-csv-btn" data-table="current-stock-body" data-filename="current_stock.csv">Export CSV</button>
     </div>
     <div class="inventory-filters">
         <input type="search" id="stock-search" placeholder="Search items...">
@@ -171,8 +257,11 @@ require_once __DIR__ . '/controllers/inventory.php';
         </table>
     </div>
 
+    <div class="inventory-pagination" data-table="current-stock-body"></div>
+
     <div class="inventory-heading">
         <h2>Batch History</h2>
+        <button type="button" class="export-csv-btn" data-table="batch-history-body" data-filename="batch_history.csv">Export CSV</button>
     </div>
 
     <div class="inventory-filters">
@@ -261,8 +350,36 @@ require_once __DIR__ . '/controllers/inventory.php';
             </tbody>
         </table>
     </div>
+    <div class="inventory-pagination" data-table="batch-history-body"></div>
+
     <div class="inventory-heading">
         <h2>Stock Movement History</h2>
+        <button type="button" class="export-csv-btn" data-table="movement-history-body" data-filename="stock_movements.csv">Export CSV</button>
+    </div>
+
+    <div class="inventory-filters">
+        <input type="search" id="movement-search" placeholder="Search movements...">
+
+        <select id="movement-type-filter">
+            <option value="">All Item Types</option>
+            <option value="Product">Product</option>
+            <option value="Ingredient">Ingredient</option>
+        </select>
+
+        <select id="movement-action-filter">
+            <option value="">All Movements</option>
+            <option value="Stock In">Stock In</option>
+            <option value="Sale">Sale</option>
+            <option value="Adjustment">Adjustment</option>
+            <option value="Cancellation">Cancellation</option>
+            <option value="Expired">Expired</option>
+            <option value="Damaged">Damaged</option>
+        </select>
+
+        <input type="date" id="movement-date-from" aria-label="Start date">
+        <input type="date" id="movement-date-to" aria-label="End date">
+
+        <button type="button" id="clear-movement-filters">Clear</button>
     </div>
 
     <div class="inventory-table">
@@ -279,7 +396,7 @@ require_once __DIR__ . '/controllers/inventory.php';
                     <th>Remarks</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="movement-history-body">
                 <?php foreach ($movements as $movement): ?>
                     <tr>
                         <td><?= htmlspecialchars($movement['item_type']) ?></td>
@@ -292,19 +409,22 @@ require_once __DIR__ . '/controllers/inventory.php';
                         <td><?= number_format((float)$movement['quantity'], 2) ?></td>
                         <td><?= $movement['batch_id'] !== null ? '#' . (int)$movement['batch_id'] : 'N/A' ?></td>
                         <td><?= htmlspecialchars($movement['username'] ?? 'System') ?></td>
-                        <td><?= htmlspecialchars((string)$movement['created_at']) ?></td>
+                        <td data-date="<?= htmlspecialchars(substr((string)$movement['created_at'], 0, 10)) ?>">
+                            <?= htmlspecialchars((string)$movement['created_at']) ?>
+                        </td>
                         <td><?= htmlspecialchars($movement['remarks'] ?? '') ?></td>
                     </tr>
                 <?php endforeach; ?>
 
-                <?php if (!$movements): ?>
-                    <tr>
-                        <td colspan="8">No stock movements recorded.</td>
-                    </tr>
-                <?php endif; ?>
+            </tbody>
+            <tbody id="movement-no-results" hidden>
+                <tr>
+                    <td colspan="8" class="no-results">No matching stock movements found.</td>
+                </tr>
             </tbody>
         </table>
     </div>
+    <div class="inventory-pagination" data-table="movement-history-body"></div>
 </main>
 
 <dialog id="stock-dialog">
@@ -357,6 +477,54 @@ require_once __DIR__ . '/controllers/inventory.php';
         </div>
     </form>
 </dialog>
+
+<?php if (in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)): ?>
+<dialog id="adjust-stock-dialog">
+    <form id="adjust-stock-form">
+        <h2>Stock Adjustment</h2>
+
+        <label for="adjust-item-type">Item Type</label>
+        <select id="adjust-item-type" required>
+            <option value="Ingredient">Ingredient</option>
+            <option value="Product">Product</option>
+        </select>
+
+        <label for="adjust-item">Item</label>
+        <select id="adjust-item" required>
+            <?php foreach ($ingredients as $item): ?>
+                <option value="<?= (int)$item['id'] ?>" data-type="Ingredient">
+                    <?= htmlspecialchars($item['name']) ?>
+                </option>
+            <?php endforeach; ?>
+            <?php foreach ($products as $item): ?>
+                <option value="<?= (int)$item['id'] ?>" data-type="Product">
+                    <?= htmlspecialchars($item['name']) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+
+        <label for="adjust-action">Adjustment Type</label>
+        <select id="adjust-action" required>
+            <option value="Add">Add Stock</option>
+            <option value="Remove">Remove Stock</option>
+        </select>
+
+        <label for="adjust-quantity">Quantity</label>
+        <input type="number" id="adjust-quantity" min="0.001" step="0.001" required>
+
+        <label for="adjust-reason">Reason</label>
+        <textarea id="adjust-reason" maxlength="500" required
+            placeholder="Enter the reason for this adjustment"></textarea>
+
+        <p id="adjust-message" role="status"></p>
+
+        <div class="dialog-actions">
+            <button type="button" id="cancel-adjust-btn">Cancel</button>
+            <button type="submit" id="save-adjust-btn">Save Adjustment</button>
+        </div>
+    </form>
+</dialog>
+<?php endif; ?>
 
 </body>
 </html>

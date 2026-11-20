@@ -263,3 +263,244 @@ document.getElementById("clear-batch-filters").addEventListener("click", () => {
     document.getElementById("batch-expiration-filter").value = "";
     filterBatchHistory();
 });
+
+function filterStockMovements() {
+    const search = document.getElementById("movement-search").value.trim().toLowerCase();
+    const type = document.getElementById("movement-type-filter").value;
+    const action = document.getElementById("movement-action-filter").value;
+    const dateFrom = document.getElementById("movement-date-from").value;
+    const dateTo = document.getElementById("movement-date-to").value;
+
+    let visibleCount = 0;
+
+    document.querySelectorAll("#movement-history-body tr").forEach(row => {
+        const itemType = row.cells[0].textContent.trim();
+        const itemName = row.cells[1].textContent.trim().toLowerCase();
+        const movementType = row.cells[2].textContent.trim();
+        const movementDate = row.cells[6].dataset.date || "";
+
+        const matchesSearch = itemName.includes(search);
+        const matchesType = !type || itemType === type;
+        const matchesAction = !action || movementType === action;
+        const matchesFrom = !dateFrom || (movementDate && movementDate >= dateFrom);
+        const matchesTo = !dateTo || (movementDate && movementDate <= dateTo);
+
+        const visible = matchesSearch &&
+            matchesType &&
+            matchesAction &&
+            matchesFrom &&
+            matchesTo;
+
+        row.hidden = !visible;
+
+        if (visible) {
+            visibleCount++;
+        }
+    });
+
+    document.getElementById("movement-no-results").hidden = visibleCount > 0;
+}
+
+[
+    "movement-search",
+    "movement-type-filter",
+    "movement-action-filter",
+    "movement-date-from",
+    "movement-date-to"
+].forEach(id => {
+    const element = document.getElementById(id);
+
+    element.addEventListener("input", filterStockMovements);
+    element.addEventListener("change", filterStockMovements);
+});
+
+document.getElementById("clear-movement-filters").addEventListener("click", () => {
+    document.getElementById("movement-search").value = "";
+    document.getElementById("movement-type-filter").value = "";
+    document.getElementById("movement-action-filter").value = "";
+    document.getElementById("movement-date-from").value = "";
+    document.getElementById("movement-date-to").value = "";
+
+    filterStockMovements();
+});
+
+filterStockMovements();
+
+const adjustDialog = document.getElementById("adjust-stock-dialog");
+const adjustForm = document.getElementById("adjust-stock-form");
+
+if (adjustDialog && adjustForm) {
+    const adjustType = document.getElementById("adjust-item-type");
+    const adjustItem = document.getElementById("adjust-item");
+    const adjustQuantity = document.getElementById("adjust-quantity");
+    const adjustMessage = document.getElementById("adjust-message");
+    const adjustSave = document.getElementById("save-adjust-btn");
+
+    const adjustOptions = Array.from(adjustItem.options).map(option => ({
+        id: option.value,
+        name: option.textContent.trim(),
+        type: option.dataset.type
+    }));
+
+    function updateAdjustItems() {
+        adjustItem.replaceChildren();
+
+        adjustOptions
+            .filter(option => option.type === adjustType.value)
+            .forEach(option => {
+                const element = document.createElement("option");
+                element.value = option.id;
+                element.textContent = option.name;
+                adjustItem.appendChild(element);
+            });
+
+        const isProduct = adjustType.value === "Product";
+
+        adjustQuantity.min = isProduct ? "1" : "0.001";
+        adjustQuantity.step = isProduct ? "1" : "0.001";
+    }
+
+    adjustType.addEventListener("change", updateAdjustItems);
+
+    document.getElementById("adjust-stock-btn").addEventListener("click", () => {
+        adjustForm.reset();
+        adjustMessage.textContent = "";
+        updateAdjustItems();
+        adjustDialog.showModal();
+    });
+
+    document.getElementById("cancel-adjust-btn").addEventListener("click", () => {
+        adjustDialog.close();
+    });
+
+    adjustForm.addEventListener("submit", async event => {
+        event.preventDefault();
+
+        adjustSave.disabled = true;
+        adjustMessage.textContent = "";
+
+        try {
+            const response = await fetch("controllers/stock_adjustment.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    csrf_token: csrfToken,
+                    item_type: adjustType.value,
+                    item_id: Number(adjustItem.value),
+                    action: document.getElementById("adjust-action").value,
+                    quantity: Number(adjustQuantity.value),
+                    reason: document.getElementById("adjust-reason").value.trim()
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Unable to adjust stock.");
+            }
+
+            window.location.reload();
+        } catch (error) {
+            adjustMessage.textContent = error.message;
+        } finally {
+            adjustSave.disabled = false;
+        }
+    });
+
+    updateAdjustItems();
+}
+
+document.querySelectorAll(".export-csv-btn").forEach(button => {
+    button.addEventListener("click", () => {
+        const tableId = button.dataset.table;
+        const tbody = document.getElementById(tableId);
+        const table = tbody.closest("table");
+
+        const headers = Array.from(table.querySelectorAll("thead > tr:first-child > th"))
+            .map(th => th.textContent.replace("⇅", "").trim());
+
+        const rows = Array.from(tbody.querySelectorAll(":scope > tr"))
+            .filter(row => !row.hidden && !row.classList.contains("stock-details"))
+            .map(row => Array.from(row.cells).map(cell => cell.textContent.trim()));
+
+        const csvRows = [headers, ...rows].map(row =>
+            row.map(value => `"${value.replace(/"/g, '""')}"`).join(",")
+        );
+
+        const blob = new Blob(["\uFEFF" + csvRows.join("\r\n")], {
+            type: "text/csv;charset=utf-8;"
+        });
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = button.dataset.filename;
+        link.click();
+
+        URL.revokeObjectURL(url);
+    });
+});
+
+const paginationState = {};
+
+function paginateInventory(tableId) {
+    const tbody = document.getElementById(tableId);
+    const container = document.querySelector(
+        `.inventory-pagination[data-table="${tableId}"]`
+    );
+
+    if (!tbody || !container) return;
+
+    const rows = Array.from(tbody.children);
+    const pageSize = 10;
+
+    if (!paginationState[tableId]) {
+        paginationState[tableId] = { page: 1 };
+    }
+
+    const matchingRows = rows.filter(row => row.dataset.filterHidden !== "true");
+    const totalPages = Math.max(1, Math.ceil(matchingRows.length / pageSize));
+
+    paginationState[tableId].page = Math.min(
+        paginationState[tableId].page,
+        totalPages
+    );
+
+    const currentPage = paginationState[tableId].page;
+
+    matchingRows.forEach((row, index) => {
+        row.hidden = index < (currentPage - 1) * pageSize ||
+                     index >= currentPage * pageSize;
+    });
+
+    container.replaceChildren();
+
+    const previous = document.createElement("button");
+    previous.textContent = "Previous";
+    previous.disabled = currentPage === 1;
+    previous.onclick = () => {
+        paginationState[tableId].page--;
+        paginateInventory(tableId);
+    };
+    container.appendChild(previous);
+
+    const label = document.createElement("span");
+    label.textContent = `Page ${currentPage} of ${totalPages}`;
+    container.appendChild(label);
+
+    const next = document.createElement("button");
+    next.textContent = "Next";
+    next.disabled = currentPage === totalPages;
+    next.onclick = () => {
+        paginationState[tableId].page++;
+        paginateInventory(tableId);
+    };
+    container.appendChild(next);
+}
+
+["current-stock-body", "batch-history-body", "movement-history-body"].forEach(
+    paginateInventory
+);
