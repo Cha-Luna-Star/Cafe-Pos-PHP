@@ -35,56 +35,135 @@ require_once __DIR__ . '/controllers/inventory.php';
 </header>
 
 <main class="inventory-page">
-    <h2>Current Stock</h2>
+    <div class="inventory-heading">
+        <h2>Current Stock</h2>
+        <select id="current-stock-sort">
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+            <option value="stock-asc">Stock (Lowest First)</option>
+            <option value="stock-desc">Stock (Highest First)</option>
+            <option value="type">Item Type</option>
+        </select>
+    </div>
 
     <div class="inventory-table">
         <table>
             <thead>
                 <tr>
-                    <th>Type</th>
-                    <th>Item</th>
-                    <th>Stock</th>
-                    <th>Unit</th>
+                    <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="0" data-type="text">Type <span>⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="1" data-type="text">Item <span>⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="2" data-type="number">Stock <span>⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="3" data-type="text">Unit <span>⇅</span></button></th>
                 </tr>
             </thead>
-            <tbody>
-                <?php foreach ($ingredients as $item): ?>
-                    <tr>
-                        <td>Ingredient</td>
+            <tbody id="current-stock-body">
+                <?php
+                $allItems = [];
+
+                foreach ($ingredients as $item) {
+                    $allItems[] = [
+                        'type' => 'Ingredient',
+                        'id' => (int)$item['id'],
+                        'name' => $item['name'],
+                        'stock' => (float)$item['stock_qty'],
+                        'unit' => $item['unit']
+                    ];
+                }
+
+                foreach ($products as $item) {
+                    $allItems[] = [
+                        'type' => 'Product',
+                        'id' => (int)$item['id'],
+                        'name' => $item['name'],
+                        'stock' => (float)$item['stock_qty'],
+                        'unit' => 'pcs'
+                    ];
+                }
+
+                foreach ($allItems as $item):
+                    $key = $item['type'] . '-' . $item['id'];
+                ?>
+                    <tr class="stock-row" data-key="<?= htmlspecialchars($key) ?>">
+                        <td><?= htmlspecialchars($item['type']) ?></td>
                         <td><?= htmlspecialchars($item['name']) ?></td>
-                        <td><?= number_format((float)$item['stock_qty'], 2) ?></td>
+                        <td><?= number_format($item['stock'], 2) ?></td>
                         <td><?= htmlspecialchars($item['unit']) ?></td>
                     </tr>
-                <?php endforeach; ?>
 
-                <?php foreach ($products as $item): ?>
-                    <tr>
-                        <td>Product</td>
-                        <td><?= htmlspecialchars($item['name']) ?></td>
-                        <td><?= (int)$item['stock_qty'] ?></td>
-                        <td>pcs</td>
+                    <tr class="stock-details" data-parent="<?= htmlspecialchars($key) ?>" hidden>
+                        <td colspan="4">
+                            <div class="batch-details">
+                                <strong>Stock Batches</strong>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Batch</th>
+                                            <th>Received</th>
+                                            <th>Remaining</th>
+                                            <th>Expiration</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        $matchingBatches = array_filter(
+                                            $batches,
+                                            fn($batch) =>
+                                                $batch['item_type'] === $item['type'] &&
+                                                (int)$batch['item_id'] === $item['id']
+                                        );
+
+                                        foreach ($matchingBatches as $batch):
+                                        ?>
+                                            <tr>
+                                                <td>#<?= (int)$batch['id'] ?></td>
+                                                <td><?= htmlspecialchars((string)$batch['received_date']) ?></td>
+                                                <td><?= number_format((float)$batch['quantity'], 2) ?></td>
+                                                <td><?= htmlspecialchars((string)($batch['expiration_date'] ?? 'N/A')) ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+
+                                        <?php if (!$matchingBatches): ?>
+                                            <tr>
+                                                <td colspan="4">No batch records available.</td>
+                                            </tr>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
     </div>
 
-    <h2>Batch History</h2>
+    <div class="inventory-heading">
+        <h2>Batch History</h2>
+        <select id="batch-sort">
+            <option value="newest">Newest Delivery</option>
+            <option value="oldest">Oldest Delivery</option>
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+            <option value="quantity-asc">Quantity (Lowest First)</option>
+            <option value="quantity-desc">Quantity (Highest First)</option>
+            <option value="expiration">Expiration (Nearest First)</option>
+        </select>
+    </div>
 
     <div class="inventory-table">
         <table>
-            <thead>
-                <tr>
-                    <th>Type</th>
-                    <th>Item</th>
-                    <th>Remaining</th>
-                    <th>Cost/Unit</th>
-                    <th>Received</th>
-                    <th>Expiration</th>
-                    <th>Supplier</th>
-                </tr>
-            </thead>
-            <tbody>
+        <thead>
+            <tr>
+                <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="0" data-type="text">Type <span>⇅</span></button></th>
+                <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="1" data-type="text">Item <span>⇅</span></button></th>
+                <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="2" data-type="number">Remaining <span>⇅</span></button></th>
+                <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="3" data-type="number">Cost/Unit <span>⇅</span></button></th>
+                <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="4" data-type="date">Received <span>⇅</span></button></th>
+                <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="5" data-type="date">Expiration <span>⇅</span></button></th>
+                <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="6" data-type="text">Supplier <span>⇅</span></button></th>
+            </tr>
+        </thead>
+            <tbody id="batch-history-body">
                 <?php foreach ($batches as $batch): ?>
                     <tr>
                         <td><?= htmlspecialchars($batch['item_type']) ?></td>

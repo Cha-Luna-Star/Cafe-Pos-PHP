@@ -95,3 +95,81 @@ th {
 #stock-message {
     color: #b42318;
 }
+
+.inventory-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+.inventory-heading h2 {
+    margin: 0;
+}
+.inventory-heading select {
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    font-size: 14px;
+    min-width: 190px;
+}
+@media (max-width: 600px) {
+    .inventory-heading {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+.stock-row {
+    cursor: pointer;
+}
+.stock-row:hover {
+    background: #f8f5f2;
+}
+.stock-row.expanded {
+    background: #f1ebe5;
+}
+.stock-details[hidden] {
+    display: none;
+}
+.stock-details > td {
+    padding: 15px 25px;
+    background: #fafafa;
+}
+.batch-details {
+    padding: 15px;
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 8px;
+}
+.batch-details strong {
+    display: block;
+    margin-bottom: 15px;
+}
+
+.sort-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #333;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.sort-header:hover {
+    color: #76543b;
+    background: transparent;
+}
+.sort-header span {
+    color: #888;
+    font-size: 16px;
+}
+.sort-header[data-direction="asc"] span,
+.sort-header[data-direction="desc"] span {
+    color: #76543b;
+}

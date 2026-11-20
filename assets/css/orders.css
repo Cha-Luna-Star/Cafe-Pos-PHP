@@ -22,29 +22,166 @@ header a {
 }
 main {
     padding: 30px;
+    width: 100%;
     overflow-x: auto;
 }
-table {
+.orders-table-wrapper {
     width: 100%;
-    border-collapse: collapse;
+    overflow-x: auto;
     background: white;
-    border-radius: 8px;
+    border-radius: 10px;
+    border: 1px solid #e5e5e5;
 }
-th,
-td {
-    padding: 15px;
+.orders-table {
+    width: 100%;
+    min-width: 1100px;
+    border-collapse: collapse;
+}
+.orders-table th,
+.orders-table td {
+    padding: 20px 22px;
     text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
     border-bottom: 1px solid #eee;
 }
-th {
+.orders-table th {
     background: #29221e;
     color: white;
+    font-size: 14px;
 }
-td a {
+.orders-table td {
+    font-size: 14px;
+}
+.orders-table tbody tr:hover {
+    background: #faf8f6;
+}
+.orders-table td a {
     color: #76543b;
     text-decoration: none;
-    font-weight: bold;
+    font-weight: 600;
 }
-tr:hover {
-    background: #faf8f6;
+.orders-table .order-actions {
+    min-width: 290px;
+}
+.order-action-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.order-action-group button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 13px;
+    cursor: pointer;
+}
+.complete-btn {
+    background: #287a48;
+}
+.cancel-btn {
+    background: #b42318;
+}
+.order-action-group button:hover {
+    opacity: 0.85;
+}
+#status-dialog {
+    position: fixed;
+    width: min(420px, 95%);
+    max-height: 90vh;
+    margin: auto;
+    padding: 28px;
+    border: none;
+    border-radius: 12px;
+    background: white;
+    color: #333;
+    z-index: 99999;
+}
+#status-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+}
+#status-dialog h2 {
+    margin-bottom: 15px;
+    font-size: 20px;
+}
+#status-confirm-message {
+    line-height: 1.6;
+}
+.status-dialog-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 25px;
+}
+.status-dialog-actions button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+#close-status-dialog {
+    background: #eee;
+    color: #333;
+}
+#confirm-status-action {
+    background: #76543b;
+    color: white;
+}
+#status-error {
+    color: #b42318;
+    margin-top: 12px;
+}
+
+/* More spacious layout */
+main {
+    padding: 40px;
+}
+.orders-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+.orders-table {
+    width: 100%;
+    min-width: 0;
+}
+
+.orders-table th,
+.orders-table td {
+    padding: 24px 28px;
+    line-height: 1.5;
+}
+.orders-table .order-actions {
+    width: 1%;
+    min-width: 0;
+    white-space: nowrap;
+}
+.order-action-group {
+    gap: 16px;
+}
+.order-action-group button {
+    padding: 12px 18px;
+}
+
+/* Order status badges */
+.status-badge {
+    display: inline-block;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    min-width: 95px;
+}
+.status-badge.completed {
+    background: #287a48;
+    color: white;
+}
+.status-badge.cancelled {
+    background: #b42318;
+    color: white;
+}
+.status-badge.pending {
+    background: #ffde7b;
+    color: #29221e;
 }

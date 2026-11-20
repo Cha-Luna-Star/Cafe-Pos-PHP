@@ -84,3 +84,99 @@ stockForm.addEventListener("submit", async event => {
 });
 
 updateItems();
+
+document.querySelectorAll(".sort-header").forEach(button => {
+    button.addEventListener("click", () => {
+        const tbody = document.getElementById(button.dataset.table);
+        const column = Number(button.dataset.column);
+        const type = button.dataset.type;
+        const ascending = button.dataset.direction !== "asc";
+
+        document.querySelectorAll(
+            `.sort-header[data-table="${button.dataset.table}"]`
+        ).forEach(header => {
+            header.dataset.direction = "";
+            header.querySelector("span").textContent = "⇅";
+        });
+
+        button.dataset.direction = ascending ? "asc" : "desc";
+        button.querySelector("span").textContent = ascending ? "↑" : "↓";
+
+        const rows = Array.from(tbody.children).filter(row =>
+            button.dataset.table !== "current-stock-body" ||
+            row.classList.contains("stock-row")
+        );
+
+        function getValue(row) {
+            const text = row.cells[column].textContent.trim();
+
+            if (type === "number") {
+                return Number(text.replace(/[^0-9.-]/g, "")) || 0;
+            }
+
+            if (type === "date") {
+                const date = Date.parse(text);
+                return Number.isNaN(date) ? null : date;
+            }
+
+            return text.toLowerCase();
+        }
+
+        rows.sort((a, b) => {
+            const valueA = getValue(a);
+            const valueB = getValue(b);
+
+            if (valueA === null || valueB === null) {
+                if (valueA === null && valueB === null) return 0;
+                return valueA === null ? 1 : -1;
+            }
+
+            let result;
+
+            if (type === "text") {
+                result = valueA.localeCompare(valueB);
+            } else {
+                result = valueA - valueB;
+            }
+
+            return ascending ? result : -result;
+        });
+
+        if (button.dataset.table === "current-stock-body") {
+            const detailsMap = new Map();
+
+            tbody.querySelectorAll(".stock-details").forEach(row => {
+                detailsMap.set(row.dataset.parent, row);
+            });
+
+            const sortedRows = [];
+
+            rows.forEach(row => {
+                sortedRows.push(row);
+
+                const details = detailsMap.get(row.dataset.key);
+
+                if (details) {
+                    sortedRows.push(details);
+                }
+            });
+
+            tbody.replaceChildren(...sortedRows);
+        } else {
+            tbody.replaceChildren(...rows);
+        }
+    });
+});
+
+
+
+document.querySelectorAll(".stock-row").forEach(row => {
+    row.addEventListener("click", () => {
+        const details = document.querySelector(
+            `.stock-details[data-parent="${row.dataset.key}"]`
+        );
+
+        details.hidden = !details.hidden;
+        row.classList.toggle("expanded", !details.hidden);
+    });
+});

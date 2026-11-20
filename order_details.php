@@ -1,4 +1,3 @@
-
 <?php
 session_start();
 
@@ -101,102 +100,48 @@ function escape($value): string {
 
 <main>
     <section class="receipt">
-        <div class="receipt-header">
-            <h2>Cafe POS</h2>
-            <p>Order Receipt</p>
+        <h2>Cafe POS</h2>
+        <p class="receipt-subtitle">Order Receipt</p>
+
+        <hr>
+
+        <p>Order #: <?= (int)$order['id'] ?></p>
+        <p>Date: <?= escape($date) ?></p>
+        <p>Payment: <?= escape($order['payment_method'] ?? 'N/A') ?></p>
+
+        <hr>
+
+        <div class="receipt-items">
+            <?php foreach ($items as $item): ?>
+                <p>
+                    <?= (int)$item['quantity'] ?>x
+                    <?= escape($item['name'] ?? 'Unknown Item') ?>
+
+                    <?php if (!empty($item['size'])): ?>
+                        (<?= escape($item['size']) ?>)
+                    <?php endif; ?>
+
+                    - <?= $money($item['subtotal']) ?>
+                </p>
+            <?php endforeach; ?>
         </div>
 
         <hr>
 
-        <div class="details">
-            <p><strong>Order #:</strong> <?= (int)$order['id'] ?></p>
-            <p><strong>Date:</strong> <?= escape($date) ?></p>
-            <p><strong>Cashier:</strong> <?= escape($order['username'] ?? 'Unknown') ?></p>
-            <p><strong>Order Type:</strong> <?= escape($order['order_type']) ?></p>
-            <p><strong>Status:</strong> <?= escape($order['status']) ?></p>
-            <p><strong>Payment:</strong> <?= escape($order['payment_method'] ?? 'N/A') ?></p>
+        <p>Subtotal: <?= $money($itemsTotal) ?></p>
+        <p>Discount: <?= $money($discount) ?></p>
+        <p>VAT Included: <?= $money($tax) ?></p>
 
-            <?php if (!empty($order['ref_number'])): ?>
-                <p><strong>Reference #:</strong> <?= escape($order['ref_number']) ?></p>
-            <?php endif; ?>
-        </div>
+        <h3>Total: <?= $money($total) ?></h3>
 
-        <hr>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>Item</th>
-                    <th>Qty</th>
-                    <th>Subtotal</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($items as $item): ?>
-                    <tr>
-                        <td>
-                            <?= escape($item['name'] ?? 'Unknown Item') ?>
-
-                            <?php if (!empty($item['size'])): ?>
-                                <small><?= escape($item['size']) ?></small>
-                            <?php endif; ?>
-                        </td>
-                        <td><?= (int)$item['quantity'] ?></td>
-                        <td><?= $money($item['subtotal']) ?></td>
-                    </tr>
-                <?php endforeach; ?>
-
-                <?php if (empty($items)): ?>
-                    <tr>
-                        <td colspan="3">No items found.</td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
-
-        <hr>
-
-        <div class="totals">
-            <p>
-                <span>Subtotal</span>
-                <span><?= $money($itemsTotal) ?></span>
-            </p>
-
-            <p>
-                <span>Discount</span>
-                <span><?= $money($discount) ?></span>
-            </p>
-
-            <p>
-                <span>VAT Included</span>
-                <span><?= $money($tax) ?></span>
-            </p>
-
-            <p class="grand-total">
-                <strong>Total</strong>
-                <strong><?= $money($total) ?></strong>
-            </p>
-
-            <p>
-                <span>Amount Paid</span>
-                <span><?= $money($paid) ?></span>
-            </p>
-
-            <p>
-                <span>Change</span>
-                <span><?= $money($change) ?></span>
-            </p>
-        </div>
+        <p>Amount Paid: <?= $money($paid) ?></p>
+        <p>Change: <?= $money($change) ?></p>
 
         <div class="receipt-actions">
-            <button type="button" onclick="window.print()">
-                Print Receipt
-            </button>
-
+            <button type="button" onclick="window.print()">Print</button>
             <a href="orders.php">Back</a>
         </div>
     </section>
 </main>
-
 </body>
 </html>

@@ -17,6 +17,7 @@ $products = $connection->query("
 $batches = $connection->query("
     SELECT
         'Ingredient' AS item_type,
+        b.ingredient_id AS item_id,
         b.id,
         i.name AS item_name,
         b.quantity,
@@ -31,6 +32,7 @@ $batches = $connection->query("
 
     SELECT
         'Product' AS item_type,
+        b.menu_item_id AS item_id,
         b.id,
         m.name AS item_name,
         b.quantity,

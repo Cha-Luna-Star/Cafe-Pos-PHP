@@ -347,6 +347,72 @@ $validatedItems[] = [
         if ($stmt->rowCount() !== 1) {
             failCheckout('Insufficient menu stock.');
         }
+        $stmt = $connection->prepare("
+            SELECT id, quantity
+            FROM dbo.product_batches WITH (UPDLOCK, HOLDLOCK)
+            WHERE menu_item_id = ?
+            AND quantity > 0
+            AND (
+                expiration_date IS NULL
+                OR expiration_date >= CAST(GETDATE() AS DATE)
+            )
+            ORDER BY
+                CASE WHEN expiration_date IS NULL THEN 1 ELSE 0 END,
+                expiration_date ASC,
+                received_date ASC,
+                id ASC
+        ");
+
+        $stmt->execute([$id]);
+        $batches = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $remaining = $quantity;
+
+        foreach ($batches as $batch) {
+            if ($remaining <= 0) {
+                break;
+            }
+
+            $deduct = min((int)$batch['quantity'], $remaining);
+
+            $update = $connection->prepare("
+                UPDATE dbo.product_batches
+                SET quantity = quantity - ?
+                WHERE id = ?
+                AND quantity >= ?
+            ");
+
+            $update->execute([
+                $deduct,
+                $batch['id'],
+                $deduct
+            ]);
+
+            if ($update->rowCount() !== 1) {
+                failCheckout('Unable to deduct product batch stock.');
+            }
+
+            $movement = $connection->prepare("
+                INSERT INTO dbo.stock_movements
+                (item_type, item_id, batch_id, movement_type,
+                quantity, remarks, user_id)
+                VALUES ('Product', ?, ?, 'Sale', ?, ?, ?)
+            ");
+
+            $movement->execute([
+                $id,
+                $batch['id'],
+                $deduct,
+                'Order #' . $orderId,
+                $_SESSION['user_id']
+            ]);
+
+            $remaining -= $deduct;
+        }
+
+        if ($remaining > 0) {
+            failCheckout('Insufficient valid product batch stock.');
+        }
     }
 
     ksort($ingredientNeeds);

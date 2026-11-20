@@ -1,6 +1,10 @@
 <?php
 session_start();
 
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit;
@@ -33,6 +37,8 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <title>Cafe POS | Order History</title>
     <link rel="stylesheet" href="assets/css/orders.css">
     <link rel="stylesheet" href="assets/css/sidebar.css">
+    <script src="assets/js/orders.js" defer></script>
+    <meta name="csrf-token" content="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body>
 <?php require __DIR__ . '/includes/sidebar.php'; ?>
@@ -43,7 +49,8 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </header>
 
 <main>
-    <table>
+    <div class="orders-table-wrapper">
+        <table class="orders-table">
         <thead>
             <tr>
                 <th>Order #</th>
@@ -65,11 +72,31 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <td><?= htmlspecialchars($order['order_type']) ?></td>
                     <td><?= htmlspecialchars($order['payment_method'] ?? 'N/A') ?></td>
                     <td>₱<?= number_format((float)$order['total'], 2) ?></td>
-                    <td><?= htmlspecialchars($order['status']) ?></td>
                     <td>
-                        <a href="order_details.php?id=<?= (int)$order['id'] ?>">
-                            View
-                        </a>
+                        <span class="status-badge <?= strtolower(htmlspecialchars($order['status'], ENT_QUOTES, 'UTF-8')) ?>">
+                            <?= htmlspecialchars($order['status'], ENT_QUOTES, 'UTF-8') ?>
+                        </span>
+                    </td>
+                    <td class="order-actions">
+                        <div class="order-action-group">
+                            <a href="order_details.php?id=<?= (int)$order['id'] ?>">View</a>
+
+                            <?php if ($order['status'] === 'Pending'): ?>
+                                <button type="button"
+                                        class="complete-btn"
+                                        data-order="<?= (int)$order['id'] ?>"
+                                        data-action="Completed">
+                                    Complete
+                                </button>
+
+                                <button type="button"
+                                        class="cancel-btn"
+                                        data-order="<?= (int)$order['id'] ?>"
+                                        data-action="Cancelled">
+                                    Cancel
+                                </button>
+                            <?php endif; ?>
+                        </div>
                     </td>
                 </tr>
             <?php endforeach; ?>
@@ -80,8 +107,20 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </tr>
             <?php endif; ?>
         </tbody>
-    </table>
+        </table>
+    </div>
 </main>
+
+<dialog id="status-dialog">
+    <h2>Confirm Order Action</h2>
+    <p id="status-confirm-message"></p>
+    <p id="status-error" role="alert"></p>
+
+    <div class="status-dialog-actions">
+        <button type="button" id="close-status-dialog">Back</button>
+        <button type="button" id="confirm-status-action">Confirm</button>
+    </div>
+</dialog>
 
 </body>
 </html>
