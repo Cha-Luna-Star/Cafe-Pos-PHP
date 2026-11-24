@@ -125,314 +125,321 @@ require_once __DIR__ . '/controllers/inventory.php';
         <button type="button" class="inventory-tab" data-target="batch-history-section">Batch History</button>
         <button type="button" class="inventory-tab" data-target="stock-movement-section">Stock Movements</button>
     </div>
-    <div class="inventory-heading">
-        <h2>Current Stock</h2>
-        <button type="button" class="export-csv-btn" data-table="current-stock-body" data-filename="current_stock.csv">Export CSV</button>
-    </div>
-    <div class="inventory-filters">
-        <input type="search" id="stock-search" placeholder="Search items...">
-        <select id="stock-type-filter">
-            <option value="">All Types</option>
-            <option value="Product">Product</option>
-            <option value="Ingredient">Ingredient</option>
-        </select>
-        <select id="stock-status-filter">
-            <option value="">All Stock Statuses</option>
-            <option value="in-stock">In Stock</option>
-            <option value="low-stock">Low Stock</option>
-            <option value="out-of-stock">Out of Stock</option>
-        </select>
-        <button type="button" id="clear-stock-filters">Clear</button>
-    </div>
+    <section id="current-stock-section" class="inventory-section">
+        <div class="inventory-heading">
+            <h2>Current Stock</h2>
+            <button type="button" class="export-csv-btn" data-table="current-stock-body" data-filename="current_stock.csv">Export CSV</button>
+        </div>
+        <div class="inventory-filters">
+            <input type="search" id="stock-search" placeholder="Search items...">
+            <select id="stock-type-filter">
+                <option value="">All Types</option>
+                <option value="Product">Product</option>
+                <option value="Ingredient">Ingredient</option>
+            </select>
+            <select id="stock-status-filter">
+                <option value="">All Stock Statuses</option>
+                <option value="in-stock">In Stock</option>
+                <option value="low-stock">Low Stock</option>
+                <option value="out-of-stock">Out of Stock</option>
+            </select>
+            <button type="button" id="clear-stock-filters">Clear</button>
+        </div>
 
-    <div class="inventory-table">
-        <table>
-            <thead>
-                <tr>
-                    <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="0" data-type="text">Type <span>⇅</span></button></th>
-                    <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="1" data-type="text">Item <span>⇅</span></button></th>
-                    <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="2" data-type="number">Stock <span>⇅</span></button></th>
-                    <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="3" data-type="text">Unit <span>⇅</span></button></th>
-                    <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="4" data-type="text">Status <span>⇅</span></button></th>
-                </tr>
-            </thead>
-            <tbody id="current-stock-body">
-                <?php
-                $allItems = [];
-
-                foreach ($ingredients as $item) {
-                    $allItems[] = [
-                        'type' => 'Ingredient',
-                        'id' => (int)$item['id'],
-                        'name' => $item['name'],
-                        'stock' => (float)$item['stock_qty'],
-                        'unit' => $item['unit'],
-                        'threshold' => (float)$item['low_stock_threshold']
-                    ];
-                }
-
-                foreach ($products as $item) {
-                    $allItems[] = [
-                        'type' => 'Product',
-                        'id' => (int)$item['id'],
-                        'name' => $item['name'],
-                        'stock' => (float)$item['stock_qty'],
-                        'unit' => 'pcs',
-                        'threshold' => 10
-                    ];
-                }
-
-                foreach ($allItems as $item):
-                    $key = $item['type'] . '-' . $item['id'];
-                ?>
-                    <tr class="stock-row" data-key="<?= htmlspecialchars($key) ?>">
-                        <td><?= htmlspecialchars($item['type']) ?></td>
-                        <td><?= htmlspecialchars($item['name']) ?></td>
-                        <td><?= number_format($item['stock'], 2) ?></td>
-                        <td><?= htmlspecialchars($item['unit']) ?></td>
-                        <?php
-                        if ($item['stock'] <= 0) {
-                            $stockStatus = 'Out of Stock';
-                            $statusClass = 'out-of-stock';
-                        } elseif ($item['stock'] <= $item['threshold']) {
-                            $stockStatus = 'Low Stock';
-                            $statusClass = 'low-stock';
-                        } else {
-                            $stockStatus = 'In Stock';
-                            $statusClass = 'in-stock';
-                        }
-                        ?>
-
-                        <td>
-                            <div class="stock-status-wrapper">
-                                <span class="stock-status <?= $statusClass ?>">
-                                    <?= $stockStatus ?>
-                                </span>
-                                <span class="stock-expand-arrow" aria-hidden="true"></span>
-                            </div>
-                        </td>
-                    </tr>
-
-                    <tr class="stock-details" data-parent="<?= htmlspecialchars($key) ?>" hidden>
-                        <td colspan="5">
-                            <div class="batch-details">
-                                <strong>Stock Batches</strong>
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Batch</th>
-                                            <th>Received</th>
-                                            <th>Remaining</th>
-                                            <th>Expiration</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php
-                                        $matchingBatches = array_filter(
-                                            $batches,
-                                            fn($batch) =>
-                                                $batch['item_type'] === $item['type'] &&
-                                                (int)$batch['item_id'] === $item['id']
-                                        );
-
-                                        foreach ($matchingBatches as $batch):
-                                        ?>
-                                            <tr>
-                                                <td>#<?= (int)$batch['id'] ?></td>
-                                                <td><?= htmlspecialchars((string)$batch['received_date']) ?></td>
-                                                <td><?= number_format((float)$batch['quantity'], 2) ?></td>
-                                                <td><?= htmlspecialchars((string)($batch['expiration_date'] ?? 'N/A')) ?></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-
-                                        <?php if (!$matchingBatches): ?>
-                                            <tr>
-                                                <td colspan="4">No batch records available.</td>
-                                            </tr>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-            <tbody id="stock-no-results" hidden>
-                <tr>
-                    <td colspan="5" class="no-results">No matching items found.</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div class="inventory-pagination" data-table="current-stock-body"></div>
-
-    <div class="inventory-heading">
-        <h2>Batch History</h2>
-        <button type="button" class="export-csv-btn" data-table="batch-history-body" data-filename="batch_history.csv">Export CSV</button>
-    </div>
-
-    <div class="inventory-filters">
-        <input type="search" id="batch-search" placeholder="Search batches...">
-        <select id="batch-type-filter">
-            <option value="">All Types</option>
-            <option value="Product">Product</option>
-            <option value="Ingredient">Ingredient</option>
-        </select>
-        <select id="batch-expiration-filter">
-            <option value="">All Expiration Statuses</option>
-            <option value="valid">Valid</option>
-            <option value="expiring-soon">Expiring Soon</option>
-            <option value="expired">Expired</option>
-            <option value="no-expiration">No Expiration</option>
-            <option value="invalid-date">Invalid Date</option>
-        </select>
-        <button type="button" id="clear-batch-filters">Clear</button>
-    </div>
-
-    <div class="inventory-table">
-        <table>
-        <thead>
-            <tr>
-                <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="0" data-type="text">Type <span>⇅</span></button></th>
-                <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="1" data-type="text">Item <span>⇅</span></button></th>
-                <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="2" data-type="number">Remaining <span>⇅</span></button></th>
-                <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="3" data-type="number">Cost/Unit <span>⇅</span></button></th>
-                <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="4" data-type="date">Received <span>⇅</span></button></th>
-                <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="5" data-type="date">Expiration <span>⇅</span></button></th>
-                <th>Status</th>
-                <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="7" data-type="text">Supplier <span>⇅</span></button></th>
-            </tr>
-        </thead>
-            <tbody id="batch-history-body">
-                <?php foreach ($batches as $batch): ?>
+        <div class="inventory-table">
+            <table>
+                <thead>
                     <tr>
-                        <td><?= htmlspecialchars($batch['item_type']) ?></td>
-                        <td><?= htmlspecialchars($batch['item_name']) ?></td>
-                        <td><?= number_format((float)$batch['quantity'], 2) ?></td>
-                        <td>₱<?= number_format((float)$batch['cost_per_unit'], 2) ?></td>
-                        <td><?= htmlspecialchars((string)$batch['received_date']) ?></td>
-                        <td><?= htmlspecialchars((string)($batch['expiration_date'] ?? 'N/A')) ?></td>
-                        <?php
-                        $expiration = $batch['expiration_date'] ?? null;
-                        $today = new DateTimeImmutable('today');
+                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="0" data-type="text">Type <span>⇅</span></button></th>
+                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="1" data-type="text">Item <span>⇅</span></button></th>
+                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="2" data-type="number">Stock <span>⇅</span></button></th>
+                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="3" data-type="text">Unit <span>⇅</span></button></th>
+                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="4" data-type="text">Status <span>⇅</span></button></th>
+                    </tr>
+                </thead>
+                <tbody id="current-stock-body">
+                    <?php
+                    $allItems = [];
 
-                        $expirationStatus = 'No Expiration';
-                        $expirationClass = 'no-expiration';
+                    foreach ($ingredients as $item) {
+                        $allItems[] = [
+                            'type' => 'Ingredient',
+                            'id' => (int)$item['id'],
+                            'name' => $item['name'],
+                            'stock' => (float)$item['stock_qty'],
+                            'unit' => $item['unit'],
+                            'threshold' => (float)$item['low_stock_threshold']
+                        ];
+                    }
 
-                        if (!empty($expiration)) {
-                            try {
-                                $expiryDate = new DateTimeImmutable((string)$expiration);
-                                $daysRemaining = (int)$today->diff($expiryDate)->format('%r%a');
+                    foreach ($products as $item) {
+                        $allItems[] = [
+                            'type' => 'Product',
+                            'id' => (int)$item['id'],
+                            'name' => $item['name'],
+                            'stock' => (float)$item['stock_qty'],
+                            'unit' => 'pcs',
+                            'threshold' => 10
+                        ];
+                    }
 
-                                if ($daysRemaining < 0) {
-                                    $expirationStatus = 'Expired';
-                                    $expirationClass = 'expired';
-                                } elseif ($daysRemaining <= 7) {
-                                    $expirationStatus = 'Expiring Soon';
-                                    $expirationClass = 'expiring-soon';
-                                } else {
-                                    $expirationStatus = 'Valid';
-                                    $expirationClass = 'valid';
-                                }
-                            } catch (Exception $e) {
-                                $expirationStatus = 'Invalid Date';
-                                $expirationClass = 'invalid-date';
+                    foreach ($allItems as $item):
+                        $key = $item['type'] . '-' . $item['id'];
+                    ?>
+                        <tr class="stock-row" data-key="<?= htmlspecialchars($key) ?>">
+                            <td><?= htmlspecialchars($item['type']) ?></td>
+                            <td><?= htmlspecialchars($item['name']) ?></td>
+                            <td><?= number_format($item['stock'], 2) ?></td>
+                            <td><?= htmlspecialchars($item['unit']) ?></td>
+                            <?php
+                            if ($item['stock'] <= 0) {
+                                $stockStatus = 'Out of Stock';
+                                $statusClass = 'out-of-stock';
+                            } elseif ($item['stock'] <= $item['threshold']) {
+                                $stockStatus = 'Low Stock';
+                                $statusClass = 'low-stock';
+                            } else {
+                                $stockStatus = 'In Stock';
+                                $statusClass = 'in-stock';
                             }
-                        }
-                        ?>
+                            ?>
 
-                        <td>
-                            <span class="expiration-status <?= $expirationClass ?>">
-                                <?= $expirationStatus ?>
-                            </span>
-                        </td>
-                        <td><?= htmlspecialchars((string)($batch['supplier'] ?? 'N/A')) ?></td>
+                            <td>
+                                <div class="stock-status-wrapper">
+                                    <span class="stock-status <?= $statusClass ?>">
+                                        <?= $stockStatus ?>
+                                    </span>
+                                    <span class="stock-expand-arrow" aria-hidden="true"></span>
+                                </div>
+                            </td>
                         </tr>
-                        <?php endforeach; ?>
-            </tbody>
-            <tbody id="batch-no-results" hidden>
-                <tr>
-                    <td colspan="8" class="no-results">No matching batches found.</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <div class="inventory-pagination" data-table="batch-history-body"></div>
 
-    <div class="inventory-heading">
-        <h2>Stock Movement History</h2>
-        <button type="button" class="export-csv-btn" data-table="movement-history-body" data-filename="stock_movements.csv">Export CSV</button>
-    </div>
+                        <tr class="stock-details" data-parent="<?= htmlspecialchars($key) ?>" hidden>
+                            <td colspan="5">
+                                <div class="batch-details">
+                                    <strong>Stock Batches</strong>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Batch</th>
+                                                <th>Received</th>
+                                                <th>Remaining</th>
+                                                <th>Expiration</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php
+                                            $matchingBatches = array_filter(
+                                                $batches,
+                                                fn($batch) =>
+                                                    $batch['item_type'] === $item['type'] &&
+                                                    (int)$batch['item_id'] === $item['id']
+                                            );
 
-    <div class="inventory-filters">
-        <input type="search" id="movement-search" placeholder="Search movements...">
+                                            foreach ($matchingBatches as $batch):
+                                            ?>
+                                                <tr>
+                                                    <td>#<?= (int)$batch['id'] ?></td>
+                                                    <td><?= htmlspecialchars((string)$batch['received_date']) ?></td>
+                                                    <td><?= number_format((float)$batch['quantity'], 2) ?></td>
+                                                    <td><?= htmlspecialchars((string)($batch['expiration_date'] ?? 'N/A')) ?></td>
+                                                </tr>
+                                            <?php endforeach; ?>
 
-        <select id="movement-type-filter">
-            <option value="">All Item Types</option>
-            <option value="Product">Product</option>
-            <option value="Ingredient">Ingredient</option>
-        </select>
+                                            <?php if (!$matchingBatches): ?>
+                                                <tr>
+                                                    <td colspan="4">No batch records available.</td>
+                                                </tr>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+                <tbody id="stock-no-results" hidden>
+                    <tr>
+                        <td colspan="5" class="no-results">No matching items found.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
-        <select id="movement-action-filter">
-            <option value="">All Movements</option>
-            <option value="Stock In">Stock In</option>
-            <option value="Sale">Sale</option>
-            <option value="Adjustment">Adjustment</option>
-            <option value="Cancellation">Cancellation</option>
-            <option value="Expired">Expired</option>
-            <option value="Damaged">Damaged</option>
-        </select>
+        <div class="inventory-pagination" data-table="current-stock-body"></div>
+    </section>
 
-        <input type="date" id="movement-date-from" aria-label="Start date">
-        <input type="date" id="movement-date-to" aria-label="End date">
+    <section id="batch-history-section" class="inventory-section" hidden>
+        <div class="inventory-heading">
+            <h2>Batch History</h2>
+            <button type="button" class="export-csv-btn" data-table="batch-history-body" data-filename="batch_history.csv">Export CSV</button>
+        </div>
 
-        <button type="button" id="clear-movement-filters">Clear</button>
-    </div>
+        <div class="inventory-filters">
+            <input type="search" id="batch-search" placeholder="Search batches...">
+            <select id="batch-type-filter">
+                <option value="">All Types</option>
+                <option value="Product">Product</option>
+                <option value="Ingredient">Ingredient</option>
+            </select>
+            <select id="batch-expiration-filter">
+                <option value="">All Expiration Statuses</option>
+                <option value="valid">Valid</option>
+                <option value="expiring-soon">Expiring Soon</option>
+                <option value="expired">Expired</option>
+                <option value="no-expiration">No Expiration</option>
+                <option value="invalid-date">Invalid Date</option>
+            </select>
+            <button type="button" id="clear-batch-filters">Clear</button>
+        </div>
 
-    <div class="inventory-table">
-        <table>
+        <div class="inventory-table">
+            <table>
             <thead>
                 <tr>
-                    <th>Type</th>
-                    <th>Item</th>
-                    <th>Movement</th>
-                    <th>Quantity</th>
-                    <th>Batch</th>
-                    <th>User</th>
-                    <th>Date</th>
-                    <th>Remarks</th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="0" data-type="text">Type <span>⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="1" data-type="text">Item <span>⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="2" data-type="number">Remaining <span>⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="3" data-type="number">Cost/Unit <span>⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="4" data-type="date">Received <span>⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="5" data-type="date">Expiration <span>⇅</span></button></th>
+                    <th>Status</th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="7" data-type="text">Supplier <span>⇅</span></button></th>
                 </tr>
             </thead>
-            <tbody id="movement-history-body">
-                <?php foreach ($movements as $movement): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($movement['item_type']) ?></td>
-                        <td><?= htmlspecialchars($movement['item_name'] ?? 'Unknown') ?></td>
-                        <td>
-                            <span class="movement-badge <?= strtolower(str_replace(' ', '-', $movement['movement_type'])) ?>">
-                                <?= htmlspecialchars($movement['movement_type']) ?>
-                            </span>
-                        </td>
-                        <td><?= number_format((float)$movement['quantity'], 2) ?></td>
-                        <td><?= $movement['batch_id'] !== null ? '#' . (int)$movement['batch_id'] : 'N/A' ?></td>
-                        <td><?= htmlspecialchars($movement['username'] ?? 'System') ?></td>
-                        <td data-date="<?= htmlspecialchars(substr((string)$movement['created_at'], 0, 10)) ?>">
-                            <?= htmlspecialchars((string)$movement['created_at']) ?>
-                        </td>
-                        <td><?= htmlspecialchars($movement['remarks'] ?? '') ?></td>
-                    </tr>
-                <?php endforeach; ?>
+                <tbody id="batch-history-body">
+                    <?php foreach ($batches as $batch): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($batch['item_type']) ?></td>
+                            <td><?= htmlspecialchars($batch['item_name']) ?></td>
+                            <td><?= number_format((float)$batch['quantity'], 2) ?></td>
+                            <td>₱<?= number_format((float)$batch['cost_per_unit'], 2) ?></td>
+                            <td><?= htmlspecialchars((string)$batch['received_date']) ?></td>
+                            <td><?= htmlspecialchars((string)($batch['expiration_date'] ?? 'N/A')) ?></td>
+                            <?php
+                            $expiration = $batch['expiration_date'] ?? null;
+                            $today = new DateTimeImmutable('today');
 
-            </tbody>
-            <tbody id="movement-no-results" hidden>
-                <tr>
-                    <td colspan="8" class="no-results">No matching stock movements found.</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <div class="inventory-pagination" data-table="movement-history-body"></div>
+                            $expirationStatus = 'No Expiration';
+                            $expirationClass = 'no-expiration';
+
+                            if (!empty($expiration)) {
+                                try {
+                                    $expiryDate = new DateTimeImmutable((string)$expiration);
+                                    $daysRemaining = (int)$today->diff($expiryDate)->format('%r%a');
+
+                                    if ($daysRemaining < 0) {
+                                        $expirationStatus = 'Expired';
+                                        $expirationClass = 'expired';
+                                    } elseif ($daysRemaining <= 7) {
+                                        $expirationStatus = 'Expiring Soon';
+                                        $expirationClass = 'expiring-soon';
+                                    } else {
+                                        $expirationStatus = 'Valid';
+                                        $expirationClass = 'valid';
+                                    }
+                                } catch (Exception $e) {
+                                    $expirationStatus = 'Invalid Date';
+                                    $expirationClass = 'invalid-date';
+                                }
+                            }
+                            ?>
+
+                            <td>
+                                <span class="expiration-status <?= $expirationClass ?>">
+                                    <?= $expirationStatus ?>
+                                </span>
+                            </td>
+                            <td><?= htmlspecialchars((string)($batch['supplier'] ?? 'N/A')) ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                </tbody>
+                <tbody id="batch-no-results" hidden>
+                    <tr>
+                        <td colspan="8" class="no-results">No matching batches found.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="inventory-pagination" data-table="batch-history-body"></div>
+    </section>
+
+    <section id="stock-movement-section" class="inventory-section" hidden>
+        <div class="inventory-heading">
+            <h2>Stock Movement History</h2>
+            <button type="button" class="export-csv-btn" data-table="movement-history-body" data-filename="stock_movements.csv">Export CSV</button>
+        </div>
+
+        <div class="inventory-filters">
+            <input type="search" id="movement-search" placeholder="Search movements...">
+
+            <select id="movement-type-filter">
+                <option value="">All Item Types</option>
+                <option value="Product">Product</option>
+                <option value="Ingredient">Ingredient</option>
+            </select>
+
+            <select id="movement-action-filter">
+                <option value="">All Movements</option>
+                <option value="Stock In">Stock In</option>
+                <option value="Sale">Sale</option>
+                <option value="Adjustment">Adjustment</option>
+                <option value="Cancellation">Cancellation</option>
+                <option value="Expired">Expired</option>
+                <option value="Damaged">Damaged</option>
+            </select>
+
+            <input type="date" id="movement-date-from" aria-label="Start date">
+            <input type="date" id="movement-date-to" aria-label="End date">
+
+            <button type="button" id="clear-movement-filters">Clear</button>
+        </div>
+
+        <div class="inventory-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Item</th>
+                        <th>Movement</th>
+                        <th>Quantity</th>
+                        <th>Batch</th>
+                        <th>User</th>
+                        <th>Date</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody id="movement-history-body">
+                    <?php foreach ($movements as $movement): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($movement['item_type']) ?></td>
+                            <td><?= htmlspecialchars($movement['item_name'] ?? 'Unknown') ?></td>
+                            <td>
+                                <span class="movement-badge <?= strtolower(str_replace(' ', '-', $movement['movement_type'])) ?>">
+                                    <?= htmlspecialchars($movement['movement_type']) ?>
+                                </span>
+                            </td>
+                            <td><?= number_format((float)$movement['quantity'], 2) ?></td>
+                            <td><?= $movement['batch_id'] !== null ? '#' . (int)$movement['batch_id'] : 'N/A' ?></td>
+                            <td><?= htmlspecialchars($movement['username'] ?? 'System') ?></td>
+                            <td data-date="<?= htmlspecialchars(substr((string)$movement['created_at'], 0, 10)) ?>">
+                                <?= htmlspecialchars((string)$movement['created_at']) ?>
+                            </td>
+                            <td><?= htmlspecialchars($movement['remarks'] ?? '') ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+
+                </tbody>
+                <tbody id="movement-no-results" hidden>
+                    <tr>
+                        <td colspan="8" class="no-results">No matching stock movements found.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="inventory-pagination" data-table="movement-history-body"></div>
+    </section>
+
 </main>
 
 <dialog id="stock-dialog">

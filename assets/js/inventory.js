@@ -581,3 +581,25 @@ function paginateInventory(tableId) {
 ["current-stock-body", "batch-history-body", "movement-history-body"].forEach(
     paginateInventory
 );
+
+document.querySelectorAll(".inventory-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+        const target = tab.dataset.target;
+
+        document.querySelectorAll(".inventory-tab").forEach(button => {
+            button.classList.toggle("active", button === tab);
+        });
+
+        document.querySelectorAll(".inventory-section").forEach(section => {
+            section.hidden = section.id !== target;
+        });
+
+        const tableMap = {
+            "current-stock-section": "current-stock-body",
+            "batch-history-section": "batch-history-body",
+            "stock-movement-section": "movement-history-body"
+        };
+
+        paginateInventory(tableMap[target]);
+    });
+});

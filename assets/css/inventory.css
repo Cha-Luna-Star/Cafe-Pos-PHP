@@ -493,3 +493,47 @@ th {
 #adjust-movement-container[hidden] {
     display: none;
 }
+
+.inventory-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 25px;
+}
+.inventory-tab {
+    background: transparent;
+    color: #666;
+    border: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    padding: 14px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.inventory-tab:hover {
+    background: #f3f4f6;
+    color: #2563eb;
+}
+.inventory-tab.active {
+    background: transparent;
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+}
+.inventory-section[hidden] {
+    display: none;
+}
+
+.inventory-section {
+    display: block;
+    width: 100%;
+}
+.inventory-section[hidden] {
+    display: none !important;
+}
+.inventory-section .inventory-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+}
