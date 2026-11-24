@@ -44,13 +44,15 @@ button:disabled {
     margin-bottom: 35px;
 }
 #current-stock-section .inventory-table,
-#batch-history-section .inventory-table {
+#batch-history-section .inventory-table,
+#reconciliation-section .inventory-table {
     height: min(612px, 72dvh);
     overflow: auto;
     scrollbar-gutter: stable;
 }
 #current-stock-section .inventory-table > table,
-#batch-history-section .inventory-table > table {
+#batch-history-section .inventory-table > table,
+#reconciliation-section .inventory-table > table {
     table-layout: fixed;
 }
 #current-stock-section .inventory-table > table {
@@ -90,19 +92,30 @@ button:disabled {
     width: 13%;
 }
 #current-stock-section .inventory-table > table > thead th,
-#batch-history-section .inventory-table > table > thead th {
+#batch-history-section .inventory-table > table > thead th,
+#reconciliation-section .inventory-table > table > thead th {
     position: sticky;
     top: 0;
     z-index: 1;
     height: 52px;
 }
 #current-stock-body > .stock-row > td,
-#batch-history-body > tr > td {
+#batch-history-body > tr > td,
+#reconciliation-body > tr > td {
     height: 56px;
     padding-block: 10px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+#reconciliation-section .inventory-table > table {
+    min-width: 860px;
+}
+#reconciliation-section .inventory-table > table > thead th:nth-child(2) {
+    width: 24%;
+}
+#reconciliation-section .inventory-table > table > thead th:not(:nth-child(2)) {
+    width: 12.666%;
 }
 #current-stock-body .stock-status-wrapper {
     gap: 10px;
@@ -871,4 +884,33 @@ th {
 }
 .inventory-valuation p {
     margin: 6px 0 0;
+}
+
+#batch-history-section .inventory-table > table:has(th[data-csv-exclude]) {
+    min-width: 1500px;
+}
+#batch-history-section .inventory-table > table:has(th[data-csv-exclude]) > thead th:nth-child(2) {
+    width: 13%;
+}
+#batch-history-section .inventory-table > table:has(th[data-csv-exclude]) > thead th:nth-child(3),
+#batch-history-section .inventory-table > table:has(th[data-csv-exclude]) > thead th:nth-child(4) {
+    width: 8%;
+}
+#batch-history-section .inventory-table > table:has(th[data-csv-exclude]) > thead th:nth-child(7) {
+    width: 9%;
+}
+#batch-history-section .inventory-table > table > thead th:nth-child(10) {
+    width: 11%;
+}
+.batch-disposal-btn,
+#save-adjust-btn[data-disposal="true"]:not(:disabled) {
+    background: #dc2626;
+}
+.batch-disposal-btn:hover,
+#save-adjust-btn[data-disposal="true"]:hover:not(:disabled) {
+    background: #b91c1c;
+}
+.batch-disposal-btn {
+    padding: 6px 9px;
+    white-space: nowrap;
 }

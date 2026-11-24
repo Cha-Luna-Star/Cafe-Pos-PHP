@@ -382,9 +382,15 @@ if (adjustDialog && adjustForm) {
     const adjustAction = document.getElementById("adjust-action");
     const adjustMovement = document.getElementById("adjust-movement");
     const batchOptions = Array.from(adjustBatch.options).slice(1);
+    const adjustTitle = document.getElementById("adjust-dialog-title");
+    let openedFromBatchHistory = false;
 
     function updateAdjustBatches() {
         const isRemove = adjustAction.value === "Remove";
+        const disposal = openedFromBatchHistory && isRemove && adjustMovement.value === "Expired";
+        adjustTitle.textContent = disposal ? "Record Disposal" : "Adjust Stock";
+        adjustSave.textContent = disposal ? "Record Disposal" : "Save Adjustment";
+        adjustSave.dataset.disposal = String(disposal);
 
         batchContainer.hidden = !isRemove;
         document.getElementById("adjust-movement-container").hidden = !isRemove;
@@ -455,12 +461,34 @@ if (adjustDialog && adjustForm) {
         updateAdjustBatches();
     });
 
-    document.getElementById("adjust-stock-btn").addEventListener("click", () => {
+    function openAdjustment(batch = null) {
         adjustForm.reset();
         adjustMessage.textContent = "";
+        openedFromBatchHistory = batch !== null;
+
+        if (batch) {
+            adjustType.value = batch.type;
+            adjustAction.value = "Remove";
+            adjustMovement.value = "Expired";
+        }
         updateAdjustItems();
+        if (batch) {
+            adjustItem.value = batch.itemId;
+        }
         updateAdjustBatches();
+        if (batch) {
+            adjustBatch.value = batch.batchId;
+            adjustBatch.dispatchEvent(new Event("change"));
+        }
         adjustDialog.showModal();
+        if (batch) {
+            adjustQuantity.focus();
+        }
+    }
+
+    document.getElementById("adjust-stock-btn").addEventListener("click", () => openAdjustment());
+    document.querySelectorAll(".batch-disposal-btn").forEach(button => {
+        button.addEventListener("click", () => openAdjustment(button.dataset));
     });
 
     document.getElementById("cancel-adjust-btn").addEventListener("click", () => {
@@ -469,6 +497,7 @@ if (adjustDialog && adjustForm) {
 
     adjustForm.addEventListener("submit", async event => {
         event.preventDefault();
+        if (adjustSave.disabled) return;
 
         adjustSave.disabled = true;
         adjustMessage.textContent = "";
@@ -501,6 +530,15 @@ if (adjustDialog && adjustForm) {
                 throw new Error(result.message || "Unable to adjust stock.");
             }
 
+            if (openedFromBatchHistory) {
+                const batchHistoryFilters = {
+                    search: document.getElementById("batch-search").value,
+                    type: document.getElementById("batch-type-filter").value,
+                    expiration: document.getElementById("batch-expiration-filter").value,
+                    remaining: document.getElementById("batch-remaining-only").checked
+                };
+                history.replaceState({ ...history.state, batchHistoryFilters }, "");
+            }
             window.location.reload();
         } catch (error) {
             adjustMessage.textContent = error.message;
@@ -525,7 +563,7 @@ document.querySelectorAll(".export-csv-btn").forEach(button => {
         const tbody = document.getElementById(tableId);
         const table = tbody.closest("table");
 
-        const headers = Array.from(table.querySelectorAll("thead > tr:first-child > th"))
+        const headers = Array.from(table.querySelectorAll("thead > tr:first-child > th:not([data-csv-exclude])"))
             .map(th => quoteInventoryCsv((th.querySelector(".sort-label") ?? th).textContent.trim()));
 
         const rows = Array.from(tbody.querySelectorAll(":scope > tr"))
@@ -533,9 +571,10 @@ document.querySelectorAll(".export-csv-btn").forEach(button => {
                 row.dataset.filterHidden !== "true" &&
                 !row.classList.contains("stock-details")
             )
-            .map(row => Array.from(row.cells, cell =>
-                quoteInventoryCsv(inventoryCellValue(cell), cell.dataset.number !== undefined)
-            ).join(","));
+            .map(row => Array.from(row.cells)
+                .filter(cell => !cell.hasAttribute("data-csv-exclude"))
+                .map(cell => quoteInventoryCsv(inventoryCellValue(cell), cell.dataset.number !== undefined))
+                .join(","));
 
         const csvRows = [headers.join(","), ...rows];
 
@@ -564,7 +603,7 @@ function paginateInventory(tableId) {
 
     if (!tbody || !container) return;
 
-    if (tableId === "current-stock-body" || tableId === "batch-history-body") {
+    if (["current-stock-body", "batch-history-body", "reconciliation-body"].includes(tableId)) {
         tbody.closest(".inventory-table")?.scrollTo({ top: 0 });
     }
 
@@ -904,14 +943,26 @@ document.querySelectorAll(".restore-ingredient-btn").forEach(button => {
 });
 
 paginateInventory("archived-ingredients-body");
-paginateInventory("reconciliation-body");
+
+const reconciliationFilterIds = [
+    "reconciliation-search", "reconciliation-type-filter", "reconciliation-status-filter", "reconciliation-sort"
+];
 
 function filterReconciliation() {
     const search = document.getElementById("reconciliation-search").value.toLowerCase().trim();
     const type = document.getElementById("reconciliation-type-filter").value;
     const status = document.getElementById("reconciliation-status-filter").value;
 
-    const rows = document.querySelectorAll("#reconciliation-body tr");
+    const body = document.getElementById("reconciliation-body");
+    const largestFirst = document.getElementById("reconciliation-sort").value === "difference";
+    const rows = Array.from(body.rows);
+    rows.sort((a, b) => {
+        const difference = largestFirst
+            ? Math.abs(Number(b.cells[4].dataset.difference)) - Math.abs(Number(a.cells[4].dataset.difference))
+            : 0;
+        return difference || a.cells[1].textContent.trim().localeCompare(b.cells[1].textContent.trim());
+    });
+    body.replaceChildren(...rows);
     let matches = 0;
 
     rows.forEach(row => {
@@ -945,14 +996,22 @@ if (document.getElementById("reconciliation-search")) {
     document.getElementById("reconciliation-status-filter")
         .addEventListener("change", filterReconciliation);
 
+    document.getElementById("reconciliation-sort")
+        .addEventListener("change", filterReconciliation);
+
     document.getElementById("clear-reconciliation-filters")
         .addEventListener("click", () => {
             document.getElementById("reconciliation-search").value = "";
             document.getElementById("reconciliation-type-filter").value = "";
             document.getElementById("reconciliation-status-filter").value = "";
+            document.getElementById("reconciliation-sort").value = "difference";
 
             filterReconciliation();
         });
+}
+
+if (document.getElementById("reconciliation-sort")) {
+    filterReconciliation();
 }
 
 const reconcileDialog = document.getElementById("reconcile-dialog");
@@ -1022,8 +1081,7 @@ if (reconcileDialog && reconcileForm) {
             message.textContent = result.message;
 
             if (response.ok && result.success) {
-                const filterIds = ["reconciliation-search", "reconciliation-type-filter", "reconciliation-status-filter"];
-                const filters = filterIds.map(id => document.getElementById(id).value);
+                const filters = reconciliationFilterIds.map(id => document.getElementById(id).value);
                 history.replaceState({ ...history.state, reconciliationFilters: filters }, "");
                 window.location.reload();
                 return;
@@ -1036,12 +1094,24 @@ if (reconcileDialog && reconcileForm) {
         cancelButton.disabled = false;
     });
 }
+if (history.state?.batchHistoryFilters) {
+    const { batchHistoryFilters, ...state } = history.state;
+    history.replaceState(state, "");
+    document.getElementById("batch-search").value = batchHistoryFilters.search;
+    document.getElementById("batch-type-filter").value = batchHistoryFilters.type;
+    document.getElementById("batch-expiration-filter").value = batchHistoryFilters.expiration;
+    document.getElementById("batch-remaining-only").checked = batchHistoryFilters.remaining;
+    document.querySelector('.inventory-tab[data-target="batch-history-section"]').click();
+    filterBatchHistory();
+}
 if (history.state?.reconciliationFilters) {
     const { reconciliationFilters, ...state } = history.state;
     history.replaceState(state, "");
-    ["reconciliation-search", "reconciliation-type-filter", "reconciliation-status-filter"]
+    reconciliationFilterIds
         .forEach((id, index) => {
-            document.getElementById(id).value = reconciliationFilters[index];
+            if (reconciliationFilters[index] !== undefined) {
+                document.getElementById(id).value = reconciliationFilters[index];
+            }
         });
     document.querySelector('.inventory-tab[data-target="reconciliation-section"]').click();
     filterReconciliation();

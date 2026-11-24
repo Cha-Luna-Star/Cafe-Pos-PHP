@@ -362,6 +362,9 @@ require_once __DIR__ . '/includes/inventory_dates.php';
                     <th>Status</th>
                     <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="7" data-type="text"><span class="sort-label">Supplier</span> <span class="sort-indicator" aria-hidden="true">A–Z</span></button></th>
                     <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="8" data-type="number"><span class="sort-label">Remaining Value</span> <span class="sort-indicator" aria-hidden="true">⇅</span></button></th>
+                    <?php if ($canManageInventory): ?>
+                        <th data-csv-exclude>Action</th>
+                    <?php endif; ?>
                 </tr>
             </thead>
                 <tbody id="batch-history-body">
@@ -380,12 +383,25 @@ require_once __DIR__ . '/includes/inventory_dates.php';
                             </td>
                             <td title="<?= htmlspecialchars($batch['supplier'] ?? 'N/A', ENT_QUOTES) ?>"><?= htmlspecialchars($batch['supplier'] ?? 'N/A') ?></td>
                             <td><?= $batch['remaining_value'] === null ? 'Unavailable' : $formatBatchValue($batch['remaining_value']) ?></td>
+                            <?php if ($canManageInventory): ?>
+                                <td data-csv-exclude>
+                                    <?php if ($batch['expiration_status'] === 'expired' && (float)$batch['quantity'] > 0 &&
+                                              isset($batch['is_archived']) && (int)$batch['is_archived'] === 0): ?>
+                                        <button type="button" class="batch-disposal-btn"
+                                            data-type="<?= htmlspecialchars($batch['item_type'], ENT_QUOTES) ?>"
+                                            data-item-id="<?= (int)$batch['item_id'] ?>"
+                                            data-batch-id="<?= (int)$batch['id'] ?>">
+                                            Record Disposal
+                                        </button>
+                                    <?php endif; ?>
+                                </td>
+                            <?php endif; ?>
                             </tr>
                             <?php endforeach; ?>
                 </tbody>
                 <tbody id="batch-no-results" hidden>
                     <tr>
-                        <td colspan="9" class="no-results">No matching batches found.</td>
+                        <td colspan="<?= $canManageInventory ? 10 : 9 ?>" class="no-results">No matching batches found.</td>
                     </tr>
                 </tbody>
             </table>
@@ -537,65 +553,72 @@ require_once __DIR__ . '/includes/inventory_dates.php';
                 <option value="Mismatch">Mismatch</option>
             </select>
 
+            <select id="reconciliation-sort" aria-label="Sort reconciliation items">
+                <option value="difference">Largest Difference First</option>
+                <option value="name">Item A–Z</option>
+            </select>
+
             <button type="button" id="clear-reconciliation-filters">
                 Clear Filters
             </button>
         </div>
 
-        <table class="inventory-table">
-            <thead>
-                <tr>
-                    <th>Type</th>
-                    <th>Item</th>
-                    <th>Recorded Stock</th>
-                    <th>Batch Stock</th>
-                    <th>Difference</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-
-            <tbody id="reconciliation-body">
-                <?php foreach ($reconciliation as $item): ?>
-                    <?php
-                    $difference = (float)$item['difference'];
-                    $matched = abs($difference) < 0.001;
-                    ?>
-
+        <div class="inventory-table">
+            <table>
+                <thead>
                     <tr>
-                        <td><?= htmlspecialchars($item['item_type']) ?></td>
-                        <td><?= htmlspecialchars($item['name']) ?></td>
-                        <td><?= round((float)$item['recorded_stock'], 3) ?></td>
-                        <td><?= round((float)$item['batch_stock'], 3) ?></td>
-                        <td><?= round($difference, 3) ?></td>
-                        <td>
-                            <span class="reconciliation-status <?= $matched ? 'matched' : 'mismatch' ?>">
-                                <?= $matched ? 'Matched' : 'Mismatch' ?>
-                            </span>
-                        </td>
-                        <td>
-                            <?php if (!$matched && $canManageInventory): ?>
-                                <button type="button" class="reconcile-btn"
-                                    data-id="<?= $item['id'] ?>"
-                                    data-type="<?= htmlspecialchars($item['item_type']) ?>"
-                                    data-name="<?= htmlspecialchars($item['name'], ENT_QUOTES) ?>"
-                                    data-recorded="<?= $item['recorded_stock'] ?>"
-                                    data-batch="<?= $item['batch_stock'] ?>">
-                                    Resolve
-                                </button>
-                            <?php elseif ($matched): ?>
-                                <span>Matched</span>
-                            <?php endif; ?>
-                        </td>
+                        <th>Type</th>
+                        <th>Item</th>
+                        <th>Recorded Stock</th>
+                        <th>Batch Stock</th>
+                        <th>Difference</th>
+                        <th>Status</th>
+                        <th>Action</th>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-            <tbody id="reconciliation-no-results" hidden>
-                <tr>
-                    <td colspan="7">No matching items found.</td>
-                </tr>
-            </tbody>
-        </table>
+                </thead>
+
+                <tbody id="reconciliation-body">
+                    <?php foreach ($reconciliation as $item): ?>
+                        <?php
+                        $difference = (float)$item['difference'];
+                        $matched = abs($difference) < 0.001;
+                        ?>
+
+                        <tr>
+                            <td><?= htmlspecialchars($item['item_type']) ?></td>
+                            <td><?= htmlspecialchars($item['name']) ?></td>
+                            <td><?= round((float)$item['recorded_stock'], 3) ?></td>
+                            <td><?= round((float)$item['batch_stock'], 3) ?></td>
+                            <td data-difference="<?= $difference ?>"><?= round($difference, 3) ?></td>
+                            <td>
+                                <span class="reconciliation-status <?= $matched ? 'matched' : 'mismatch' ?>">
+                                    <?= $matched ? 'Matched' : 'Mismatch' ?>
+                                </span>
+                            </td>
+                            <td>
+                                <?php if (!$matched && $canManageInventory): ?>
+                                    <button type="button" class="reconcile-btn"
+                                        data-id="<?= $item['id'] ?>"
+                                        data-type="<?= htmlspecialchars($item['item_type']) ?>"
+                                        data-name="<?= htmlspecialchars($item['name'], ENT_QUOTES) ?>"
+                                        data-recorded="<?= $item['recorded_stock'] ?>"
+                                        data-batch="<?= $item['batch_stock'] ?>">
+                                        Resolve
+                                    </button>
+                                <?php elseif ($matched): ?>
+                                    <span>Matched</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+                <tbody id="reconciliation-no-results" hidden>
+                    <tr>
+                        <td colspan="7">No matching items found.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
         <div class="inventory-pagination"
             data-table="reconciliation-body"></div>
@@ -715,7 +738,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
 <?php if ($canManageInventory): ?>
 <dialog id="adjust-stock-dialog">
     <form id="adjust-stock-form">
-        <h2>Stock Adjustment</h2>
+        <h2 id="adjust-dialog-title">Stock Adjustment</h2>
 
         <label for="adjust-item-type">Item Type</label>
         <select id="adjust-item-type" required>
