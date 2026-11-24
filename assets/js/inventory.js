@@ -681,6 +681,7 @@ if (ingredientDialog && ingredientForm) {
                 },
                 body: JSON.stringify({
                     csrf_token: csrfToken,
+                    id: Number(document.getElementById("ingredient-id").value || 0),
                     name: document.getElementById("ingredient-name").value.trim(),
                     unit: document.getElementById("ingredient-unit").value,
                     threshold: Number(document.getElementById("ingredient-threshold").value),
@@ -728,5 +729,45 @@ document.querySelectorAll(".edit-ingredient-btn").forEach(button => {
         document.getElementById("ingredient-message").textContent = "";
 
         ingredientDialog.showModal();
+    });
+});
+
+document.querySelectorAll(".delete-ingredient-btn").forEach(button => {
+    button.addEventListener("click", async event => {
+        event.stopPropagation();
+
+        const confirmed = confirm(
+            `Delete ${button.dataset.name}? This cannot be undone.`
+        );
+
+        if (!confirmed) return;
+
+        button.disabled = true;
+
+        try {
+            const response = await fetch("controllers/delete_ingredient.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    csrf_token: csrfToken,
+                    id: Number(button.dataset.id)
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Unable to delete ingredient.");
+            }
+
+            window.location.reload();
+
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            button.disabled = false;
+        }
     });
 });

@@ -32,6 +32,11 @@ try {
         throw new RuntimeException('Invalid security token.');
     }
 
+    $id = filter_var($data['id'] ?? 0, FILTER_VALIDATE_INT);
+
+    if ($id === false || $id < 0) {
+        throw new RuntimeException('Invalid ingredient ID.');
+    }
     $name = trim((string)($data['name'] ?? ''));
     $unit = $data['unit'] ?? '';
     $threshold = $data['threshold'] ?? null;
@@ -41,7 +46,7 @@ try {
         throw new RuntimeException('Invalid ingredient name.');
     }
 
-    if (!in_array($unit, ['g', 'kg', 'ml', 'L', 'pcs'], true)) {
+    if ($id === 0 && !in_array($unit, ['g', 'kg', 'ml', 'L', 'pcs'], true)) {
         throw new RuntimeException('Invalid unit.');
     }
 
@@ -61,10 +66,10 @@ try {
     $stmt = $connection->prepare("
         SELECT id
         FROM dbo.ingredients WITH (UPDLOCK, HOLDLOCK)
-        WHERE LOWER(name) = LOWER(?)
+        WHERE LOWER(name) = LOWER(?) AND id <> ?
     ");
 
-    $stmt->execute([$name]);
+    $stmt->execute([$name, $id]);
     $existing = $stmt->fetchColumn();
     $stmt->closeCursor();
 
@@ -72,31 +77,66 @@ try {
         throw new RuntimeException('Ingredient already exists.');
     }
 
-    $stmt = $connection->prepare("
-        INSERT INTO dbo.ingredients
-        (
-            name,
-            unit,
-            stock_qty,
-            low_stock_threshold,
-            cost_per_unit,
-            initial_quantity
-        )
-        VALUES (?, ?, 0, ?, ?, 0)
-    ");
+    if ($id > 0) {
+        $stmt = $connection->prepare("
+            SELECT id
+            FROM dbo.ingredients WITH (UPDLOCK, HOLDLOCK)
+            WHERE id = ?
+        ");
 
-    $stmt->execute([
-        $name,
-        $unit,
-        $threshold,
-        $cost
-    ]);
+        $stmt->execute([$id]);
+        $ingredientExists = $stmt->fetchColumn();
+        $stmt->closeCursor();
+
+        if ($ingredientExists === false) {
+            throw new RuntimeException('Ingredient not found.');
+        }
+
+        $stmt = $connection->prepare("
+            UPDATE dbo.ingredients
+            SET name = ?,
+                low_stock_threshold = ?,
+                cost_per_unit = ?
+            WHERE id = ?
+        ");
+
+        $stmt->execute([
+            $name,
+            $threshold,
+            $cost,
+            $id
+        ]);
+
+        $message = 'Ingredient updated successfully.';
+    } else {
+        $stmt = $connection->prepare("
+            INSERT INTO dbo.ingredients
+            (
+                name,
+                unit,
+                stock_qty,
+                low_stock_threshold,
+                cost_per_unit,
+                initial_quantity
+            )
+            VALUES (?, ?, 0, ?, ?, 0)
+        ");
+
+        $stmt->execute([
+            $name,
+            $unit,
+            $threshold,
+            $cost
+        ]);
+
+        $message = 'Ingredient added successfully.';
+    }
 
     $connection->commit();
 
     echo json_encode([
         'success' => true,
-        'message' => 'Ingredient added successfully.'
+        'message' => $message
     ]);
 
 } catch (Throwable $e) {

@@ -613,3 +613,20 @@ th {
     color: #666;
     cursor: not-allowed;
 }
+
+.delete-ingredient-btn {
+    background: #dc2626;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+}
+.delete-ingredient-btn:hover {
+    background: #b91c1c;
+}
+.delete-ingredient-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

@@ -223,6 +223,11 @@ require_once __DIR__ . '/controllers/inventory.php';
                                             data-cost="<?= $item['cost'] ?>">
                                             Edit
                                         </button>
+                                        <button type="button" class="delete-ingredient-btn"
+                                            data-id="<?= $item['id'] ?>"
+                                            data-name="<?= htmlspecialchars($item['name'], ENT_QUOTES) ?>">
+                                            Delete
+                                        </button>
                                     <?php endif; ?>
                                     <span class="stock-expand-arrow" aria-hidden="true"></span>
                                 </div>
