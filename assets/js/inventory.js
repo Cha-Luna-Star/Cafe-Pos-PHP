@@ -598,7 +598,8 @@ document.querySelectorAll(".inventory-tab").forEach(tab => {
             "current-stock-section": "current-stock-body",
             "batch-history-section": "batch-history-body",
             "stock-movement-section": "movement-history-body",
-            "archived-ingredients-section": "archived-ingredients-body"
+            "archived-ingredients-section": "archived-ingredients-body",
+            "reconciliation-section": "reconciliation-body"
         };
 
         paginateInventory(tableMap[target]);
@@ -844,3 +845,53 @@ document.querySelectorAll(".restore-ingredient-btn").forEach(button => {
 });
 
 paginateInventory("archived-ingredients-body");
+paginateInventory("reconciliation-body");
+
+function filterReconciliation() {
+    const search = document.getElementById("reconciliation-search").value.toLowerCase().trim();
+    const type = document.getElementById("reconciliation-type-filter").value;
+    const status = document.getElementById("reconciliation-status-filter").value;
+
+    const rows = document.querySelectorAll("#reconciliation-body tr");
+    let matches = 0;
+
+    rows.forEach(row => {
+        const itemType = row.cells[0].textContent.trim();
+        const itemName = row.cells[1].textContent.toLowerCase();
+        const itemStatus = row.cells[5].textContent.trim();
+
+        const visible =
+            itemName.includes(search) &&
+            (!type || itemType === type) &&
+            (!status || itemStatus === status);
+
+        row.dataset.filterHidden = String(!visible);
+
+        if (visible) matches++;
+    });
+
+    document.getElementById("reconciliation-no-results").hidden = matches !== 0;
+
+    paginationState["reconciliation-body"] = { page: 1 };
+    paginateInventory("reconciliation-body");
+}
+
+if (document.getElementById("reconciliation-search")) {
+    document.getElementById("reconciliation-search")
+        .addEventListener("input", filterReconciliation);
+
+    document.getElementById("reconciliation-type-filter")
+        .addEventListener("change", filterReconciliation);
+
+    document.getElementById("reconciliation-status-filter")
+        .addEventListener("change", filterReconciliation);
+
+    document.getElementById("clear-reconciliation-filters")
+        .addEventListener("click", () => {
+            document.getElementById("reconciliation-search").value = "";
+            document.getElementById("reconciliation-type-filter").value = "";
+            document.getElementById("reconciliation-status-filter").value = "";
+
+            filterReconciliation();
+        });
+}

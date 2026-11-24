@@ -76,3 +76,44 @@ $movements = $connection->query("
         ON sm.user_id = u.id
     ORDER BY sm.created_at DESC, sm.id DESC
 ")->fetchAll(PDO::FETCH_ASSOC);
+
+$reconciliation = $connection->query("
+    SELECT
+        'Ingredient' AS item_type,
+        i.id,
+        i.name,
+        i.stock_qty AS recorded_stock,
+        COALESCE(b.batch_stock, 0) AS batch_stock,
+        i.stock_qty - COALESCE(b.batch_stock, 0) AS difference
+    FROM dbo.ingredients i
+    LEFT JOIN (
+        SELECT ingredient_id, SUM(quantity) AS batch_stock
+        FROM dbo.inventory_batches
+        GROUP BY ingredient_id
+    ) b ON i.id = b.ingredient_id
+    WHERE i.is_archived = 0
+
+    UNION ALL
+
+    SELECT
+        'Product' AS item_type,
+        m.id,
+        m.name,
+        m.stock_qty AS recorded_stock,
+        COALESCE(b.batch_stock, 0) AS batch_stock,
+        m.stock_qty - COALESCE(b.batch_stock, 0) AS difference
+    FROM dbo.menu_items m
+    LEFT JOIN (
+        SELECT menu_item_id, SUM(quantity) AS batch_stock
+        FROM dbo.product_batches
+        GROUP BY menu_item_id
+    ) b ON m.id = b.menu_item_id
+    WHERE m.is_archived = 0
+
+    ORDER BY name
+")->fetchAll(PDO::FETCH_ASSOC);
+
+$discrepancies = array_filter(
+    $reconciliation,
+    fn($item) => abs((float)$item['difference']) >= 0.001
+);

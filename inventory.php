@@ -122,6 +122,12 @@ require_once __DIR__ . '/controllers/inventory.php';
         </div>
     </section>
     <div class="inventory-tabs">
+        <?php if (in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)): ?>
+            <button type="button" class="inventory-tab"
+                data-target="reconciliation-section">
+                Reconciliation (<?= count($discrepancies) ?>)
+            </button>
+        <?php endif; ?>
         <button type="button" class="inventory-tab active" data-target="current-stock-section">Current Stock</button>
         <button type="button" class="inventory-tab" data-target="batch-history-section">Batch History</button>
         <button type="button" class="inventory-tab" data-target="stock-movement-section">Stock Movements</button>
@@ -513,6 +519,79 @@ require_once __DIR__ . '/controllers/inventory.php';
 
         <div class="inventory-pagination"
             data-table="archived-ingredients-body"></div>
+    </section>
+    <?php endif; ?>
+    <?php if (in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)): ?>
+    <section id="reconciliation-section" class="inventory-section" hidden>
+        <h2>Stock Reconciliation</h2>
+
+        <p class="reconciliation-description">
+            Compare recorded stock with remaining batch quantities.
+        </p>
+
+        <div class="reconciliation-filters">
+            <input type="search" id="reconciliation-search"
+                placeholder="Search item...">
+
+            <select id="reconciliation-type-filter">
+                <option value="">All Types</option>
+                <option value="Ingredient">Ingredient</option>
+                <option value="Product">Product</option>
+            </select>
+
+            <select id="reconciliation-status-filter">
+                <option value="">All Statuses</option>
+                <option value="Matched">Matched</option>
+                <option value="Mismatch">Mismatch</option>
+            </select>
+
+            <button type="button" id="clear-reconciliation-filters">
+                Clear Filters
+            </button>
+        </div>
+
+        <table class="inventory-table">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Item</th>
+                    <th>Recorded Stock</th>
+                    <th>Batch Stock</th>
+                    <th>Difference</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody id="reconciliation-body">
+                <?php foreach ($reconciliation as $item): ?>
+                    <?php
+                    $difference = (float)$item['difference'];
+                    $matched = abs($difference) < 0.001;
+                    ?>
+
+                    <tr>
+                        <td><?= htmlspecialchars($item['item_type']) ?></td>
+                        <td><?= htmlspecialchars($item['name']) ?></td>
+                        <td><?= round((float)$item['recorded_stock'], 3) ?></td>
+                        <td><?= round((float)$item['batch_stock'], 3) ?></td>
+                        <td><?= round($difference, 3) ?></td>
+                        <td>
+                            <span class="reconciliation-status <?= $matched ? 'matched' : 'mismatch' ?>">
+                                <?= $matched ? 'Matched' : 'Mismatch' ?>
+                            </span>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+            <tbody id="reconciliation-no-results" hidden>
+                <tr>
+                    <td colspan="6">No matching items found.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="inventory-pagination"
+            data-table="reconciliation-body"></div>
     </section>
     <?php endif; ?>
 </main>
