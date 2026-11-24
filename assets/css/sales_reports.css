@@ -1,0 +1,103 @@
+* {
+    box-sizing: border-box;
+}
+body {
+    margin: 0;
+    background: #f5f5f5;
+    color: #333;
+    font-family: Arial, sans-serif;
+}
+.report-header {
+    padding: 20px 30px;
+    background: white;
+    border-bottom: 1px solid #ddd;
+}
+.report-header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+.sales-report {
+    padding: clamp(14px, 3vw, 30px);
+}
+.report-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+}
+.report-filters label {
+    display: block;
+    margin-bottom: 6px;
+}
+.report-filters input,
+.report-filters button {
+    max-width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font: inherit;
+}
+.report-filters button {
+    background: #76543b;
+    border-color: #76543b;
+    color: white;
+    cursor: pointer;
+}
+.report-filters a {
+    padding: 9px 4px;
+    color: #76543b;
+}
+.report-note {
+    color: #555;
+}
+.report-summary,
+.report-breakdowns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    gap: 16px;
+    align-items: start;
+}
+.report-summary > div,
+.report-section,
+.report-empty {
+    padding: 16px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background: white;
+}
+.report-summary dd {
+    margin: 8px 0 0;
+    font-size: 22px;
+    font-weight: bold;
+}
+.report-section h2 {
+    margin: 0 0 12px;
+    font-size: 18px;
+}
+.report-table {
+    overflow-x: auto;
+}
+.report-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.report-table th,
+.report-table td {
+    padding: 9px 8px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+}
+.report-table th:not(:first-child),
+.report-table td {
+    text-align: right;
+    white-space: nowrap;
+}
+.report-table th[scope="row"] {
+    font-weight: normal;
+}
+.report-table thead {
+    background: #faf8f6;
+}
+.report-error {
+    color: #b42318;
+}
