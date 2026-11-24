@@ -559,6 +559,7 @@ require_once __DIR__ . '/controllers/inventory.php';
                     <th>Batch Stock</th>
                     <th>Difference</th>
                     <th>Status</th>
+                    <th>Action</th>
                 </tr>
             </thead>
 
@@ -580,12 +581,26 @@ require_once __DIR__ . '/controllers/inventory.php';
                                 <?= $matched ? 'Matched' : 'Mismatch' ?>
                             </span>
                         </td>
+                        <td>
+                            <?php if (!$matched): ?>
+                                <button type="button" class="reconcile-btn"
+                                    data-id="<?= $item['id'] ?>"
+                                    data-type="<?= htmlspecialchars($item['item_type']) ?>"
+                                    data-name="<?= htmlspecialchars($item['name'], ENT_QUOTES) ?>"
+                                    data-recorded="<?= $item['recorded_stock'] ?>"
+                                    data-batch="<?= $item['batch_stock'] ?>">
+                                    Resolve
+                                </button>
+                            <?php else: ?>
+                                <span>Matched</span>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
             <tbody id="reconciliation-no-results" hidden>
                 <tr>
-                    <td colspan="6">No matching items found.</td>
+                    <td colspan="7">No matching items found.</td>
                 </tr>
             </tbody>
         </table>
@@ -755,5 +770,38 @@ require_once __DIR__ . '/controllers/inventory.php';
     </form>
 </dialog>
 <?php endif; ?>
+
+<?php if (in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)): ?>
+<dialog id="reconcile-dialog">
+    <form id="reconcile-form">
+        <h2>Resolve Stock Mismatch</h2>
+
+        <input type="hidden" id="reconcile-id">
+        <input type="hidden" id="reconcile-type">
+        <input type="hidden" id="reconcile-recorded">
+        <input type="hidden" id="reconcile-batch">
+
+        <p id="reconcile-item-name"></p>
+        <p id="reconcile-stock-info"></p>
+
+        <label for="reconcile-reason">Reason for Correction</label>
+        <textarea id="reconcile-reason"
+            maxlength="500" rows="4" required></textarea>
+
+        <label>
+            <input type="checkbox" id="reconcile-confirm" required>
+            I have verified that the batch quantities are correct.
+        </label>
+
+        <p id="reconcile-message" role="status"></p>
+
+        <div class="dialog-actions">
+            <button type="button" id="cancel-reconcile-btn">Cancel</button>
+            <button type="submit" id="save-reconcile-btn">Confirm Correction</button>
+        </div>
+    </form>
+</dialog>
+<?php endif; ?>
+
 </body>
 </html>

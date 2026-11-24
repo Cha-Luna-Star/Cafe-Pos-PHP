@@ -895,3 +895,37 @@ if (document.getElementById("reconciliation-search")) {
             filterReconciliation();
         });
 }
+
+const reconcileDialog = document.getElementById("reconcile-dialog");
+const reconcileForm = document.getElementById("reconcile-form");
+
+if (reconcileDialog && reconcileForm) {
+    document.querySelectorAll(".reconcile-btn").forEach(button => {
+        button.addEventListener("click", () => {
+            reconcileForm.reset();
+
+            document.getElementById("reconcile-id").value = button.dataset.id;
+            document.getElementById("reconcile-type").value = button.dataset.type;
+            document.getElementById("reconcile-recorded").value = button.dataset.recorded;
+            document.getElementById("reconcile-batch").value = button.dataset.batch;
+
+            document.getElementById("reconcile-item-name").textContent =
+                button.dataset.name;
+
+            document.getElementById("reconcile-stock-info").textContent =
+                `Recorded Stock: ${button.dataset.recorded} → Corrected Stock: ${button.dataset.batch}`;
+
+            document.getElementById("reconcile-message").textContent = "";
+
+            reconcileDialog.showModal();
+        });
+    });
+
+    document.getElementById("cancel-reconcile-btn").addEventListener("click", () => {
+        reconcileDialog.close();
+    });
+
+    reconcileForm.addEventListener("submit", event => {
+        event.preventDefault();
+    });
+}
