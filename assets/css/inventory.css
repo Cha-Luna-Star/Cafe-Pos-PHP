@@ -427,19 +427,69 @@ th {
     margin: 20px 0 35px;
 }
 .inventory-pagination button {
-    padding: 8px 14px;
-    background: white;
-    border: 1px solid #ddd;
+    background: #2563eb;
+    color: #ffffff;
+    border: 1px solid #2563eb;
     border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: 500;
     cursor: pointer;
 }
 .inventory-pagination button:hover:not(:disabled) {
-    background: #f3f4f6;
+    background: #1d4ed8;
+    color: #ffffff;
 }
 .inventory-pagination button:disabled {
-    opacity: 0.5;
+    background: #d1d5db;
+    color: #6b7280;
+    border-color: #d1d5db;
     cursor: not-allowed;
 }
-.inventory-pagination span {
-    font-size: 14px;
+
+.stock-row {
+    cursor: pointer;
+}
+.stock-row:hover {
+    background: #f5f5f5;
+}
+.stock-status-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+}
+.stock-expand-arrow {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid #777;
+    border-bottom: 2px solid #777;
+    transform: rotate(45deg);
+    transition: transform 0.2s ease;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+.stock-row.expanded .stock-expand-arrow {
+    transform: rotate(225deg);
+}
+.stock-details[hidden] {
+    display: none !important;
+}
+
+#adjust-batch-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+#adjust-batch-container[hidden] {
+    display: none;
+}
+
+#adjust-movement-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+#adjust-movement-container[hidden] {
+    display: none;
 }

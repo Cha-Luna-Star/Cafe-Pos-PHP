@@ -31,6 +31,21 @@ try {
     $type = $data['item_type'] ?? '';
     $id = filter_var($data['item_id'] ?? null, FILTER_VALIDATE_INT);
     $action = $data['action'] ?? '';
+    $movementType = $action === 'Remove'
+        ? ($data['movement_type'] ?? 'Adjustment')
+        : 'Adjustment';
+
+    if (!in_array($movementType, ['Adjustment', 'Expired', 'Damaged'], true)) {
+        throw new RuntimeException('Invalid movement type.');
+    }
+    $batchId = filter_var(
+        $data['batch_id'] ?? null,
+        FILTER_VALIDATE_INT
+    );
+
+    if ($action === 'Remove' && (!$batchId || $batchId <= 0)) {
+        throw new RuntimeException('Please select a valid batch.');
+    }
     $quantity = $data['quantity'] ?? null;
     $reason = trim((string)($data['reason'] ?? ''));
 
@@ -130,17 +145,21 @@ try {
         $stmt = $connection->prepare("
             SELECT id, quantity
             FROM $batchTable WITH (UPDLOCK, HOLDLOCK)
-            WHERE $foreignKey = ? AND quantity > 0
-            ORDER BY
-                CASE WHEN expiration_date IS NULL THEN 1 ELSE 0 END,
-                expiration_date,
-                received_date,
-                id
+            WHERE $foreignKey = ?
+                AND id = ?
+                AND quantity > 0
         ");
 
-        $stmt->execute([$id]);
+        $stmt->execute([$id, $batchId]);
         $batches = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $stmt->closeCursor();
+        if (!$batches) {
+            throw new RuntimeException('Selected batch is unavailable.');
+        }
+
+        if ($quantity > (float)$batches[0]['quantity']) {
+            throw new RuntimeException('Insufficient stock in the selected batch.');
+        }
 
         $remaining = $quantity;
 
@@ -161,13 +180,14 @@ try {
             $log = $connection->prepare("
                 INSERT INTO dbo.stock_movements
                 (item_type, item_id, batch_id, movement_type, quantity, remarks, user_id)
-                VALUES (?, ?, ?, 'Adjustment', ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
             ");
 
             $log->execute([
                 $type,
                 $id,
                 $batch['id'],
+                $movementType,
                 -$deduct,
                 'Removed: ' . $reason,
                 $_SESSION['user_id']
@@ -180,10 +200,14 @@ try {
             throw new RuntimeException('Insufficient batch stock.');
         }
 
+        $archiveCondition = $type === 'Product'
+            ? 'AND is_archived = 0'
+            : '';
+
         $stmt = $connection->prepare("
             UPDATE $table
             SET stock_qty = stock_qty - ?
-            WHERE id = ?
+            WHERE id = ? $archiveCondition
         ");
         $stmt->execute([$quantity, $id]);
     }

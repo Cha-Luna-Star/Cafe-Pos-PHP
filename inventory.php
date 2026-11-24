@@ -120,6 +120,11 @@ require_once __DIR__ . '/controllers/inventory.php';
             <strong><?= $expiredCount ?></strong>
         </div>
     </section>
+    <div class="inventory-tabs">
+        <button type="button" class="inventory-tab active" data-target="current-stock-section">Current Stock</button>
+        <button type="button" class="inventory-tab" data-target="batch-history-section">Batch History</button>
+        <button type="button" class="inventory-tab" data-target="stock-movement-section">Stock Movements</button>
+    </div>
     <div class="inventory-heading">
         <h2>Current Stock</h2>
         <button type="button" class="export-csv-btn" data-table="current-stock-body" data-filename="current_stock.csv">Export CSV</button>
@@ -199,9 +204,12 @@ require_once __DIR__ . '/controllers/inventory.php';
                         ?>
 
                         <td>
-                            <span class="stock-status <?= $statusClass ?>">
-                                <?= $stockStatus ?>
-                            </span>
+                            <div class="stock-status-wrapper">
+                                <span class="stock-status <?= $statusClass ?>">
+                                    <?= $stockStatus ?>
+                                </span>
+                                <span class="stock-expand-arrow" aria-hidden="true"></span>
+                            </div>
                         </td>
                     </tr>
 
@@ -508,10 +516,36 @@ require_once __DIR__ . '/controllers/inventory.php';
             <option value="Add">Add Stock</option>
             <option value="Remove">Remove Stock</option>
         </select>
-
+        <div id="adjust-batch-container" hidden>
+            <label for="adjust-batch">Select Batch</label>
+            <select id="adjust-batch">
+                <option value="">Select a batch</option>
+                <?php foreach ($batches as $batch): ?>
+                    <?php if ((float)$batch['quantity'] > 0): ?>
+                        <option
+                            value="<?= (int)$batch['id'] ?>"
+                            data-type="<?= htmlspecialchars($batch['item_type']) ?>"
+                            data-item="<?= (int)$batch['item_id'] ?>"
+                            data-quantity="<?= (float)$batch['quantity'] ?>">
+                            #<?= (int)$batch['id'] ?>
+                            | Stock: <?= (float)$batch['quantity'] ?>
+                            | Exp: <?= htmlspecialchars((string)($batch['expiration_date'] ?: 'N/A')) ?>
+                        </option>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </select>
+        </div>
         <label for="adjust-quantity">Quantity</label>
         <input type="number" id="adjust-quantity" min="0.001" step="0.001" required>
 
+        <div id="adjust-movement-container" hidden>
+            <label for="adjust-movement">Removal Reason</label>
+            <select id="adjust-movement">
+                <option value="Adjustment">Stock Correction</option>
+                <option value="Expired">Expired Stock</option>
+                <option value="Damaged">Damaged Stock</option>
+            </select>
+        </div>
         <label for="adjust-reason">Reason</label>
         <textarea id="adjust-reason" maxlength="500" required
             placeholder="Enter the reason for this adjustment"></textarea>

@@ -5,6 +5,7 @@ const stockItem = document.getElementById("stock-item");
 const stockQuantity = document.getElementById("stock-quantity");
 const stockMessage = document.getElementById("stock-message");
 const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+const paginationState = {};
 
 const allOptions = Array.from(stockItem.options).map(option => ({
     id: option.value,
@@ -198,6 +199,7 @@ function filterCurrentStock() {
 
         const visible = matchesSearch && matchesType && matchesStatus;
         row.hidden = !visible;
+        row.dataset.filterHidden = String(row.hidden);
 
         const details = document.querySelector(
             `.stock-details[data-parent="${row.dataset.key}"]`
@@ -212,6 +214,8 @@ function filterCurrentStock() {
     ).some(row => !row.hidden);
 
     document.getElementById("stock-no-results").hidden = hasResults;
+    paginationState["current-stock-body"] = { page: 1 };
+    paginateInventory("current-stock-body");
 }
 
 function filterBatchHistory() {
@@ -230,12 +234,15 @@ function filterBatchHistory() {
             expirationStatus?.classList.contains(expiration);
 
         row.hidden = !(matchesSearch && matchesType && matchesExpiration);
+        row.dataset.filterHidden = String(row.hidden);
     });
     const hasResults = Array.from(
         document.querySelectorAll("#batch-history-body tr")
     ).some(row => !row.hidden);
 
     document.getElementById("batch-no-results").hidden = hasResults;
+    paginationState["batch-history-body"] = { page: 1 };
+    paginateInventory("batch-history-body");
 }
 
 ["stock-search", "stock-type-filter", "stock-status-filter"].forEach(id => {
@@ -292,6 +299,7 @@ function filterStockMovements() {
             matchesTo;
 
         row.hidden = !visible;
+        row.dataset.filterHidden = String(row.hidden);
 
         if (visible) {
             visibleCount++;
@@ -299,6 +307,8 @@ function filterStockMovements() {
     });
 
     document.getElementById("movement-no-results").hidden = visibleCount > 0;
+    paginationState["movement-history-body"] = { page: 1 };
+    paginateInventory("movement-history-body");
 }
 
 [
@@ -335,6 +345,46 @@ if (adjustDialog && adjustForm) {
     const adjustQuantity = document.getElementById("adjust-quantity");
     const adjustMessage = document.getElementById("adjust-message");
     const adjustSave = document.getElementById("save-adjust-btn");
+    const adjustBatch = document.getElementById("adjust-batch");
+    const batchContainer = document.getElementById("adjust-batch-container");
+    const adjustAction = document.getElementById("adjust-action");
+    const batchOptions = Array.from(adjustBatch.options).slice(1);
+
+    function updateAdjustBatches() {
+        const isRemove = adjustAction.value === "Remove";
+
+        batchContainer.hidden = !isRemove;
+        document.getElementById("adjust-movement-container").hidden = !isRemove;
+        adjustBatch.required = isRemove;
+        adjustQuantity.removeAttribute("max");
+
+        adjustBatch.replaceChildren(new Option("Select a batch", ""));
+
+        if (!isRemove) return;
+
+        batchOptions.forEach(option => {
+            if (
+                option.dataset.type === adjustType.value &&
+                option.dataset.item === adjustItem.value
+            ) {
+                adjustBatch.appendChild(option.cloneNode(true));
+            }
+        });
+    }
+
+    adjustType.addEventListener("change", updateAdjustBatches);
+    adjustItem.addEventListener("change", updateAdjustBatches);
+    adjustAction.addEventListener("change", updateAdjustBatches);
+
+    adjustBatch.addEventListener("change", () => {
+        const option = adjustBatch.selectedOptions[0];
+
+        if (option?.dataset.quantity) {
+            adjustQuantity.max = option.dataset.quantity;
+        } else {
+            adjustQuantity.removeAttribute("max");
+        }
+    });
 
     const adjustOptions = Array.from(adjustItem.options).map(option => ({
         id: option.value,
@@ -366,6 +416,7 @@ if (adjustDialog && adjustForm) {
         adjustForm.reset();
         adjustMessage.textContent = "";
         updateAdjustItems();
+        updateAdjustBatches();
         adjustDialog.showModal();
     });
 
@@ -390,8 +441,14 @@ if (adjustDialog && adjustForm) {
                     item_type: adjustType.value,
                     item_id: Number(adjustItem.value),
                     action: document.getElementById("adjust-action").value,
+                    batch_id: adjustAction.value === "Remove"
+                        ? Number(adjustBatch.value)
+                        : null,
                     quantity: Number(adjustQuantity.value),
-                    reason: document.getElementById("adjust-reason").value.trim()
+                    reason: document.getElementById("adjust-reason").value.trim(),
+                    movement_type: adjustAction.value === "Remove"
+                        ? document.getElementById("adjust-movement").value
+                        : "Adjustment"
                 })
             });
 
@@ -422,7 +479,10 @@ document.querySelectorAll(".export-csv-btn").forEach(button => {
             .map(th => th.textContent.replace("⇅", "").trim());
 
         const rows = Array.from(tbody.querySelectorAll(":scope > tr"))
-            .filter(row => !row.hidden && !row.classList.contains("stock-details"))
+            .filter(row =>
+                row.dataset.filterHidden !== "true" &&
+                !row.classList.contains("stock-details")
+            )
             .map(row => Array.from(row.cells).map(cell => cell.textContent.trim()));
 
         const csvRows = [headers, ...rows].map(row =>
@@ -444,7 +504,7 @@ document.querySelectorAll(".export-csv-btn").forEach(button => {
     });
 });
 
-const paginationState = {};
+
 
 function paginateInventory(tableId) {
     const tbody = document.getElementById(tableId);
@@ -454,7 +514,20 @@ function paginateInventory(tableId) {
 
     if (!tbody || !container) return;
 
-    const rows = Array.from(tbody.children);
+    const rows = Array.from(tbody.children).filter(
+        row => !row.classList.contains("stock-details")
+    );
+
+    if (tableId === "current-stock-body") {
+        tbody.querySelectorAll(".stock-details").forEach(row => {
+            row.hidden = true;
+        });
+
+        tbody.querySelectorAll(".stock-row").forEach(row => {
+            row.classList.remove("expanded");
+        });
+    }
+
     const pageSize = 10;
 
     if (!paginationState[tableId]) {
@@ -470,6 +543,10 @@ function paginateInventory(tableId) {
     );
 
     const currentPage = paginationState[tableId].page;
+
+    rows.forEach(row => {
+        row.hidden = true;
+    });
 
     matchingRows.forEach((row, index) => {
         row.hidden = index < (currentPage - 1) * pageSize ||
