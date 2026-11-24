@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/mutation_request.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -21,22 +21,20 @@ try {
         throw new RuntimeException('Invalid request.');
     }
 
-    $token = $data['csrf_token'] ?? '';
-
-    if (!is_string($token) ||
-        empty($_SESSION['csrf_token']) ||
-        !hash_equals($_SESSION['csrf_token'], $token)) {
+    if (!hasValidCsrfToken($data['csrf_token'] ?? null)) {
         throw new RuntimeException('Invalid security token.');
     }
 
-    $orderId = filter_var($data['order_id'] ?? null, FILTER_VALIDATE_INT);
+    $orderId = requestSqlInt($data['order_id'] ?? null);
     $action = $data['action'] ?? '';
 
-    if (!$orderId || $orderId <= 0 ||
+    if ($orderId === false ||
         !in_array($action, ['Completed', 'Cancelled'], true)) {
         throw new RuntimeException('Invalid order or action.');
     }
 
+    $throwDatabaseConnectionError = true;
+    require_once __DIR__ . '/../config/database.php';
     $connection->beginTransaction();
 
     $stmt = $connection->prepare("
@@ -254,20 +252,21 @@ try {
     ]);
 
 } catch (Throwable $e) {
-    if ($connection->inTransaction()) {
+    $isRequestError = $e instanceof RuntimeException && !($e instanceof PDOException);
+    if (isset($connection) && $connection->inTransaction()) {
         $connection->rollBack();
     }
 
-    http_response_code(400);
+    http_response_code($isRequestError ? 400 : 500);
 
     echo json_encode([
         'success' => false,
-        'message' => $e instanceof RuntimeException
+        'message' => $isRequestError
             ? $e->getMessage()
             : 'Unable to update order.'
     ]);
 
-    if (!($e instanceof RuntimeException)) {
+    if (!$isRequestError) {
         error_log($e->getMessage());
     }
 }

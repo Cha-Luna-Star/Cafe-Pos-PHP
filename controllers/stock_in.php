@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id']) ||
     exit;
 }
 
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/mutation_request.php';
 require_once __DIR__ . '/../includes/inventory_dates.php';
 
 try {
@@ -19,25 +19,21 @@ try {
 
     $data = json_decode(file_get_contents('php://input'), true);
 
-    if (!is_array($data) ||
-        !hash_equals(
-            $_SESSION['csrf_token'] ?? '',
-            $data['csrf_token'] ?? ''
-        )) {
+    if (!is_array($data) || !hasValidCsrfToken($data['csrf_token'] ?? null)) {
         throw new RuntimeException('Invalid security token.');
     }
 
     $type = $data['item_type'] ?? '';
-    $id = filter_var($data['item_id'] ?? null, FILTER_VALIDATE_INT);
+    $id = requestSqlInt($data['item_id'] ?? null);
     $quantity = $data['quantity'] ?? null;
     $cost = $data['cost_per_unit'] ?? null;
     $received = $data['received_date'] ?? '';
     $expiration = $data['expiration_date'] ?? null;
-    $supplier = trim((string)($data['supplier'] ?? ''));
-    $notes = trim((string)($data['notes'] ?? ''));
+    $supplier = $data['supplier'] ?? '';
+    $notes = $data['notes'] ?? '';
 
     if (!in_array($type, ['Ingredient', 'Product'], true) ||
-        !$id || $id <= 0 ||
+        $id === false || !is_string($supplier) || !is_string($notes) ||
         !is_numeric($quantity) ||
         !is_finite((float)$quantity) ||
         (float)$quantity <= 0 ||
@@ -57,6 +53,8 @@ try {
         throw new RuntimeException('Ingredient quantity must use at most 3 decimal places.');
     }
 
+    $supplier = trim($supplier);
+    $notes = trim($notes);
     if (strlen($supplier) > 150 || strlen($notes) > 500) {
         throw new RuntimeException('Supplier or notes are too long.');
     }
@@ -84,6 +82,8 @@ try {
         throw new RuntimeException('Expiration cannot precede delivery.');
     }
 
+    $throwDatabaseConnectionError = true;
+    require_once __DIR__ . '/../config/database.php';
     $connection->beginTransaction();
 
     if ($type === 'Ingredient') {
@@ -173,20 +173,21 @@ try {
     ]);
 
 } catch (Throwable $e) {
-    if ($connection->inTransaction()) {
+    $isRequestError = $e instanceof RuntimeException && !($e instanceof PDOException);
+    if (isset($connection) && $connection->inTransaction()) {
         $connection->rollBack();
     }
 
-    http_response_code(400);
+    http_response_code($isRequestError ? 400 : 500);
 
     echo json_encode([
         'success' => false,
-        'message' => $e instanceof RuntimeException
+        'message' => $isRequestError
             ? $e->getMessage()
             : 'Unable to add stock.'
     ]);
 
-    if (!($e instanceof RuntimeException)) {
+    if (!$isRequestError) {
         error_log($e->getMessage());
     }
 }

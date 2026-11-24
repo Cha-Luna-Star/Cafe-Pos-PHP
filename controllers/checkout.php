@@ -1,4 +1,3 @@
-
 <?php
 session_start();
 header('Content-Type: application/json');
@@ -15,13 +14,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+require_once __DIR__ . '/../includes/mutation_request.php';
 
-if (
-    empty($_SESSION['csrf_token']) ||
-    !is_string($csrfToken) ||
-    !hash_equals($_SESSION['csrf_token'], $csrfToken)
-) {
+if (!hasValidCsrfToken($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null)) {
     http_response_code(403);
     echo json_encode([
         'success' => false,
@@ -30,7 +25,6 @@ if (
     exit;
 }
 
-require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/inventory_dates.php';
 
 function failCheckout(string $message): void {
@@ -49,7 +43,11 @@ try {
     $payment = $data['payment_method'] ?? '';
     $discountType = $data['discount_type'] ?? 'None';
     $tendered = $data['amount_tendered'] ?? 0;
-    $reference = trim((string)($data['ref_number'] ?? ''));
+    $reference = $data['ref_number'] ?? '';
+    if (!is_string($reference)) {
+        failCheckout('Invalid payment reference.');
+    }
+    $reference = trim($reference);
 
     if (!is_array($items) || count($items) === 0 || count($items) > 100) {
         failCheckout('Invalid cart.');
@@ -70,7 +68,7 @@ try {
         'Senior Citizen' => 0.20
     ];
 
-    if (!array_key_exists($discountType, $discounts)) {
+    if (!is_string($discountType) || !array_key_exists($discountType, $discounts)) {
         failCheckout('Invalid discount.');
     }
 
@@ -95,6 +93,8 @@ try {
         )
     )";
 
+    $throwDatabaseConnectionError = true;
+    require_once __DIR__ . '/../config/database.php';
     $connection->beginTransaction();
 
     $validatedItems = [];
@@ -124,8 +124,8 @@ try {
         if (!is_array($item)) {
             failCheckout('Invalid cart item.');
         }
-        $id = filter_var($item['id'] ?? null, FILTER_VALIDATE_INT);
-        if (!$id || $id <= 0 || $id > 2147483647) {
+        $id = requestSqlInt($item['id'] ?? null);
+        if ($id === false) {
             failCheckout('Invalid item or quantity.');
         }
         $menuIds[$id] = true;
@@ -152,7 +152,7 @@ try {
 
     foreach ($items as $item) {
         $id = (int)$item['id'];
-        $quantity = filter_var($item['quantity'] ?? null, FILTER_VALIDATE_INT);
+        $quantity = requestSqlInt($item['quantity'] ?? null);
         $size = $item['size'] ?? 'Regular';
         $temperature = $item['temperature'] ?? null;
 
@@ -163,7 +163,7 @@ try {
             failCheckout('Invalid temperature.');
         }
 
-        if (!$quantity || $quantity < 1 || $quantity > 100) {
+        if ($quantity === false || $quantity > 100) {
             failCheckout('Invalid item or quantity.');
         }
 
@@ -548,20 +548,21 @@ $validatedItems[] = [
     ]);
 
 } catch (Throwable $e) {
-    if ($connection->inTransaction()) {
+    $isRequestError = $e instanceof RuntimeException && !($e instanceof PDOException);
+    if (isset($connection) && $connection->inTransaction()) {
         $connection->rollBack();
     }
 
-    http_response_code(400);
+    http_response_code($isRequestError ? 400 : 500);
 
     echo json_encode([
         'success' => false,
-        'error' => $e instanceof RuntimeException
+        'error' => $isRequestError
             ? $e->getMessage()
             : 'Checkout failed. Check the server logs.'
     ]);
 
-    if (!($e instanceof RuntimeException)) {
+    if (!$isRequestError) {
         error_log($e->getMessage());
     }
 }

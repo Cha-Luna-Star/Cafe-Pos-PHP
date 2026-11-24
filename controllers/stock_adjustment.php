@@ -11,7 +11,7 @@ if (
     exit;
 }
 
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/mutation_request.php';
 require_once __DIR__ . '/../includes/inventory_dates.php';
 
 try {
@@ -21,16 +21,12 @@ try {
 
     $data = json_decode(file_get_contents('php://input'), true);
 
-    if (
-        !is_array($data) ||
-        !is_string($data['csrf_token'] ?? null) ||
-        !hash_equals($_SESSION['csrf_token'] ?? '', $data['csrf_token'])
-    ) {
+    if (!is_array($data) || !hasValidCsrfToken($data['csrf_token'] ?? null)) {
         throw new RuntimeException('Invalid security token.');
     }
 
     $type = $data['item_type'] ?? '';
-    $id = filter_var($data['item_id'] ?? null, FILTER_VALIDATE_INT);
+    $id = requestSqlInt($data['item_id'] ?? null);
     $action = $data['action'] ?? '';
     $movementType = $action === 'Remove'
         ? ($data['movement_type'] ?? 'Adjustment')
@@ -39,20 +35,17 @@ try {
     if (!in_array($movementType, ['Adjustment', 'Expired', 'Damaged'], true)) {
         throw new RuntimeException('Invalid movement type.');
     }
-    $batchId = filter_var(
-        $data['batch_id'] ?? null,
-        FILTER_VALIDATE_INT
-    );
+    $batchId = requestSqlInt($data['batch_id'] ?? null);
 
-    if ($action === 'Remove' && (!$batchId || $batchId <= 0)) {
+    if ($action === 'Remove' && $batchId === false) {
         throw new RuntimeException('Please select a valid batch.');
     }
     $quantity = $data['quantity'] ?? null;
-    $reason = trim((string)($data['reason'] ?? ''));
+    $reason = is_string($data['reason'] ?? null) ? trim($data['reason']) : '';
 
     if (
         !in_array($type, ['Ingredient', 'Product'], true) ||
-        !$id || $id <= 0 ||
+        $id === false ||
         !in_array($action, ['Add', 'Remove'], true) ||
         !is_numeric($quantity) ||
         !is_finite((float)$quantity) ||
@@ -93,6 +86,8 @@ try {
         ? 'ingredient_id'
         : 'menu_item_id';
 
+    $throwDatabaseConnectionError = true;
+    require_once __DIR__ . '/../config/database.php';
     $connection->beginTransaction();
 
     $stmt = $connection->prepare("
@@ -223,20 +218,21 @@ try {
     ]);
 
 } catch (Throwable $e) {
-    if ($connection->inTransaction()) {
+    $isRequestError = $e instanceof RuntimeException && !($e instanceof PDOException);
+    if (isset($connection) && $connection->inTransaction()) {
         $connection->rollBack();
     }
 
-    http_response_code(400);
+    http_response_code($isRequestError ? 400 : 500);
 
     echo json_encode([
         'success' => false,
-        'message' => $e instanceof RuntimeException
+        'message' => $isRequestError
             ? $e->getMessage()
             : 'Unable to adjust stock.'
     ]);
 
-    if (!($e instanceof RuntimeException)) {
+    if (!$isRequestError) {
         error_log($e->getMessage());
     }
 }
