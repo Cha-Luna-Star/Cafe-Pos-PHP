@@ -26,10 +26,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $throwDatabaseConnectionError = true;
             require_once __DIR__ . '/config/database.php';
 
+            $hasStatus = hasStaffAccountStatus($connection);
+            $versionColumn = $hasStatus ? 'session_version' : '0 AS session_version';
+            $activeCondition = $hasStatus ? 'AND is_active = 1' : '';
             $stmt = $connection->prepare("
-                SELECT id, username, password, role
+                SELECT id, username, password, role, $versionColumn
                 FROM dbo.users
-                WHERE username = ?
+                WHERE username = ? $activeCondition
             ");
             $stmt->execute([$username]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -71,6 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['role'] = $user['role'];
+                $_SESSION['account_session_version'] = (string)$user['session_version'];
                 $_SESSION['password_fingerprint'] = hash('sha256', $storedHash);
                 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 session_write_close();

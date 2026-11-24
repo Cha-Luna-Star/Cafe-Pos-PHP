@@ -16,6 +16,8 @@ $creatableStaffRoles = ['Cashier', 'Manager'];
 $staffRoles = ['Admin', 'Manager', 'Cashier'];
 $staffCreateError = null;
 $staffResetError = null;
+$staffStatusError = null;
+$staffStatusAvailable = false;
 $staffNotice = $_SESSION['staff_account_notice'] ?? null;
 unset($_SESSION['staff_account_notice']);
 
@@ -30,6 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $staffCreateError = require __DIR__ . '/../includes/create_staff_account.php';
     } elseif ($staffAction === 'reset_password') {
         $staffResetError = require __DIR__ . '/../includes/reset_staff_password.php';
+    } elseif ($staffAction === 'change_status') {
+        $staffStatusError = require __DIR__ . '/../includes/update_staff_account_status.php';
     } else {
         http_response_code(400);
         exit('Invalid staff account action.');
@@ -64,8 +68,10 @@ try {
     $throwDatabaseConnectionError = true;
     require_once __DIR__ . '/../config/database.php';
 
+    $staffStatusAvailable = hasStaffAccountStatus($connection);
+    $activeColumn = $staffStatusAvailable ? 'is_active' : '1 AS is_active';
     $stmt = $connection->prepare("
-        SELECT id, username, role
+        SELECT id, username, role, $activeColumn
         FROM dbo.users
         $where
         ORDER BY username, id

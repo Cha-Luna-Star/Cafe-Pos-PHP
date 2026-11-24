@@ -83,6 +83,12 @@ $staffEscape = static fn($value): string => htmlspecialchars(
         <a href="staff_accounts.php">Reset</a>
     </form>
 
+    <?php if ($staffStatusError !== null): ?>
+        <p class="report-error" role="alert"><?= $staffEscape($staffStatusError) ?></p>
+    <?php elseif ($staffError === null && !$staffStatusAvailable && ($_SESSION['role'] ?? '') === 'Admin'): ?>
+        <p class="report-note">Apply the staff account status database migration to enable deactivation.</p>
+    <?php endif; ?>
+
     <?php if ($staffError !== null): ?>
         <p class="report-error" role="alert"><?= $staffEscape($staffError) ?></p>
     <?php elseif (!$staffAccounts): ?>
@@ -98,8 +104,11 @@ $staffEscape = static fn($value): string => htmlspecialchars(
                         <tr>
                             <th scope="col">Username</th>
                             <th scope="col">Role</th>
+                            <?php if ($staffStatusAvailable): ?>
+                                <th scope="col">Account Status</th>
+                            <?php endif; ?>
                             <?php if (($_SESSION['role'] ?? '') === 'Admin'): ?>
-                                <th scope="col">Password</th>
+                                <th scope="col">Actions</th>
                             <?php endif; ?>
                         </tr>
                     </thead>
@@ -108,6 +117,9 @@ $staffEscape = static fn($value): string => htmlspecialchars(
                             <tr>
                                 <th scope="row"><?= $staffEscape($staffAccount['username']) ?></th>
                                 <td><?= $staffEscape($staffAccount['role'] ?? 'Unassigned') ?></td>
+                                <?php if ($staffStatusAvailable): ?>
+                                    <td><?= (int)$staffAccount['is_active'] === 1 ? 'Active' : 'Inactive' ?></td>
+                                <?php endif; ?>
                                 <?php if (($_SESSION['role'] ?? '') === 'Admin'): ?>
                                     <td>
                                         <?php if (in_array($staffAccount['role'], $creatableStaffRoles, true)): ?>
@@ -125,6 +137,22 @@ $staffEscape = static fn($value): string => htmlspecialchars(
                                                     <button type="submit">Reset Password</button>
                                                 </form>
                                             </details>
+                                            <?php if ($staffStatusAvailable): ?>
+                                                <?php
+                                                $isActive = (int)$staffAccount['is_active'] === 1;
+                                                $statusAction = $isActive ? 'Deactivate' : 'Reactivate';
+                                                ?>
+                                                <details>
+                                                    <summary><?= $statusAction ?> Account</summary>
+                                                    <form method="post" action="staff_accounts.php" class="report-filters">
+                                                        <input type="hidden" name="staff_action" value="change_status">
+                                                        <input type="hidden" name="user_id" value="<?= (int)$staffAccount['id'] ?>">
+                                                        <input type="hidden" name="csrf_token" value="<?= $staffEscape(sessionCsrfToken()) ?>">
+                                                        <input type="hidden" name="account_status" value="<?= strtolower($statusAction) ?>">
+                                                        <button type="submit"><?= $statusAction ?> <?= $staffEscape($staffAccount['username']) ?></button>
+                                                    </form>
+                                                </details>
+                                            <?php endif; ?>
                                         <?php endif; ?>
                                     </td>
                                 <?php endif; ?>
