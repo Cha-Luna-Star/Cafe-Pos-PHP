@@ -101,17 +101,43 @@ $dashboardMoney = static fn($value): string => '&#8369;' . number_format((float)
             </section>
 
             <?php if ($canViewSales): ?>
-                <section class="dashboard-panel dashboard-sales" aria-labelledby="weekly-heading">
+                <section class="dashboard-panel dashboard-sales" aria-labelledby="trend-heading">
                     <div class="dashboard-panel-heading">
-                        <h2 id="weekly-heading">Sales Over the Last 7 Days</h2>
-                        <a href="sales_reports.php?from=<?= $weekStart->format('Y-m-d') ?>&amp;to=<?= $todayDate ?>">Open Sales Reports</a>
+                        <h2 id="trend-heading">Sales and Order Trends</h2>
+                        <?php if ($chartStart !== null): ?>
+                            <a href="sales_reports.php?from=<?= $chartStart->format('Y-m-d') ?>&amp;to=<?= $todayDate ?>">Open Sales Reports</a>
+                        <?php endif; ?>
                     </div>
-                    <p>Completed orders by the date they were placed.</p>
-                    <dl class="dashboard-sales-days">
-                        <?php foreach ($weeklySales as $day): ?>
-                            <div><dt><?= $escapeDashboard($day['label']) ?></dt><dd><?= $dashboardMoney($day['sales']) ?></dd></div>
+
+                    <nav class="dashboard-ranges" aria-label="Trend date range">
+                        <?php foreach ($rangeLabels as $value => $label): ?>
+                            <a href="dashboard.php?range=<?= $value ?>"
+                                <?= $range === $value ? 'aria-current="page"' : '' ?>><?= $label ?></a>
                         <?php endforeach; ?>
-                    </dl>
+                    </nav>
+
+                    <?php if (!$chartPeriods): ?>
+                        <p>No orders to chart yet.</p>
+                    <?php else: ?>
+                        <div class="dashboard-charts">
+                            <?php foreach (['sales' => 'Completed Sales', 'orders' => 'Orders Placed'] as $metric => $heading): ?>
+                                <?php $peak = max(1, max(array_column($chartPeriods, $metric))); ?>
+                                <section aria-labelledby="chart-<?= $metric ?>">
+                                    <h3 id="chart-<?= $metric ?>"><?= $heading ?></h3>
+                                    <dl class="dashboard-chart-values">
+                                        <?php foreach ($chartPeriods as $period): ?>
+                                            <?php $width = max(0, $period[$metric]) / $peak * 100; ?>
+                                            <div class="dashboard-chart-row">
+                                                <dt><?= $escapeDashboard($period['label']) ?></dt>
+                                                <dd class="dashboard-chart-track" aria-hidden="true"><span style="width: <?= number_format($width, 2, '.', '') ?>%"></span></dd>
+                                                <dd><?= $metric === 'sales' ? $dashboardMoney($period[$metric]) : number_format($period[$metric]) ?></dd>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </dl>
+                                </section>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
                 </section>
             <?php endif; ?>
         </div>

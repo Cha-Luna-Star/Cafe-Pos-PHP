@@ -11,33 +11,65 @@ require_once __DIR__ . '/../includes/product_stock.php';
 $dashboardError = null;
 $today = inventoryToday();
 $todayDate = $today->format('Y-m-d');
-$weekStart = $today->modify('-6 days');
-$weeklySales = [];
+$tomorrowDate = $today->modify('+1 day')->format('Y-m-d');
+$rangeLabels = ['7-days' => '7 Days', '1-month' => '1 Month', 'all-time' => 'All Time'];
+$requestedRange = $_GET['range'] ?? '';
+$range = is_string($requestedRange) && isset($rangeLabels[$requestedRange]) ? $requestedRange : '7-days';
+$isMonthly = $range === 'all-time';
+$chartStart = match ($range) {
+    'all-time' => null,
+    '1-month' => $today->modify('-29 days'),
+    default => $today->modify('-6 days')
+};
+$chartPeriods = [];
 
 try {
     $throwDatabaseConnectionError = true;
     require_once __DIR__ . '/../config/database.php';
 
     $stmt = $connection->prepare("
-        SELECT CONVERT(char(10), created_at, 23) AS order_date, COUNT_BIG(*) AS orders,
+        SELECT COUNT_BIG(*) AS orders,
             SUM(CASE WHEN status = 'Completed' THEN CAST(COALESCE(total, 0) AS decimal(19,2)) ELSE 0 END) AS sales
         FROM dbo.orders
         WHERE created_at >= CONVERT(date, ?, 23) AND created_at < CONVERT(date, ?, 23)
-        GROUP BY CONVERT(char(10), created_at, 23)
     ");
-    $stmt->execute([
-        ($canViewSales ? $weekStart : $today)->format('Y-m-d'),
-        $today->modify('+1 day')->format('Y-m-d')
-    ]);
-    $dailyTotals = $stmt->fetchAll(PDO::FETCH_UNIQUE | PDO::FETCH_ASSOC);
+    $stmt->execute([$todayDate, $tomorrowDate]);
+    $totals = $stmt->fetch(PDO::FETCH_ASSOC);
     $stmt->closeCursor();
+    $todaySales = $totals['sales'] ?? '0.00';
+    $todayOrders = (int)$totals['orders'];
 
-    $todaySales = $dailyTotals[$todayDate]['sales'] ?? '0.00';
-    $todayOrders = (int)($dailyTotals[$todayDate]['orders'] ?? 0);
     if ($canViewSales) {
-        for ($day = $weekStart; $day <= $today; $day = $day->modify('+1 day')) {
-            $date = $day->format('Y-m-d');
-            $weeklySales[] = ['label' => $day->format('D, M j'), 'sales' => $dailyTotals[$date]['sales'] ?? '0.00'];
+        $dateFormat = $isMonthly ? 'char(7)' : 'char(10)';
+        $startCondition = $isMonthly ? '' : 'AND created_at >= CONVERT(date, ?, 23)';
+        $stmt = $connection->prepare("
+            SELECT CONVERT($dateFormat, created_at, 23) AS period, COUNT_BIG(*) AS orders,
+                SUM(CASE WHEN status = 'Completed' THEN CAST(COALESCE(total, 0) AS decimal(19,2)) ELSE 0 END) AS sales
+            FROM dbo.orders
+            WHERE created_at < CONVERT(date, ?, 23) $startCondition
+            GROUP BY CONVERT($dateFormat, created_at, 23)
+            ORDER BY period
+        ");
+        $params = [$tomorrowDate];
+        if (!$isMonthly) {
+            $params[] = $chartStart->format('Y-m-d');
+        }
+        $stmt->execute($params);
+        $periodTotals = $stmt->fetchAll(PDO::FETCH_UNIQUE | PDO::FETCH_ASSOC);
+        $stmt->closeCursor();
+
+        if ($isMonthly && $periodTotals) {
+            $chartStart = parseInventoryDate(array_key_first($periodTotals) . '-01');
+        }
+
+        $step = $isMonthly ? '+1 month' : '+1 day';
+        for ($date = $chartStart; $date !== null && $date <= $today; $date = $date->modify($step)) {
+            $period = $date->format($isMonthly ? 'Y-m' : 'Y-m-d');
+            $chartPeriods[] = [
+                'label' => $date->format($isMonthly ? 'M Y' : 'M j'),
+                'sales' => (float)($periodTotals[$period]['sales'] ?? 0),
+                'orders' => (int)($periodTotals[$period]['orders'] ?? 0)
+            ];
         }
     }
 
