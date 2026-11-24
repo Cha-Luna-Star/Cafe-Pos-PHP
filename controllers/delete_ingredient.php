@@ -14,7 +14,7 @@ if (
     exit;
 }
 
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/audit_event.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -38,10 +38,12 @@ try {
         throw new RuntimeException('Invalid ingredient ID.');
     }
 
+    $throwDatabaseConnectionError = true;
+    require_once __DIR__ . '/../config/database.php';
     $connection->beginTransaction();
 
     $stmt = $connection->prepare("
-        SELECT stock_qty
+        SELECT name, stock_qty
         FROM dbo.ingredients WITH (UPDLOCK, HOLDLOCK)
         WHERE id = ?
     ");
@@ -103,6 +105,7 @@ try {
 
     $stmt->execute([$id]);
 
+    recordAuditEvent($connection, 'Inventory Deleted', "Deleted ingredient #$id ({$ingredient['name']}).");
     $connection->commit();
 
     echo json_encode([
@@ -111,20 +114,20 @@ try {
     ]);
 
 } catch (Throwable $e) {
-    if ($connection->inTransaction()) {
+    if (isset($connection) && $connection->inTransaction()) {
         $connection->rollBack();
     }
 
-    http_response_code(400);
+    $isRequestError = $e instanceof RuntimeException && !($e instanceof PDOException);
+    http_response_code($isRequestError ? 400 : 500);
 
-    if ($e instanceof PDOException) {
+    if (!$isRequestError) {
         error_log($e->getMessage());
     }
 
     echo json_encode([
         'success' => false,
-        'message' => $e instanceof RuntimeException &&
-                     !($e instanceof PDOException)
+        'message' => $isRequestError
             ? $e->getMessage()
             : 'Unable to delete ingredient.'
     ]);

@@ -14,7 +14,7 @@ if (
     exit;
 }
 
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/audit_event.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -38,17 +38,26 @@ try {
         throw new RuntimeException('Invalid ingredient ID.');
     }
 
+    $throwDatabaseConnectionError = true;
+    require_once __DIR__ . '/../config/database.php';
+    $connection->beginTransaction();
+
     $stmt = $connection->prepare("
         UPDATE dbo.ingredients
         SET is_archived = 0
+        OUTPUT INSERTED.name
         WHERE id = ? AND is_archived = 1
     ");
-
     $stmt->execute([$id]);
+    $name = $stmt->fetchColumn();
+    $stmt->closeCursor();
 
-    if ($stmt->rowCount() === 0) {
+    if ($name === false) {
         throw new RuntimeException('Archived ingredient not found.');
     }
+
+    recordAuditEvent($connection, 'Inventory Restored', "Restored ingredient #$id ($name).");
+    $connection->commit();
 
     echo json_encode([
         'success' => true,
@@ -56,16 +65,20 @@ try {
     ]);
 
 } catch (Throwable $e) {
-    http_response_code(400);
+    if (isset($connection) && $connection->inTransaction()) {
+        $connection->rollBack();
+    }
 
-    if ($e instanceof PDOException) {
+    $isRequestError = $e instanceof RuntimeException && !($e instanceof PDOException);
+    http_response_code($isRequestError ? 400 : 500);
+
+    if (!$isRequestError) {
         error_log($e->getMessage());
     }
 
     echo json_encode([
         'success' => false,
-        'message' => $e instanceof RuntimeException &&
-                     !($e instanceof PDOException)
+        'message' => $isRequestError
             ? $e->getMessage()
             : 'Unable to restore ingredient.'
     ]);
