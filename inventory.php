@@ -125,6 +125,12 @@ require_once __DIR__ . '/controllers/inventory.php';
         <button type="button" class="inventory-tab active" data-target="current-stock-section">Current Stock</button>
         <button type="button" class="inventory-tab" data-target="batch-history-section">Batch History</button>
         <button type="button" class="inventory-tab" data-target="stock-movement-section">Stock Movements</button>
+        <?php if (in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)): ?>
+            <button type="button" class="inventory-tab"
+                data-target="archived-ingredients-section">
+                Archived Ingredients
+            </button>
+        <?php endif; ?>
     </div>
     <section id="current-stock-section" class="inventory-section">
         <div class="inventory-heading">
@@ -227,6 +233,11 @@ require_once __DIR__ . '/controllers/inventory.php';
                                             data-id="<?= $item['id'] ?>"
                                             data-name="<?= htmlspecialchars($item['name'], ENT_QUOTES) ?>">
                                             Delete
+                                        </button>
+                                        <button type="button" class="archive-ingredient-btn"
+                                            data-id="<?= $item['id'] ?>"
+                                            data-name="<?= htmlspecialchars($item['name'], ENT_QUOTES) ?>">
+                                            Archive
                                         </button>
                                     <?php endif; ?>
                                     <span class="stock-expand-arrow" aria-hidden="true"></span>
@@ -460,6 +471,50 @@ require_once __DIR__ . '/controllers/inventory.php';
         <div class="inventory-pagination" data-table="movement-history-body"></div>
     </section>
 
+    <?php if (in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)): ?>
+    <section id="archived-ingredients-section" class="inventory-section" hidden>
+        <h2>Archived Ingredients</h2>
+
+        <table class="inventory-table">
+            <thead>
+                <tr>
+                    <th>Ingredient</th>
+                    <th>Unit</th>
+                    <th>Low Stock Threshold</th>
+                    <th>Cost Per Unit</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="archived-ingredients-body">
+                <?php foreach ($archivedIngredients as $ingredient): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($ingredient['name']) ?></td>
+                        <td><?= htmlspecialchars($ingredient['unit']) ?></td>
+                        <td><?= $ingredient['low_stock_threshold'] ?></td>
+                        <td>₱<?= number_format($ingredient['cost_per_unit'], 2) ?></td>
+                        <td>
+                            <button type="button" class="restore-ingredient-btn"
+                                data-id="<?= $ingredient['id'] ?>"
+                                data-name="<?= htmlspecialchars($ingredient['name'], ENT_QUOTES) ?>">
+                                Restore
+                            </button>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+            <?php if (empty($archivedIngredients)): ?>
+                <tbody>
+                    <tr>
+                        <td colspan="5">No archived ingredients.</td>
+                    </tr>
+                </tbody>
+            <?php endif; ?>
+        </table>
+
+        <div class="inventory-pagination"
+            data-table="archived-ingredients-body"></div>
+    </section>
+    <?php endif; ?>
 </main>
 
 <dialog id="stock-dialog">

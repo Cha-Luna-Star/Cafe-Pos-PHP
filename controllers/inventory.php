@@ -2,8 +2,17 @@
 require_once __DIR__ . '/../config/database.php';
 
 $ingredients = $connection->query("
-    SELECT id, name, unit, stock_qty, low_stock_threshold, cost_per_unit
+    SELECT id, name, unit, stock_qty,
+           low_stock_threshold, cost_per_unit
     FROM dbo.ingredients
+    WHERE is_archived = 0
+    ORDER BY name
+")->fetchAll(PDO::FETCH_ASSOC);
+
+$archivedIngredients = $connection->query("
+    SELECT id, name, unit, low_stock_threshold, cost_per_unit
+    FROM dbo.ingredients
+    WHERE is_archived = 1
     ORDER BY name
 ")->fetchAll(PDO::FETCH_ASSOC);
 

@@ -597,7 +597,8 @@ document.querySelectorAll(".inventory-tab").forEach(tab => {
         const tableMap = {
             "current-stock-section": "current-stock-body",
             "batch-history-section": "batch-history-body",
-            "stock-movement-section": "movement-history-body"
+            "stock-movement-section": "movement-history-body",
+            "archived-ingredients-section": "archived-ingredients-body"
         };
 
         paginateInventory(tableMap[target]);
@@ -771,3 +772,75 @@ document.querySelectorAll(".delete-ingredient-btn").forEach(button => {
         }
     });
 });
+
+document.querySelectorAll(".archive-ingredient-btn").forEach(button => {
+    button.addEventListener("click", async event => {
+        event.stopPropagation();
+
+        if (!confirm(`Archive ${button.dataset.name}?`)) return;
+
+        button.disabled = true;
+
+        try {
+            const response = await fetch("controllers/archive_ingredient.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    csrf_token: csrfToken,
+                    id: Number(button.dataset.id)
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Unable to archive ingredient.");
+            }
+
+            window.location.reload();
+
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            button.disabled = false;
+        }
+    });
+});
+
+document.querySelectorAll(".restore-ingredient-btn").forEach(button => {
+    button.addEventListener("click", async () => {
+        if (!confirm(`Restore ${button.dataset.name}?`)) return;
+
+        button.disabled = true;
+
+        try {
+            const response = await fetch("controllers/restore_ingredient.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    csrf_token: csrfToken,
+                    id: Number(button.dataset.id)
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Unable to restore ingredient.");
+            }
+
+            window.location.reload();
+
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            button.disabled = false;
+        }
+    });
+});
+
+paginateInventory("archived-ingredients-body");

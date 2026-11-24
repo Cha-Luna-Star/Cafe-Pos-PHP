@@ -630,3 +630,37 @@ th {
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+.archive-ingredient-btn {
+    background: #d97706;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+}
+.archive-ingredient-btn:hover {
+    background: #b45309;
+}
+.archive-ingredient-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.restore-ingredient-btn {
+    background: #16a34a;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+}
+.restore-ingredient-btn:hover {
+    background: #15803d;
+}
+.restore-ingredient-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
