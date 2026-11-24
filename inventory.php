@@ -164,11 +164,11 @@ require_once __DIR__ . '/includes/inventory_dates.php';
             <table>
                 <thead>
                     <tr>
-                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="0" data-type="text">Type <span>⇅</span></button></th>
-                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="1" data-type="text">Item <span>⇅</span></button></th>
-                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="2" data-type="number">Stock <span>⇅</span></button></th>
-                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="3" data-type="text">Unit <span>⇅</span></button></th>
-                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="4" data-type="text">Status <span>⇅</span></button></th>
+                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="0" data-type="text">Type <span aria-hidden="true">⇅</span></button></th>
+                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="1" data-type="text">Item <span aria-hidden="true">⇅</span></button></th>
+                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="2" data-type="number">Stock <span aria-hidden="true">⇅</span></button></th>
+                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="3" data-type="text">Unit <span aria-hidden="true">⇅</span></button></th>
+                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="4" data-type="text">Status <span aria-hidden="true">⇅</span></button></th>
                     </tr>
                 </thead>
                 <tbody id="current-stock-body">
@@ -204,7 +204,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
                         <tr class="stock-row" data-key="<?= htmlspecialchars($key) ?>">
                             <td><?= htmlspecialchars($item['type']) ?></td>
                             <td><?= htmlspecialchars($item['name']) ?></td>
-                            <td><?= number_format($item['stock'], 2) ?></td>
+                            <td data-number="<?= number_format($item['stock'], 3, '.', '') ?>"><?= number_format($item['stock'], 3) ?></td>
                             <td><?= htmlspecialchars($item['unit']) ?></td>
                             <?php
                             if ($item['stock'] <= 0) {
@@ -219,7 +219,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
                             }
                             ?>
 
-                            <td>
+                            <td data-value="<?= $stockStatus ?>">
                                 <div class="stock-status-wrapper">
                                     <span class="stock-status <?= $statusClass ?>">
                                         <?= $stockStatus ?>
@@ -341,6 +341,10 @@ require_once __DIR__ . '/includes/inventory_dates.php';
                 <option value="no-expiration">No Expiration</option>
                 <option value="invalid-date">Invalid Date</option>
             </select>
+            <label>
+                <input type="checkbox" id="batch-remaining-only">
+                Remaining stock only
+            </label>
             <button type="button" id="clear-batch-filters">Clear</button>
         </div>
 
@@ -348,23 +352,23 @@ require_once __DIR__ . '/includes/inventory_dates.php';
             <table>
             <thead>
                 <tr>
-                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="0" data-type="text">Type <span>⇅</span></button></th>
-                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="1" data-type="text">Item <span>⇅</span></button></th>
-                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="2" data-type="number">Remaining <span>⇅</span></button></th>
-                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="3" data-type="number">Cost/Unit <span>⇅</span></button></th>
-                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="4" data-type="date">Received <span>⇅</span></button></th>
-                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="5" data-type="date">Expiration <span>⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="0" data-type="text">Type <span aria-hidden="true">⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="1" data-type="text">Item <span aria-hidden="true">⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="2" data-type="number">Remaining <span aria-hidden="true">⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="3" data-type="number">Cost/Unit <span aria-hidden="true">⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="4" data-type="date">Received <span aria-hidden="true">⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="5" data-type="date">Expiration <span aria-hidden="true">⇅</span></button></th>
                     <th>Status</th>
-                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="7" data-type="text">Supplier <span>⇅</span></button></th>
-                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="8" data-type="number">Remaining Value <span>⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="7" data-type="text">Supplier <span aria-hidden="true">⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="8" data-type="number">Remaining Value <span aria-hidden="true">⇅</span></button></th>
                 </tr>
             </thead>
                 <tbody id="batch-history-body">
                     <?php foreach ($batches as $batch): ?>
-                        <tr>
+                        <tr data-has-stock="<?= (float)$batch['quantity'] > 0 ? 'true' : 'false' ?>">
                             <td><?= htmlspecialchars($batch['item_type']) ?></td>
                             <td><?= htmlspecialchars($batch['item_name']) ?></td>
-                            <td><?= number_format((float)$batch['quantity'], 2) ?></td>
+                            <td data-number="<?= number_format((float)$batch['quantity'], 3, '.', '') ?>"><?= number_format((float)$batch['quantity'], 3) ?></td>
                             <td>₱<?= number_format((float)$batch['cost_per_unit'], 2) ?></td>
                             <td><?= htmlspecialchars((string)$batch['received_date']) ?></td>
                             <td><?= htmlspecialchars((string)($batch['expiration_date'] ?? 'N/A')) ?></td>
@@ -443,7 +447,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
                                     <?= htmlspecialchars($movement['movement_type']) ?>
                                 </span>
                             </td>
-                            <td><?= number_format((float)$movement['quantity'], 2) ?></td>
+                            <td data-number="<?= number_format((float)$movement['quantity'], 3, '.', '') ?>"><?= number_format((float)$movement['quantity'], 3) ?></td>
                             <td><?= $movement['batch_id'] !== null ? '#' . (int)$movement['batch_id'] : 'N/A' ?></td>
                             <td><?= htmlspecialchars($movement['username'] ?? 'System') ?></td>
                             <td data-date="<?= htmlspecialchars(substr((string)$movement['created_at'], 0, 10)) ?>">

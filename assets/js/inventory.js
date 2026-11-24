@@ -86,6 +86,10 @@ stockForm.addEventListener("submit", async event => {
 
 updateItems();
 
+function inventoryCellValue(cell) {
+    return (cell.dataset.number ?? cell.dataset.value ?? cell.textContent).trim();
+}
+
 document.querySelectorAll(".sort-header").forEach(button => {
     button.addEventListener("click", () => {
         const tbody = document.getElementById(button.dataset.table);
@@ -97,10 +101,12 @@ document.querySelectorAll(".sort-header").forEach(button => {
             `.sort-header[data-table="${button.dataset.table}"]`
         ).forEach(header => {
             header.dataset.direction = "";
+            header.closest("th").removeAttribute("aria-sort");
             header.querySelector("span").textContent = "⇅";
         });
 
         button.dataset.direction = ascending ? "asc" : "desc";
+        button.closest("th").setAttribute("aria-sort", ascending ? "ascending" : "descending");
         button.querySelector("span").textContent = ascending ? "↑" : "↓";
 
         const rows = Array.from(tbody.children).filter(row =>
@@ -109,15 +115,20 @@ document.querySelectorAll(".sort-header").forEach(button => {
         );
 
         function getValue(row) {
-            const text = row.cells[column].textContent.trim();
+            const text = inventoryCellValue(row.cells[column]);
 
             if (type === "number") {
-                return Number(text.replace(/[^0-9.-]/g, "")) || 0;
+                const value = text.replace(/[₱,]/g, "");
+                const number = Number(value);
+                return value !== "" && Number.isFinite(number) ? number : null;
             }
 
             if (type === "date") {
-                const date = Date.parse(text);
-                return Number.isNaN(date) ? null : date;
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
+                const date = new Date(text);
+                return Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== text
+                    ? null
+                    : date.getTime();
             }
 
             return text.toLowerCase();
@@ -166,6 +177,9 @@ document.querySelectorAll(".sort-header").forEach(button => {
         } else {
             tbody.replaceChildren(...rows);
         }
+
+        paginationState[button.dataset.table] = { page: 1 };
+        paginateInventory(button.dataset.table);
     });
 });
 
@@ -222,6 +236,7 @@ function filterBatchHistory() {
     const search = document.getElementById("batch-search").value.trim().toLowerCase();
     const type = document.getElementById("batch-type-filter").value;
     const expiration = document.getElementById("batch-expiration-filter").value;
+    const remainingOnly = document.getElementById("batch-remaining-only").checked;
 
     document.querySelectorAll("#batch-history-body tr").forEach(row => {
         const itemType = row.cells[0].textContent.trim();
@@ -233,7 +248,8 @@ function filterBatchHistory() {
         const matchesExpiration = !expiration ||
             expirationStatus?.classList.contains(expiration);
 
-        row.hidden = !(matchesSearch && matchesType && matchesExpiration);
+        const matchesRemaining = !remainingOnly || row.dataset.hasStock === "true";
+        row.hidden = !(matchesSearch && matchesType && matchesExpiration && matchesRemaining);
         row.dataset.filterHidden = String(row.hidden);
     });
     const hasResults = Array.from(
@@ -257,6 +273,8 @@ function filterBatchHistory() {
     element.addEventListener("change", filterBatchHistory);
 });
 
+document.getElementById("batch-remaining-only").addEventListener("change", filterBatchHistory);
+
 document.getElementById("clear-stock-filters").addEventListener("click", () => {
     document.getElementById("stock-search").value = "";
     document.getElementById("stock-type-filter").value = "";
@@ -268,6 +286,7 @@ document.getElementById("clear-batch-filters").addEventListener("click", () => {
     document.getElementById("batch-search").value = "";
     document.getElementById("batch-type-filter").value = "";
     document.getElementById("batch-expiration-filter").value = "";
+    document.getElementById("batch-remaining-only").checked = false;
     filterBatchHistory();
 });
 
@@ -480,6 +499,13 @@ if (adjustDialog && adjustForm) {
     updateAdjustItems();
 }
 
+function quoteInventoryCsv(value, isNumber = false) {
+    const safeNumber = isNumber && /^-?\d+(?:\.\d+)?$/.test(value);
+    const startsWithFormula = /^[\s\u0000-\u001f\u200b-\u200f\u202a-\u202e\u2060]*[=+\-@＝＋－＠]/u.test(value);
+    const text = !safeNumber && startsWithFormula ? "'" + value : value;
+    return '"' + text.replace(/"/g, '""') + '"';
+}
+
 document.querySelectorAll(".export-csv-btn").forEach(button => {
     button.addEventListener("click", () => {
         const tableId = button.dataset.table;
@@ -487,18 +513,18 @@ document.querySelectorAll(".export-csv-btn").forEach(button => {
         const table = tbody.closest("table");
 
         const headers = Array.from(table.querySelectorAll("thead > tr:first-child > th"))
-            .map(th => th.textContent.replace("⇅", "").trim());
+            .map(th => quoteInventoryCsv(th.textContent.replace(/[⇅↑↓]/g, "").trim()));
 
         const rows = Array.from(tbody.querySelectorAll(":scope > tr"))
             .filter(row =>
                 row.dataset.filterHidden !== "true" &&
                 !row.classList.contains("stock-details")
             )
-            .map(row => Array.from(row.cells).map(cell => cell.textContent.trim()));
+            .map(row => Array.from(row.cells, cell =>
+                quoteInventoryCsv(inventoryCellValue(cell), cell.dataset.number !== undefined)
+            ).join(","));
 
-        const csvRows = [headers, ...rows].map(row =>
-            row.map(value => `"${value.replace(/"/g, '""')}"`).join(",")
-        );
+        const csvRows = [headers.join(","), ...rows];
 
         const blob = new Blob(["\uFEFF" + csvRows.join("\r\n")], {
             type: "text/csv;charset=utf-8;"
@@ -576,7 +602,7 @@ function paginateInventory(tableId) {
     container.appendChild(previous);
 
     const label = document.createElement("span");
-    label.textContent = `Page ${currentPage} of ${totalPages}`;
+    label.textContent = `Page ${currentPage} of ${totalPages} · ${matchingRows.length} ${matchingRows.length === 1 ? "result" : "results"}`;
     container.appendChild(label);
 
     const next = document.createElement("button");
@@ -589,9 +615,8 @@ function paginateInventory(tableId) {
     container.appendChild(next);
 }
 
-["current-stock-body", "batch-history-body", "movement-history-body"].forEach(
-    paginateInventory
-);
+filterCurrentStock();
+filterBatchHistory();
 
 document.querySelectorAll(".inventory-tab").forEach(tab => {
     tab.addEventListener("click", () => {
@@ -631,6 +656,7 @@ document.querySelectorAll(".summary-card[data-filter]").forEach(card => {
             document.getElementById("batch-search").value = "";
             document.getElementById("batch-type-filter").value = "";
             document.getElementById("batch-expiration-filter").value = filter;
+            document.getElementById("batch-remaining-only").checked = true;
 
             filterBatchHistory();
         } else {

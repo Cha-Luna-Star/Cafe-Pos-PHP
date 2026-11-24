@@ -233,7 +233,7 @@ th {
     gap: 12px;
     margin-bottom: 20px;
 }
-.inventory-filters input,
+.inventory-filters input:not([type="checkbox"]),
 .inventory-filters select {
     padding: 10px 14px;
     border: 1px solid #ddd;
@@ -242,7 +242,7 @@ th {
     font: inherit;
     font-size: 14px;
 }
-.inventory-filters input {
+.inventory-filters input:not([type="checkbox"]) {
     flex: 1;
     min-width: 200px;
 }
@@ -264,7 +264,7 @@ th {
         flex-direction: column;
         align-items: stretch;
     }
-    .inventory-filters input,
+    .inventory-filters input:not([type="checkbox"]),
     .inventory-filters select,
     .inventory-filters button {
         width: 100%;
