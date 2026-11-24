@@ -87,7 +87,7 @@ try {
 
     $today = inventoryToday()->format('Y-m-d');
     $ingredientBatchAvailable = "(
-        expiration_date IS NULL OR (
+        NULLIF(LTRIM(RTRIM(expiration_date)), '') IS NULL OR (
             DATALENGTH(expiration_date) = 20
             AND expiration_date = CONVERT(char(10), TRY_CONVERT(date, expiration_date, 23), 23)
             AND TRY_CONVERT(date, expiration_date, 23) >= CONVERT(date, ?, 23)
@@ -279,25 +279,35 @@ $validatedItems[] = [
     }
 
 
+    $ingredientsInOrder = [];
     ksort($ingredientNeeds, SORT_NUMERIC);
     foreach ($ingredientNeeds as $ingredientId => $needed) {
         $needed = round($needed, 3);
 
         $stmt = $connection->prepare("
-            SELECT stock_qty
+            SELECT name, unit, stock_qty
             FROM dbo.ingredients WITH (UPDLOCK, HOLDLOCK)
             WHERE id = ? AND is_archived = 0
         ");
         $stmt->execute([$ingredientId]);
 
-        $stock = $stmt->fetchColumn();
+        $ingredient = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt->closeCursor();
 
-        if ($stock === false) {
-            failCheckout('An ingredient is unavailable.');
+        if (!$ingredient) {
+            failCheckout("Ingredient #$ingredientId is no longer available.");
         }
 
+        $ingredientsInOrder[$ingredientId] = $ingredient['name'];
+        $stock = $ingredient['stock_qty'];
+        $unit = trim($ingredient['unit'] ?? '');
+        $unit = $unit === '' ? '' : " $unit";
+        $formatQuantity = static fn(float $value): string => rtrim(rtrim(number_format($value, 3, '.', ''), '0'), '.');
+        $requiredQuantity = $formatQuantity($needed) . $unit;
+
         if ($stock === null || (float)$stock + 0.000001 < $needed) {
-            failCheckout('Insufficient ingredient stock.');
+            $recordedQuantity = $formatQuantity((float)$stock) . $unit;
+            failCheckout("Not enough {$ingredient['name']}. Need $requiredQuantity, with $recordedQuantity recorded in Inventory.");
         }
 
         $stmt = $connection->prepare("
@@ -310,9 +320,11 @@ $validatedItems[] = [
         $stmt->execute([$ingredientId, $today]);
 
         $batchStock = (float)$stmt->fetchColumn();
+        $stmt->closeCursor();
 
         if ($batchStock + 0.000001 < $needed) {
-            failCheckout('Insufficient usable ingredient batch stock.');
+            $usableQuantity = $formatQuantity($batchStock) . $unit;
+            failCheckout("Not enough usable {$ingredient['name']}. Need $requiredQuantity, with $usableQuantity in usable batches. Check Batch History in Inventory.");
         }
     }
 
@@ -466,7 +478,7 @@ $validatedItems[] = [
         $stmt->execute([$needed, $needed, $ingredientId, $needed]);
 
         if ($stmt->rowCount() !== 1) {
-            failCheckout('Insufficient ingredient stock.');
+            failCheckout("Not enough {$ingredientsInOrder[$ingredientId]} to complete checkout.");
         }
 
         $stmt = $connection->prepare("
@@ -521,7 +533,7 @@ $validatedItems[] = [
         }
 
         if ($remaining > 0.000001) {
-            failCheckout('Insufficient usable ingredient batch stock.');
+            failCheckout("Not enough usable {$ingredientsInOrder[$ingredientId]} to complete checkout. Check Batch History in Inventory.");
         }
     }
 

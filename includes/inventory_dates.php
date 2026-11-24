@@ -18,7 +18,7 @@ function parseInventoryDate(string $value): ?DateTimeImmutable
 
 function batchExpirationStatus(?string $value, DateTimeImmutable $today): string
 {
-    if ($value === null) {
+    if ($value === null || trim($value, ' ') === '') {
         return 'no-expiration';
     }
 
