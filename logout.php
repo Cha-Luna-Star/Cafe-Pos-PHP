@@ -7,6 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once __DIR__ . '/includes/auth_session.php';
 require_once __DIR__ . '/includes/mutation_request.php';
+require_once __DIR__ . '/includes/audit_event.php';
 
 startAuthSession();
 
@@ -15,8 +16,10 @@ if (!isset($_SESSION['user_id']) || !hasValidCsrfToken($_POST['csrf_token'] ?? n
     exit('Invalid logout request.');
 }
 
-$_SESSION = [];
 session_destroy();
+// The request still has the actor's identity after the stored session is removed.
+recordAuthenticationAuditEvent('Logout', 'Signed out.');
+$_SESSION = [];
 
 $cookie = session_get_cookie_params();
 setcookie(session_name(), '', [

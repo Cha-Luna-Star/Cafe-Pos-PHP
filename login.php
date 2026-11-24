@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/auth_session.php';
 require_once __DIR__ . '/includes/mutation_request.php';
+require_once __DIR__ . '/includes/audit_event.php';
 
 startAuthSession();
 
@@ -68,6 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['role'] = $user['role'];
                 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                session_write_close();
+                recordAuthenticationAuditEvent('Login', 'Signed in.', $connection);
                 header('Location: dashboard.php');
                 exit;
             }
