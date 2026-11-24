@@ -287,7 +287,8 @@ th {
 }
 
 #movement-history-body tr[hidden],
-#movement-no-results[hidden] {
+#movement-no-results[hidden],
+#correction-no-results[hidden] {
     display: none;
 }
 
@@ -762,4 +763,10 @@ th {
 }
 #reconcile-message {
     color: #dc2626;
+}
+
+.correction-reason {
+    min-width: 12rem;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
 }

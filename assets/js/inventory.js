@@ -599,7 +599,8 @@ document.querySelectorAll(".inventory-tab").forEach(tab => {
             "batch-history-section": "batch-history-body",
             "stock-movement-section": "movement-history-body",
             "archived-ingredients-section": "archived-ingredients-body",
-            "reconciliation-section": "reconciliation-body"
+            "reconciliation-section": "reconciliation-body",
+            "reconciliation-history-section": "reconciliation-history-body"
         };
 
         paginateInventory(tableMap[target]);
@@ -986,4 +987,46 @@ if (history.state?.reconciliationFilters) {
         });
     document.querySelector('.inventory-tab[data-target="reconciliation-section"]').click();
     filterReconciliation();
+}
+
+const correctionHistory = document.getElementById("reconciliation-history-body");
+
+if (correctionHistory) {
+    const searchInput = document.getElementById("correction-search");
+    const typeFilter = document.getElementById("correction-type-filter");
+    const dateFrom = document.getElementById("correction-date-from");
+    const dateTo = document.getElementById("correction-date-to");
+    const noResults = document.getElementById("correction-no-results");
+    const filters = [searchInput, typeFilter, dateFrom, dateTo];
+
+    function filterCorrectionHistory() {
+        const search = searchInput.value.trim().toLowerCase();
+        let matches = 0;
+
+        for (const row of correctionHistory.rows) {
+            const { type, date } = row.dataset;
+            const matchesSearch = !search || Array.from(row.querySelectorAll(".correction-search-value"))
+                .some(cell => cell.textContent.toLowerCase().includes(search));
+            const visible = matchesSearch &&
+                (!typeFilter.value || type === typeFilter.value) &&
+                (!dateFrom.value || date >= dateFrom.value) &&
+                (!dateTo.value || (date && date <= dateTo.value));
+
+            row.dataset.filterHidden = String(!visible);
+            matches += Number(Boolean(visible));
+        }
+
+        noResults.hidden = matches > 0;
+        paginationState[correctionHistory.id] = { page: 1 };
+        paginateInventory(correctionHistory.id);
+    }
+
+    searchInput.addEventListener("input", filterCorrectionHistory);
+    [typeFilter, dateFrom, dateTo].forEach(input => {
+        input.addEventListener("change", filterCorrectionHistory);
+    });
+    document.getElementById("clear-correction-filters").addEventListener("click", () => {
+        filters.forEach(input => { input.value = ""; });
+        filterCorrectionHistory();
+    });
 }

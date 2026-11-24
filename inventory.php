@@ -10,6 +10,7 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
+$canManageInventory = in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true);
 require_once __DIR__ . '/controllers/inventory.php';
 ?>
 <!DOCTYPE html>
@@ -29,7 +30,7 @@ require_once __DIR__ . '/controllers/inventory.php';
 
 <header class="page-header">
     <h1>Inventory Management</h1>
-    <?php if (in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)): ?>
+    <?php if ($canManageInventory): ?>
         <div class="inventory-actions">
             <button type="button" id="stock-in-btn">+ Stock In</button>
             <button type="button" id="adjust-stock-btn">Adjust Stock</button>
@@ -122,16 +123,19 @@ require_once __DIR__ . '/controllers/inventory.php';
         </div>
     </section>
     <div class="inventory-tabs">
-        <?php if (in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)): ?>
+        <?php if ($canManageInventory): ?>
             <button type="button" class="inventory-tab"
                 data-target="reconciliation-section">
                 Reconciliation (<?= count($discrepancies) ?>)
+            </button>
+            <button type="button" class="inventory-tab" data-target="reconciliation-history-section">
+                Reconciliation History
             </button>
         <?php endif; ?>
         <button type="button" class="inventory-tab active" data-target="current-stock-section">Current Stock</button>
         <button type="button" class="inventory-tab" data-target="batch-history-section">Batch History</button>
         <button type="button" class="inventory-tab" data-target="stock-movement-section">Stock Movements</button>
-        <?php if (in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)): ?>
+        <?php if ($canManageInventory): ?>
             <button type="button" class="inventory-tab"
                 data-target="archived-ingredients-section">
                 Archived Ingredients
@@ -477,7 +481,7 @@ require_once __DIR__ . '/controllers/inventory.php';
         <div class="inventory-pagination" data-table="movement-history-body"></div>
     </section>
 
-    <?php if (in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)): ?>
+    <?php if ($canManageInventory): ?>
     <section id="archived-ingredients-section" class="inventory-section" hidden>
         <h2>Archived Ingredients</h2>
 
@@ -521,7 +525,7 @@ require_once __DIR__ . '/controllers/inventory.php';
             data-table="archived-ingredients-body"></div>
     </section>
     <?php endif; ?>
-    <?php if (in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)): ?>
+    <?php if ($canManageInventory): ?>
     <section id="reconciliation-section" class="inventory-section" hidden>
         <h2>Stock Reconciliation</h2>
 
@@ -582,7 +586,7 @@ require_once __DIR__ . '/controllers/inventory.php';
                             </span>
                         </td>
                         <td>
-                            <?php if (!$matched && in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)): ?>
+                            <?php if (!$matched && $canManageInventory): ?>
                                 <button type="button" class="reconcile-btn"
                                     data-id="<?= $item['id'] ?>"
                                     data-type="<?= htmlspecialchars($item['item_type']) ?>"
@@ -608,6 +612,64 @@ require_once __DIR__ . '/controllers/inventory.php';
         <div class="inventory-pagination"
             data-table="reconciliation-body"></div>
     </section>
+    <section id="reconciliation-history-section" class="inventory-section" hidden>
+        <h2>Reconciliation History</h2>
+
+        <div class="inventory-filters">
+            <input type="search" id="correction-search" aria-label="Search corrections by item, user, or reason"
+                placeholder="Search item, user, or reason">
+
+            <select id="correction-type-filter" aria-label="Item type">
+                <option value="">All Item Types</option>
+                <option value="Ingredient">Ingredient</option>
+                <option value="Product">Product</option>
+            </select>
+
+            <input type="date" id="correction-date-from" aria-label="Correction start date">
+            <input type="date" id="correction-date-to" aria-label="Correction end date">
+            <button type="button" id="clear-correction-filters">Clear</button>
+        </div>
+
+        <div class="inventory-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Type</th>
+                        <th scope="col">Item</th>
+                        <th scope="col">Previous Stock</th>
+                        <th scope="col">Corrected Stock</th>
+                        <th scope="col">User</th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Reason</th>
+                    </tr>
+                </thead>
+                <tbody id="reconciliation-history-body">
+                    <?php foreach ($reconciliationHistory as $correction): ?>
+                        <tr data-type="<?= htmlspecialchars($correction['item_type']) ?>"
+                            data-date="<?= htmlspecialchars(substr($correction['corrected_at'] ?? '', 0, 10)) ?>">
+                            <td><?= htmlspecialchars($correction['item_type']) ?></td>
+                            <td class="correction-search-value"><?= htmlspecialchars($correction['item_name'] ?? 'Item #' . (int)$correction['item_id']) ?></td>
+                            <td><?= htmlspecialchars($correction['previous_stock']) ?></td>
+                            <td><?= htmlspecialchars($correction['corrected_stock']) ?></td>
+                            <td class="correction-search-value"><?= htmlspecialchars($correction['username'] ?? 'User #' . (int)$correction['user_id']) ?></td>
+                            <td><?= htmlspecialchars($correction['corrected_at'] ?? 'Unavailable') ?></td>
+                            <td class="correction-search-value correction-reason"><?= htmlspecialchars($correction['reason']) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+                <tbody id="correction-no-results" <?= $reconciliationHistory ? 'hidden' : '' ?>>
+                    <tr>
+                        <td colspan="7" class="no-results"><?= $reconciliationHistory
+                            ? 'No matching corrections found.'
+                            : 'No stock corrections have been recorded.' ?></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="inventory-pagination" data-table="reconciliation-history-body"></div>
+    </section>
+
     <?php endif; ?>
 </main>
 
@@ -662,7 +724,7 @@ require_once __DIR__ . '/controllers/inventory.php';
     </form>
 </dialog>
 
-<?php if (in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)): ?>
+<?php if ($canManageInventory): ?>
 <dialog id="adjust-stock-dialog">
     <form id="adjust-stock-form">
         <h2>Stock Adjustment</h2>
@@ -736,7 +798,7 @@ require_once __DIR__ . '/controllers/inventory.php';
 </dialog>
 <?php endif; ?>
 
-<?php if (in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)): ?>
+<?php if ($canManageInventory): ?>
 <dialog id="ingredient-dialog">
     <form id="ingredient-form">
         <h2 id="ingredient-dialog-title">Add Ingredient</h2>
@@ -771,7 +833,7 @@ require_once __DIR__ . '/controllers/inventory.php';
 </dialog>
 <?php endif; ?>
 
-<?php if (in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)): ?>
+<?php if ($canManageInventory): ?>
 <dialog id="reconcile-dialog">
     <form id="reconcile-form">
         <h2>Resolve Stock Mismatch</h2>

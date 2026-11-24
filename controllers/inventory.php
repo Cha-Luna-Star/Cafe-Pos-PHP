@@ -117,3 +117,25 @@ $discrepancies = array_filter(
     $reconciliation,
     fn($item) => abs((float)$item['difference']) >= 0.001
 );
+
+if (!empty($canManageInventory)) {
+    $reconciliationHistory = $connection->query("
+        SELECT
+            r.item_type,
+            r.item_id,
+            COALESCE(i.name, m.name) AS item_name,
+            r.previous_stock,
+            r.corrected_stock,
+            r.reason,
+            r.user_id,
+            u.username,
+            CONVERT(varchar(19), r.created_at, 120) AS corrected_at
+        FROM dbo.stock_reconciliations r
+        LEFT JOIN dbo.ingredients i
+            ON r.item_type = 'Ingredient' AND r.item_id = i.id
+        LEFT JOIN dbo.menu_items m
+            ON r.item_type = 'Product' AND r.item_id = m.id
+        LEFT JOIN dbo.users u ON r.user_id = u.id
+        ORDER BY r.created_at DESC, r.id DESC
+    ")->fetchAll(PDO::FETCH_ASSOC);
+}
