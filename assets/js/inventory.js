@@ -687,6 +687,10 @@ document.querySelectorAll(".summary-card[data-filter]").forEach(card => {
     });
 });
 
+const requestedInventoryFilter = new URLSearchParams(window.location.search).get("filter");
+Array.from(document.querySelectorAll(".summary-card[data-filter]"))
+    .find(card => card.dataset.filter === requestedInventoryFilter)?.click();
+
 const ingredientDialog = document.getElementById("ingredient-dialog");
 const ingredientForm = document.getElementById("ingredient-form");
 

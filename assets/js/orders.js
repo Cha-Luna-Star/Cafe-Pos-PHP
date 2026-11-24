@@ -109,6 +109,12 @@ document.addEventListener("DOMContentLoaded", () => {
         filterOrders();
     });
 
+    const requestedStatus = new URLSearchParams(window.location.search).get("status");
+    if (Array.from(statusFilter.options).some(option => option.value === requestedStatus)) {
+        statusFilter.value = requestedStatus;
+        filterOrders();
+    }
+
     let sortColumn = -1;
     let sortAscending = true;
 
