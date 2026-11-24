@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/product_stock.php';
 
 $ingredients = $connection->query("
     SELECT id, name, unit, stock_qty,
@@ -16,12 +17,26 @@ $archivedIngredients = $connection->query("
     ORDER BY name
 ")->fetchAll(PDO::FETCH_ASSOC);
 
+$productThresholdColumn = hasProductLowStockThreshold($connection)
+    ? 'low_stock_threshold'
+    : DEFAULT_PRODUCT_LOW_STOCK_THRESHOLD;
+
 $products = $connection->query("
-    SELECT id, name, stock_qty
+    SELECT id, name, stock_qty, $productThresholdColumn AS low_stock_threshold
     FROM dbo.menu_items
     WHERE is_archived = 0
     ORDER BY name
 ")->fetchAll(PDO::FETCH_ASSOC);
+
+$batchValueExpression = "
+    CASE
+        WHEN b.quantity = 0 THEN 0
+        WHEN TRY_CONVERT(decimal(18,3), b.quantity) > 0
+            AND TRY_CONVERT(decimal(18,6), b.cost_per_unit) > 0
+        THEN ROUND(TRY_CONVERT(decimal(18,3), b.quantity) *
+            TRY_CONVERT(decimal(18,6), b.cost_per_unit), 2)
+    END AS remaining_value
+";
 
 $batches = $connection->query("
     SELECT
@@ -31,6 +46,7 @@ $batches = $connection->query("
         i.name AS item_name,
         b.quantity,
         b.cost_per_unit,
+        $batchValueExpression,
         b.received_date,
         b.expiration_date,
         b.supplier
@@ -46,12 +62,25 @@ $batches = $connection->query("
         m.name AS item_name,
         b.quantity,
         b.cost_per_unit,
+        $batchValueExpression,
         CONVERT(NVARCHAR(30), b.received_date, 23),
         CONVERT(NVARCHAR(30), b.expiration_date, 23),
         b.supplier
     FROM dbo.product_batches b
     JOIN dbo.menu_items m ON b.menu_item_id = m.id
 ")->fetchAll(PDO::FETCH_ASSOC);
+
+$inventoryValue = ['Ingredient' => '0.00', 'Product' => '0.00'];
+$uncostedBatches = 0;
+foreach ($batches as $batch) {
+    if ($batch['remaining_value'] === null && (float)$batch['quantity'] > 0) {
+        $uncostedBatches++;
+    } elseif ($batch['remaining_value'] !== null) {
+        $type = $batch['item_type'];
+        $inventoryValue[$type] = bcadd($inventoryValue[$type], $batch['remaining_value'], 2);
+    }
+}
+$totalInventoryValue = bcadd($inventoryValue['Ingredient'], $inventoryValue['Product'], 2);
 
 $movements = $connection->query("
     SELECT

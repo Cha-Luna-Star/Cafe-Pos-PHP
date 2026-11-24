@@ -1,11 +1,15 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/product_stock.php';
 
 $categories = $connection->query("
     SELECT id, name
     FROM dbo.categories
     ORDER BY name
 ")->fetchAll(PDO::FETCH_ASSOC);
+
+$canSetProductThreshold = hasProductLowStockThreshold($connection);
+$productThresholdColumn = $canSetProductThreshold ? 'm.low_stock_threshold' : DEFAULT_PRODUCT_LOW_STOCK_THRESHOLD;
 
 $menuItems = $connection->query("
     SELECT
@@ -16,6 +20,7 @@ $menuItems = $connection->query("
         c.name AS category_name,
         m.available,
         m.stock_qty,
+        $productThresholdColumn AS low_stock_threshold,
         m.discount,
         m.has_temp_option,
         m.has_sizes,

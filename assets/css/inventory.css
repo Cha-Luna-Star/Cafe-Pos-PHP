@@ -770,3 +770,31 @@ th {
     overflow-wrap: anywhere;
     white-space: pre-wrap;
 }
+
+.inventory-valuation {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    padding: 16px;
+}
+.inventory-valuation h3 {
+    margin: 0;
+}
+.inventory-valuation dl {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 32px;
+    margin: 12px 0;
+}
+.inventory-valuation dt,
+.inventory-valuation p {
+    color: #555;
+}
+.inventory-valuation dd {
+    margin: 4px 0 0;
+    font-weight: bold;
+}
+.inventory-valuation p {
+    margin: 6px 0 0;
+}

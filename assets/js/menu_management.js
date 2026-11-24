@@ -5,6 +5,7 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 const itemId = document.getElementById("item-id");
 const itemName = document.getElementById("item-name");
 const itemPrice = document.getElementById("item-price");
+const itemThreshold = document.getElementById("item-low-stock-threshold");
 const itemCategory = document.getElementById("item-category");
 const itemAvailable = document.getElementById("item-available");
 const itemTemperature = document.getElementById("item-temperature");
@@ -38,6 +39,7 @@ document.querySelectorAll(".edit-btn").forEach(button => {
         itemId.value = item.id;
         itemName.value = item.name;
         itemPrice.value = item.price;
+        itemThreshold.value = item.low_stock_threshold;
         itemCategory.value = item.category_id;
         itemAvailable.checked = item.available === 1;
         itemTemperature.checked = item.has_temp_option === 1;
@@ -71,6 +73,7 @@ form.addEventListener("submit", async event => {
                 id: Number(itemId.value),
                 name: itemName.value.trim(),
                 price: Number(itemPrice.value),
+                low_stock_threshold: itemThreshold.disabled ? undefined : itemThreshold.valueAsNumber,
                 category_id: Number(itemCategory.value),
                 available: itemAvailable.checked,
                 has_temp_option: itemTemperature.checked

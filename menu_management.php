@@ -61,6 +61,7 @@ require_once __DIR__ . '/controllers/menu_management.php';
                     <th>Category</th>
                     <th>Price</th>
                     <th>Stock</th>
+                    <th>Low Stock Threshold</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -81,6 +82,7 @@ require_once __DIR__ . '/controllers/menu_management.php';
                         <td><?= htmlspecialchars($item['category_name'] ?? 'Uncategorized') ?></td>
                         <td>₱<?= number_format((float)$item['price'], 2) ?></td>
                         <td><?= (int)$item['stock_qty'] ?></td>
+                        <td><?= (int)$item['low_stock_threshold'] ?></td>
                         <td>
                             <span class="status <?= strtolower($status) ?>">
                                 <?= $status ?>
@@ -95,6 +97,7 @@ require_once __DIR__ . '/controllers/menu_management.php';
                                     'name' => $item['name'],
                                     'price' => (float)$item['price'],
                                     'category_id' => (int)$item['category_id'],
+                                    'low_stock_threshold' => (int)$item['low_stock_threshold'],
                                     'available' => (int)$item['available'],
                                     'has_temp_option' => (int)$item['has_temp_option']
                                 ]), ENT_QUOTES, 'UTF-8') ?>"
@@ -142,6 +145,13 @@ require_once __DIR__ . '/controllers/menu_management.php';
 
         <label for="item-price">Price (₱)</label>
         <input type="number" id="item-price" min="0" step="0.01" required>
+
+        <label for="item-low-stock-threshold">Low Stock Threshold</label>
+        <input type="number" id="item-low-stock-threshold" min="0" max="2147483647" step="1"
+            value="<?= DEFAULT_PRODUCT_LOW_STOCK_THRESHOLD ?>" <?= $canSetProductThreshold ? 'required' : 'disabled' ?>>
+        <?php if (!$canSetProductThreshold): ?>
+            <small>Apply the product threshold database migration to edit this value.</small>
+        <?php endif; ?>
 
         <label for="item-category">Category</label>
         <select id="item-category" required>

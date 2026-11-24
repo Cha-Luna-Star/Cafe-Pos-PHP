@@ -15,6 +15,7 @@ if (!in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)) {
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/product_stock.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -43,6 +44,16 @@ if ($name === '' || strlen($name) > 150 ||
     exit;
 }
 
+$threshold = null;
+if (array_key_exists('low_stock_threshold', $data)) {
+    $threshold = $data['low_stock_threshold'];
+    if (!is_int($threshold) || $threshold < 0 || $threshold > 2147483647) {
+        http_response_code(422);
+        echo json_encode(["success" => false, "message" => "Low stock threshold must be a nonnegative whole number."]);
+        exit;
+    }
+}
+
 $categoryStmt = $connection->prepare(
     "SELECT COUNT(*) FROM dbo.categories WHERE id = ?"
 );
@@ -61,7 +72,20 @@ $hasTemp = $isDrink && !empty($data['has_temp_option']) ? 1 : 0;
 $hasSizes = $isDrink ? 1 : 0;
 
 try {
+    $canSetProductThreshold = hasProductLowStockThreshold($connection);
+    if ($threshold !== null && !$canSetProductThreshold) {
+        http_response_code(409);
+        echo json_encode(["success" => false, "message" => "Apply the product threshold database migration first."]);
+        exit;
+    }
+
+    $params = [$name, (float)$price, $categoryId, $available, $hasTemp, $hasSizes];
     if ($id > 0) {
+        $thresholdUpdate = '';
+        if ($canSetProductThreshold && $threshold !== null) {
+            $thresholdUpdate = ', low_stock_threshold = ?';
+            $params[] = $threshold;
+        }
         $stmt = $connection->prepare("
             UPDATE dbo.menu_items
             SET name = ?,
@@ -69,28 +93,30 @@ try {
                 category_id = ?,
                 available = ?,
                 has_temp_option = ?,
-                has_sizes = ?
+                has_sizes = ?$thresholdUpdate
             WHERE id = ?
         ");
 
-        $stmt->execute([
-            $name, (float)$price, $categoryId,
-            $available, $hasTemp, $hasSizes, $id
-        ]);
+        $params[] = $id;
+        $stmt->execute($params);
 
         $message = "Item updated successfully.";
     } else {
+        $thresholdColumn = '';
+        $thresholdPlaceholder = '';
+        if ($canSetProductThreshold && $threshold !== null) {
+            $thresholdColumn = ', low_stock_threshold';
+            $thresholdPlaceholder = ', ?';
+            $params[] = $threshold;
+        }
         $stmt = $connection->prepare("
             INSERT INTO dbo.menu_items
             (name, price, category_id, available, stock_qty,
-             discount, has_temp_option, has_sizes, is_archived)
-            VALUES (?, ?, ?, ?, 0, 0, ?, ?, 0)
+             discount, has_temp_option, has_sizes, is_archived$thresholdColumn)
+            VALUES (?, ?, ?, ?, 0, 0, ?, ?, 0$thresholdPlaceholder)
         ");
 
-        $stmt->execute([
-            $name, (float)$price, $categoryId,
-            $available, $hasTemp, $hasSizes
-        ]);
+        $stmt->execute($params);
 
         $message = "Item added successfully.";
     }

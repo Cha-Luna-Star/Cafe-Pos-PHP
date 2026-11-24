@@ -64,7 +64,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
 
         if ($stock <= 0) {
             $outOfStockCount++;
-        } elseif ($stock <= 10) {
+        } elseif ($stock <= (int)$item['low_stock_threshold']) {
             $lowStockCount++;
         }
     }
@@ -86,6 +86,11 @@ require_once __DIR__ . '/includes/inventory_dates.php';
         }
     }
     unset($batch);
+
+    $formatBatchValue = static function (string $value): string {
+        [$whole, $cents] = explode('.', bcadd($value, '0', 2));
+        return '&#8369;' . preg_replace('/\B(?=(\d{3})+$)/', ',', $whole) . '.' . $cents;
+    };
     ?>
 
     <section class="inventory-summary">
@@ -189,7 +194,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
                             'name' => $item['name'],
                             'stock' => (float)$item['stock_qty'],
                             'unit' => 'pcs',
-                            'threshold' => 10
+                            'threshold' => (int)$item['low_stock_threshold']
                         ];
                     }
 
@@ -308,6 +313,19 @@ require_once __DIR__ . '/includes/inventory_dates.php';
             <button type="button" class="export-csv-btn" data-table="batch-history-body" data-filename="batch_history.csv">Export CSV</button>
         </div>
 
+        <section class="inventory-valuation" aria-labelledby="inventory-valuation-heading">
+            <h3 id="inventory-valuation-heading">Inventory Valuation</h3>
+            <dl>
+                <div><dt>Ingredients</dt><dd><?= $formatBatchValue($inventoryValue['Ingredient']) ?></dd></div>
+                <div><dt>Products</dt><dd><?= $formatBatchValue($inventoryValue['Product']) ?></dd></div>
+                <div><dt>Total at recorded cost</dt><dd><?= $formatBatchValue($totalInventoryValue) ?></dd></div>
+            </dl>
+            <p>Uses remaining quantities at their batch cost, including expired and archived stock still on hand.</p>
+            <?php if ($uncostedBatches > 0): ?>
+                <p>Excluded from the total: <?= $uncostedBatches ?> remaining batches without a usable cost.</p>
+            <?php endif; ?>
+        </section>
+
         <div class="inventory-filters">
             <input type="search" id="batch-search" placeholder="Search batches...">
             <select id="batch-type-filter">
@@ -321,7 +339,6 @@ require_once __DIR__ . '/includes/inventory_dates.php';
                 <option value="expiring-soon">Expiring Soon</option>
                 <option value="expired">Expired</option>
                 <option value="no-expiration">No Expiration</option>
-                <option value="invalid-date">Invalid Date</option>
                 <option value="invalid-date">Invalid Date</option>
             </select>
             <button type="button" id="clear-batch-filters">Clear</button>
@@ -339,6 +356,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
                     <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="5" data-type="date">Expiration <span>⇅</span></button></th>
                     <th>Status</th>
                     <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="7" data-type="text">Supplier <span>⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="8" data-type="number">Remaining Value <span>⇅</span></button></th>
                 </tr>
             </thead>
                 <tbody id="batch-history-body">
@@ -356,12 +374,13 @@ require_once __DIR__ . '/includes/inventory_dates.php';
                                 </span>
                             </td>
                             <td><?= htmlspecialchars((string)($batch['supplier'] ?? 'N/A')) ?></td>
+                            <td><?= $batch['remaining_value'] === null ? 'Unavailable' : $formatBatchValue($batch['remaining_value']) ?></td>
                             </tr>
                             <?php endforeach; ?>
                 </tbody>
                 <tbody id="batch-no-results" hidden>
                     <tr>
-                        <td colspan="8" class="no-results">No matching batches found.</td>
+                        <td colspan="9" class="no-results">No matching batches found.</td>
                     </tr>
                 </tbody>
             </table>
