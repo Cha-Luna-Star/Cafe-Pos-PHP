@@ -27,13 +27,25 @@
     border-radius: 6px;
 }
 .sidebar a:hover,
+.sidebar .logout button:hover,
 .sidebar a.active {
     background: #76543b;
     color: white;
 }
 .sidebar .logout {
     margin-top: auto;
+}
+.sidebar .logout button {
+    display: block;
+    width: 100%;
+    padding: 13px;
+    border: 0;
+    border-radius: 6px;
     background: #49352a;
+    color: #ddd;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
 }
 body {
     padding-left: 240px;

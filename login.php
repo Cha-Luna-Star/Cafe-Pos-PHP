@@ -1,5 +1,8 @@
 <?php
-session_start();
+require_once __DIR__ . '/includes/auth_session.php';
+require_once __DIR__ . '/includes/mutation_request.php';
+
+startAuthSession();
 
 if (isset($_SESSION['user_id'])) {
     header('Location: dashboard.php');
@@ -12,7 +15,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = is_string($_POST['username'] ?? null) ? trim($_POST['username']) : '';
     $password = is_string($_POST['password'] ?? null) ? $_POST['password'] : '';
 
-    if ($username === '' || $password === '') {
+    if (!hasValidCsrfToken($_POST['csrf_token'] ?? null)) {
+        http_response_code(403);
+        $error = 'Your sign-in form expired. Please try again.';
+    } elseif ($username === '' || $password === '') {
         $error = 'Username and password are required.';
     } else {
         try {
@@ -97,6 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <form method="POST" action="login.php">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(sessionCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
             <label for="login-username">Username</label>
             <input type="text" id="login-username" name="username" autocomplete="username" required>
 
