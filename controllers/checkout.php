@@ -31,6 +31,7 @@ if (
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/inventory_dates.php';
 
 function failCheckout(string $message): void {
     throw new RuntimeException($message);
@@ -84,6 +85,15 @@ try {
     if ($payment !== 'Cash' && $reference === '') {
         failCheckout('Payment reference is required.');
     }
+
+    $today = inventoryToday()->format('Y-m-d');
+    $ingredientBatchAvailable = "(
+        expiration_date IS NULL OR (
+            DATALENGTH(expiration_date) = 20
+            AND expiration_date = CONVERT(char(10), TRY_CONVERT(date, expiration_date, 23), 23)
+            AND TRY_CONVERT(date, expiration_date, 23) >= CONVERT(date, ?, 23)
+        )
+    )";
 
     $connection->beginTransaction();
 
@@ -294,13 +304,14 @@ $validatedItems[] = [
             FROM dbo.inventory_batches WITH (UPDLOCK, HOLDLOCK)
             WHERE ingredient_id = ?
             AND quantity > 0
+            AND $ingredientBatchAvailable
         ");
-        $stmt->execute([$ingredientId]);
+        $stmt->execute([$ingredientId, $today]);
 
         $batchStock = (float)$stmt->fetchColumn();
 
         if ($batchStock + 0.000001 < $needed) {
-            failCheckout('Insufficient inventory batch stock.');
+            failCheckout('Insufficient usable ingredient batch stock.');
         }
     }
 
@@ -381,7 +392,7 @@ $validatedItems[] = [
             AND quantity > 0
             AND (
                 expiration_date IS NULL
-                OR expiration_date >= CAST(GETDATE() AS DATE)
+                OR expiration_date >= CONVERT(date, ?, 23)
             )
             ORDER BY
                 CASE WHEN expiration_date IS NULL THEN 1 ELSE 0 END,
@@ -390,7 +401,7 @@ $validatedItems[] = [
                 id ASC
         ");
 
-        $stmt->execute([$id]);
+        $stmt->execute([$id, $today]);
         $batches = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $remaining = $quantity;
@@ -468,9 +479,10 @@ $validatedItems[] = [
             SELECT id, quantity
             FROM dbo.inventory_batches WITH (UPDLOCK, HOLDLOCK)
             WHERE ingredient_id = ? AND quantity > 0
-            ORDER BY received_date ASC, id ASC
+                AND $ingredientBatchAvailable
+            ORDER BY TRY_CONVERT(date, received_date, 23) ASC, id ASC
         ");
-        $stmt->execute([$ingredientId]);
+        $stmt->execute([$ingredientId, $today]);
         $batches = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $remaining = $needed;
@@ -508,7 +520,7 @@ $validatedItems[] = [
         }
 
         if ($remaining > 0.000001) {
-            failCheckout('Insufficient inventory batch stock.');
+            failCheckout('Insufficient usable ingredient batch stock.');
         }
     }
 

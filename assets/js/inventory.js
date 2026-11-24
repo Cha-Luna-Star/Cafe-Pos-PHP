@@ -348,6 +348,7 @@ if (adjustDialog && adjustForm) {
     const adjustBatch = document.getElementById("adjust-batch");
     const batchContainer = document.getElementById("adjust-batch-container");
     const adjustAction = document.getElementById("adjust-action");
+    const adjustMovement = document.getElementById("adjust-movement");
     const batchOptions = Array.from(adjustBatch.options).slice(1);
 
     function updateAdjustBatches() {
@@ -358,6 +359,7 @@ if (adjustDialog && adjustForm) {
         adjustBatch.required = isRemove;
         adjustQuantity.removeAttribute("max");
 
+        const selectedBatch = adjustBatch.value;
         adjustBatch.replaceChildren(new Option("Select a batch", ""));
 
         if (!isRemove) return;
@@ -365,14 +367,20 @@ if (adjustDialog && adjustForm) {
         batchOptions.forEach(option => {
             if (
                 option.dataset.type === adjustType.value &&
-                option.dataset.item === adjustItem.value
+                option.dataset.item === adjustItem.value &&
+                (adjustMovement.value !== "Expired" || option.dataset.expirationStatus === "expired")
             ) {
                 adjustBatch.appendChild(option.cloneNode(true));
             }
         });
+
+        if (Array.from(adjustBatch.options).some(option => option.value === selectedBatch)) {
+            adjustBatch.value = selectedBatch;
+        }
+        adjustBatch.dispatchEvent(new Event("change"));
     }
 
-    adjustType.addEventListener("change", updateAdjustBatches);
+    adjustMovement.addEventListener("change", updateAdjustBatches);
     adjustItem.addEventListener("change", updateAdjustBatches);
     adjustAction.addEventListener("change", updateAdjustBatches);
 
@@ -410,7 +418,10 @@ if (adjustDialog && adjustForm) {
         adjustQuantity.step = isProduct ? "1" : "0.001";
     }
 
-    adjustType.addEventListener("change", updateAdjustItems);
+    adjustType.addEventListener("change", () => {
+        updateAdjustItems();
+        updateAdjustBatches();
+    });
 
     document.getElementById("adjust-stock-btn").addEventListener("click", () => {
         adjustForm.reset();
@@ -447,7 +458,7 @@ if (adjustDialog && adjustForm) {
                     quantity: Number(adjustQuantity.value),
                     reason: document.getElementById("adjust-reason").value.trim(),
                     movement_type: adjustAction.value === "Remove"
-                        ? document.getElementById("adjust-movement").value
+                        ? adjustMovement.value
                         : "Adjustment"
                 })
             });

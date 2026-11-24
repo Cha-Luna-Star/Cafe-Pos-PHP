@@ -12,6 +12,7 @@ if (
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/inventory_dates.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -143,7 +144,7 @@ try {
         ]);
     } else {
         $stmt = $connection->prepare("
-            SELECT id, quantity
+            SELECT id, quantity, CONVERT(nvarchar(4000), expiration_date, 23) AS expiration_date
             FROM $batchTable WITH (UPDLOCK, HOLDLOCK)
             WHERE $foreignKey = ?
                 AND id = ?
@@ -155,6 +156,11 @@ try {
         $stmt->closeCursor();
         if (!$batches) {
             throw new RuntimeException('Selected batch is unavailable.');
+        }
+
+        if ($movementType === 'Expired' &&
+            batchExpirationStatus($batches[0]['expiration_date'], inventoryToday()) !== 'expired') {
+            throw new RuntimeException('Select a batch with a valid expiration date before today.');
         }
 
         if ($quantity > (float)$batches[0]['quantity']) {

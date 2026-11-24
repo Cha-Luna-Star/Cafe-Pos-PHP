@@ -12,6 +12,7 @@ if (empty($_SESSION['csrf_token'])) {
 
 $canManageInventory = in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true);
 require_once __DIR__ . '/controllers/inventory.php';
+require_once __DIR__ . '/includes/inventory_dates.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -68,32 +69,23 @@ require_once __DIR__ . '/controllers/inventory.php';
         }
     }
 
-    $today = new DateTimeImmutable('today');
+    $today = inventoryToday();
+    $expirationLabels = [
+        'no-expiration' => 'No Expiration',
+        'invalid-date' => 'Invalid Date',
+        'expired' => 'Expired',
+        'expiring-soon' => 'Expiring Soon',
+        'valid' => 'Valid'
+    ];
 
-    foreach ($batches as $batch) {
-        if ((float)$batch['quantity'] <= 0) {
-            continue;
-        }
-
-        $expiration = $batch['expiration_date'] ?? null;
-
-        if (empty($expiration)) {
-            continue;
-        }
-
-        try {
-            $expiryDate = new DateTimeImmutable((string)$expiration);
-            $daysRemaining = (int)$today->diff($expiryDate)->format('%r%a');
-
-            if ($daysRemaining < 0) {
-                $expiredCount++;
-            } elseif ($daysRemaining <= 7) {
-                $expiringSoonCount++;
-            }
-        } catch (Exception $e) {
-            continue;
+    foreach ($batches as &$batch) {
+        $batch['expiration_status'] = batchExpirationStatus($batch['expiration_date'], $today);
+        if ((float)$batch['quantity'] > 0) {
+            $expiredCount += (int)($batch['expiration_status'] === 'expired');
+            $expiringSoonCount += (int)($batch['expiration_status'] === 'expiring-soon');
         }
     }
+    unset($batch);
     ?>
 
     <section class="inventory-summary">
@@ -330,6 +322,7 @@ require_once __DIR__ . '/controllers/inventory.php';
                 <option value="expired">Expired</option>
                 <option value="no-expiration">No Expiration</option>
                 <option value="invalid-date">Invalid Date</option>
+                <option value="invalid-date">Invalid Date</option>
             </select>
             <button type="button" id="clear-batch-filters">Clear</button>
         </div>
@@ -357,38 +350,9 @@ require_once __DIR__ . '/controllers/inventory.php';
                             <td>₱<?= number_format((float)$batch['cost_per_unit'], 2) ?></td>
                             <td><?= htmlspecialchars((string)$batch['received_date']) ?></td>
                             <td><?= htmlspecialchars((string)($batch['expiration_date'] ?? 'N/A')) ?></td>
-                            <?php
-                            $expiration = $batch['expiration_date'] ?? null;
-                            $today = new DateTimeImmutable('today');
-
-                            $expirationStatus = 'No Expiration';
-                            $expirationClass = 'no-expiration';
-
-                            if (!empty($expiration)) {
-                                try {
-                                    $expiryDate = new DateTimeImmutable((string)$expiration);
-                                    $daysRemaining = (int)$today->diff($expiryDate)->format('%r%a');
-
-                                    if ($daysRemaining < 0) {
-                                        $expirationStatus = 'Expired';
-                                        $expirationClass = 'expired';
-                                    } elseif ($daysRemaining <= 7) {
-                                        $expirationStatus = 'Expiring Soon';
-                                        $expirationClass = 'expiring-soon';
-                                    } else {
-                                        $expirationStatus = 'Valid';
-                                        $expirationClass = 'valid';
-                                    }
-                                } catch (Exception $e) {
-                                    $expirationStatus = 'Invalid Date';
-                                    $expirationClass = 'invalid-date';
-                                }
-                            }
-                            ?>
-
                             <td>
-                                <span class="expiration-status <?= $expirationClass ?>">
-                                    <?= $expirationStatus ?>
+                                <span class="expiration-status <?= $batch['expiration_status'] ?>">
+                                    <?= $expirationLabels[$batch['expiration_status']] ?>
                                 </span>
                             </td>
                             <td><?= htmlspecialchars((string)($batch['supplier'] ?? 'N/A')) ?></td>
@@ -754,6 +718,14 @@ require_once __DIR__ . '/controllers/inventory.php';
             <option value="Add">Add Stock</option>
             <option value="Remove">Remove Stock</option>
         </select>
+        <div id="adjust-movement-container" hidden>
+            <label for="adjust-movement">Removal Reason</label>
+            <select id="adjust-movement">
+                <option value="Adjustment">Stock Correction</option>
+                <option value="Expired">Expired Stock</option>
+                <option value="Damaged">Damaged Stock</option>
+            </select>
+        </div>
         <div id="adjust-batch-container" hidden>
             <label for="adjust-batch">Select Batch</label>
             <select id="adjust-batch">
@@ -764,7 +736,8 @@ require_once __DIR__ . '/controllers/inventory.php';
                             value="<?= (int)$batch['id'] ?>"
                             data-type="<?= htmlspecialchars($batch['item_type']) ?>"
                             data-item="<?= (int)$batch['item_id'] ?>"
-                            data-quantity="<?= (float)$batch['quantity'] ?>">
+                            data-quantity="<?= (float)$batch['quantity'] ?>"
+                            data-expiration-status="<?= $batch['expiration_status'] ?>">
                             #<?= (int)$batch['id'] ?>
                             | Stock: <?= (float)$batch['quantity'] ?>
                             | Exp: <?= htmlspecialchars((string)($batch['expiration_date'] ?: 'N/A')) ?>
@@ -776,14 +749,6 @@ require_once __DIR__ . '/controllers/inventory.php';
         <label for="adjust-quantity">Quantity</label>
         <input type="number" id="adjust-quantity" min="0.001" step="0.001" required>
 
-        <div id="adjust-movement-container" hidden>
-            <label for="adjust-movement">Removal Reason</label>
-            <select id="adjust-movement">
-                <option value="Adjustment">Stock Correction</option>
-                <option value="Expired">Expired Stock</option>
-                <option value="Damaged">Damaged Stock</option>
-            </select>
-        </div>
         <label for="adjust-reason">Reason</label>
         <textarea id="adjust-reason" maxlength="500" required
             placeholder="Enter the reason for this adjustment"></textarea>

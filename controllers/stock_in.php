@@ -10,6 +10,7 @@ if (!isset($_SESSION['user_id']) ||
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/inventory_dates.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -61,11 +62,11 @@ try {
     }
 
     $parseDate = function ($value) {
-        if (!is_string($value) || $value === '') return null;
+        if ($value === null || $value === '') {
+            return null;
+        }
 
-        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
-
-        if (!$date || $date->format('Y-m-d') !== $value) {
+        if (!is_string($value) || parseInventoryDate($value) === null) {
             throw new RuntimeException('Invalid date.');
         }
 
