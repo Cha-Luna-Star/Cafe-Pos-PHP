@@ -60,7 +60,7 @@ $retryAccountVisible = $retryResetId !== false && array_any($staffAccounts, stat
                     <input type="password" id="new-staff-password" name="password"
                         autocomplete="new-password" minlength="12" required>
                 </div>
-                <button type="submit">Create Account</button>
+                <button type="submit" class="staff-action-positive">Create Account</button>
             </form>
             <?php if ($staffCreateError !== null): ?>
                 <p class="report-error" role="alert"><?= $staffEscape($staffCreateError) ?></p>
@@ -84,9 +84,10 @@ $retryAccountVisible = $retryResetId !== false && array_any($staffAccounts, stat
                 <?php endforeach; ?>
             </select>
         </div>
-        <button type="submit">Apply</button>
-        <a href="staff_accounts.php">Reset</a>
+        <button type="submit" class="staff-action-positive">Apply</button>
+        <button type="submit" class="staff-action-danger" form="clear-staff-filters">Reset Filters</button>
     </form>
+    <form id="clear-staff-filters" method="get" action="staff_accounts.php" hidden></form>
 
     <?php if ($staffStatusError !== null): ?>
         <p class="report-error" role="alert"><?= $staffEscape($staffStatusError) ?></p>
@@ -129,7 +130,7 @@ $retryAccountVisible = $retryResetId !== false && array_any($staffAccounts, stat
                                 <?php if (($_SESSION['role'] ?? '') === 'Admin'): ?>
                                     <td>
                                         <?php if (in_array($staffAccount['role'], $creatableStaffRoles, true)): ?>
-                                            <button type="button" class="staff-row-action" data-reset-staff
+                                            <button type="button" class="staff-row-action staff-action-danger" data-reset-staff
                                                 data-staff-id="<?= (int)$staffAccount['id'] ?>"
                                                 data-staff-name="<?= $staffEscape($staffAccount['username']) ?>">
                                                 Reset Password
@@ -138,15 +139,16 @@ $retryAccountVisible = $retryResetId !== false && array_any($staffAccounts, stat
                                                 <?php
                                                 $isActive = (int)$staffAccount['is_active'] === 1;
                                                 $statusAction = $isActive ? 'Deactivate' : 'Reactivate';
+                                                $statusStyle = $isActive ? 'staff-action-danger' : 'staff-action-positive';
                                                 ?>
                                                 <details>
-                                                    <summary class="staff-row-action"><?= $statusAction ?> Account</summary>
+                                                    <summary class="staff-row-action <?= $statusStyle ?>"><?= $statusAction ?> Account</summary>
                                                     <form method="post" action="staff_accounts.php" class="report-filters">
                                                         <input type="hidden" name="staff_action" value="change_status">
                                                         <input type="hidden" name="user_id" value="<?= (int)$staffAccount['id'] ?>">
                                                         <input type="hidden" name="csrf_token" value="<?= $staffEscape(sessionCsrfToken()) ?>">
                                                         <input type="hidden" name="account_status" value="<?= strtolower($statusAction) ?>">
-                                                        <button type="submit"><?= $statusAction ?> <?= $staffEscape($staffAccount['username']) ?></button>
+                                                        <button type="submit" class="<?= $statusStyle ?>"><?= $statusAction ?> <?= $staffEscape($staffAccount['username']) ?></button>
                                                     </form>
                                                 </details>
                                             <?php endif; ?>
@@ -178,7 +180,7 @@ $retryAccountVisible = $retryResetId !== false && array_any($staffAccounts, stat
             <p id="reset-staff-error" class="report-error" role="alert" hidden><?= $staffEscape($staffResetError) ?></p>
             <div class="staff-dialog-buttons">
                 <button type="button" id="cancel-staff-reset">Cancel</button>
-                <button type="submit">Reset Password</button>
+                <button type="submit" class="staff-action-danger">Reset Password</button>
             </div>
         </form>
     </dialog>

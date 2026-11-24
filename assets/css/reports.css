@@ -205,3 +205,24 @@ body {
 .staff-dialog-buttons button[type="button"] {
     background: #dc2626;
 }
+
+.staff-accounts .staff-action-danger,
+.staff-action-dialog .staff-action-danger {
+    border-color: #dc2626;
+    background: #dc2626;
+    color: white;
+}
+.staff-accounts .staff-action-positive {
+    border-color: #16a34a;
+    background: #16a34a;
+    color: white;
+}
+.staff-accounts .staff-action-danger:hover,
+.staff-action-dialog .staff-action-danger:hover {
+    border-color: #b91c1c;
+    background: #b91c1c;
+}
+.staff-accounts .staff-action-positive:hover {
+    border-color: #15803d;
+    background: #15803d;
+}
