@@ -130,3 +130,13 @@ body {
 .audit-pages a {
     color: #76543b;
 }
+
+.staff-results {
+    margin-top: 20px;
+}
+.staff-accounts .report-table th,
+.staff-accounts .report-table td {
+    text-align: left;
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
