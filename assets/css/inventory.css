@@ -43,6 +43,70 @@ button:disabled {
     overflow-x: auto;
     margin-bottom: 35px;
 }
+#current-stock-section .inventory-table,
+#batch-history-section .inventory-table {
+    height: min(612px, 72dvh);
+    overflow: auto;
+    scrollbar-gutter: stable;
+}
+#current-stock-section .inventory-table > table,
+#batch-history-section .inventory-table > table {
+    table-layout: fixed;
+}
+#current-stock-section .inventory-table > table {
+    min-width: 900px;
+}
+#current-stock-section .inventory-table > table > thead th:nth-child(1) {
+    width: 13%;
+}
+#current-stock-section .inventory-table > table > thead th:nth-child(2) {
+    width: 21%;
+}
+#current-stock-section .inventory-table > table > thead th:nth-child(3) {
+    width: 13%;
+}
+#current-stock-section .inventory-table > table > thead th:nth-child(4) {
+    width: 10%;
+}
+#batch-history-section .inventory-table > table {
+    min-width: 1360px;
+}
+#batch-history-section .inventory-table > table > thead th:nth-child(1),
+#batch-history-section .inventory-table > table > thead th:nth-child(4) {
+    width: 9%;
+}
+#batch-history-section .inventory-table > table > thead th:nth-child(2) {
+    width: 16%;
+}
+#batch-history-section .inventory-table > table > thead th:nth-child(3) {
+    width: 10%;
+}
+#batch-history-section .inventory-table > table > thead th:nth-child(5),
+#batch-history-section .inventory-table > table > thead th:nth-child(6),
+#batch-history-section .inventory-table > table > thead th:nth-child(7) {
+    width: 11%;
+}
+#batch-history-section .inventory-table > table > thead th:nth-child(9) {
+    width: 13%;
+}
+#current-stock-section .inventory-table > table > thead th,
+#batch-history-section .inventory-table > table > thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    height: 52px;
+}
+#current-stock-body > .stock-row > td,
+#batch-history-body > tr > td {
+    height: 56px;
+    padding-block: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+#current-stock-body .stock-status-wrapper {
+    gap: 10px;
+}
 table {
     width: 100%;
     border-collapse: collapse;
@@ -166,7 +230,17 @@ th {
     background: transparent;
 }
 .sort-header .sort-indicator {
+    inline-size: 3ch;
+    flex: none;
     color: #888;
+    font-size: 13px;
+    text-align: center;
+}
+.sort-header[data-type="date"] .sort-indicator {
+    inline-size: 6.5ch;
+}
+.sort-header[data-type="number"] .sort-indicator {
+    inline-size: 1.4em;
     font-size: 16px;
 }
 .sort-header[data-direction="asc"] .sort-indicator,

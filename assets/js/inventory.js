@@ -564,6 +564,10 @@ function paginateInventory(tableId) {
 
     if (!tbody || !container) return;
 
+    if (tableId === "current-stock-body" || tableId === "batch-history-body") {
+        tbody.closest(".inventory-table")?.scrollTo({ top: 0 });
+    }
+
     const rows = Array.from(tbody.children).filter(
         row => !row.classList.contains("stock-details")
     );

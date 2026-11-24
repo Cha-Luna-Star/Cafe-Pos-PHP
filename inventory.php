@@ -204,7 +204,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
                     ?>
                         <tr class="stock-row" data-key="<?= htmlspecialchars($key) ?>">
                             <td><?= htmlspecialchars($item['type']) ?></td>
-                            <td><?= htmlspecialchars($item['name']) ?></td>
+                            <td title="<?= htmlspecialchars($item['name'], ENT_QUOTES) ?>"><?= htmlspecialchars($item['name']) ?></td>
                             <td data-number="<?= number_format($item['stock'], 3, '.', '') ?>"><?= number_format($item['stock'], 3) ?></td>
                             <td><?= htmlspecialchars($item['unit']) ?></td>
                             <?php
@@ -368,7 +368,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
                     <?php foreach ($batches as $batch): ?>
                         <tr data-has-stock="<?= (float)$batch['quantity'] > 0 ? 'true' : 'false' ?>">
                             <td><?= htmlspecialchars($batch['item_type']) ?></td>
-                            <td><?= htmlspecialchars($batch['item_name']) ?></td>
+                            <td title="<?= htmlspecialchars($batch['item_name'], ENT_QUOTES) ?>"><?= htmlspecialchars($batch['item_name']) ?></td>
                             <td data-number="<?= number_format((float)$batch['quantity'], 3, '.', '') ?>"><?= number_format((float)$batch['quantity'], 3) ?></td>
                             <td>₱<?= number_format((float)$batch['cost_per_unit'], 2) ?></td>
                             <td><?= htmlspecialchars((string)$batch['received_date']) ?></td>
@@ -378,7 +378,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
                                     <?= $expirationLabels[$batch['expiration_status']] ?>
                                 </span>
                             </td>
-                            <td><?= htmlspecialchars((string)($batch['supplier'] ?? 'N/A')) ?></td>
+                            <td title="<?= htmlspecialchars($batch['supplier'] ?? 'N/A', ENT_QUOTES) ?>"><?= htmlspecialchars($batch['supplier'] ?? 'N/A') ?></td>
                             <td><?= $batch['remaining_value'] === null ? 'Unavailable' : $formatBatchValue($batch['remaining_value']) ?></td>
                             </tr>
                             <?php endforeach; ?>
