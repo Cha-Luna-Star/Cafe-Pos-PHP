@@ -89,10 +89,14 @@ $retryAccountVisible = $retryResetId !== false && array_any($staffAccounts, stat
     </form>
     <form id="clear-staff-filters" method="get" action="staff_accounts.php" hidden></form>
 
+    <?php if ($staffRoleError !== null): ?>
+        <p class="report-error" role="alert"><?= $staffEscape($staffRoleError) ?></p>
+    <?php endif; ?>
+
     <?php if ($staffStatusError !== null): ?>
         <p class="report-error" role="alert"><?= $staffEscape($staffStatusError) ?></p>
     <?php elseif ($staffError === null && !$staffStatusAvailable && ($_SESSION['role'] ?? '') === 'Admin'): ?>
-        <p class="report-note">Apply the staff account status database migration to enable deactivation.</p>
+        <p class="report-note">Apply the staff account status database migration to enable deactivation and role changes.</p>
     <?php endif; ?>
 
     <?php if ($staffResetError !== null && !$retryAccountVisible): ?>
@@ -141,6 +145,20 @@ $retryAccountVisible = $retryResetId !== false && array_any($staffAccounts, stat
                                                 $statusAction = $isActive ? 'Deactivate' : 'Reactivate';
                                                 $statusStyle = $isActive ? 'staff-action-danger' : 'staff-action-positive';
                                                 ?>
+                                                <?php $nextRole = $staffAccount['role'] === 'Cashier' ? 'Manager' : 'Cashier'; ?>
+                                                <details>
+                                                    <summary class="staff-row-action staff-action-positive">Change Role</summary>
+                                                    <form method="post" action="staff_accounts.php" class="report-filters">
+                                                        <input type="hidden" name="staff_action" value="change_role">
+                                                        <input type="hidden" name="user_id" value="<?= (int)$staffAccount['id'] ?>">
+                                                        <input type="hidden" name="csrf_token" value="<?= $staffEscape(sessionCsrfToken()) ?>">
+                                                        <input type="hidden" name="current_role" value="<?= $staffEscape($staffAccount['role']) ?>">
+                                                        <input type="hidden" name="new_role" value="<?= $staffEscape($nextRole) ?>">
+                                                        <button type="submit" class="staff-action-positive">
+                                                            Change <?= $staffEscape($staffAccount['username']) ?> to <?= $staffEscape($nextRole) ?>
+                                                        </button>
+                                                    </form>
+                                                </details>
                                                 <details>
                                                     <summary class="staff-row-action <?= $statusStyle ?>"><?= $statusAction ?> Account</summary>
                                                     <form method="post" action="staff_accounts.php" class="report-filters">

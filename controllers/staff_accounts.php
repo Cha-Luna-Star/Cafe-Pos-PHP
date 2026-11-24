@@ -17,6 +17,7 @@ $staffRoles = ['Admin', 'Manager', 'Cashier'];
 $staffCreateError = null;
 $staffResetError = null;
 $staffStatusError = null;
+$staffRoleError = null;
 $staffStatusAvailable = false;
 $staffNotice = $_SESSION['staff_account_notice'] ?? null;
 unset($_SESSION['staff_account_notice']);
@@ -34,6 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $staffResetError = require __DIR__ . '/../includes/reset_staff_password.php';
     } elseif ($staffAction === 'change_status') {
         $staffStatusError = require __DIR__ . '/../includes/update_staff_account_status.php';
+    } elseif ($staffAction === 'change_role') {
+        $staffRoleError = require __DIR__ . '/../includes/update_staff_role.php';
     } else {
         http_response_code(400);
         exit('Invalid staff account action.');
