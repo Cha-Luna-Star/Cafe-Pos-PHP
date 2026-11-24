@@ -4,6 +4,11 @@ require __DIR__ . '/controllers/sales_reports.php';
 $salesMoney = static fn($value): string => '&#8369;' . number_format((float)$value, 2);
 $salesEscape = static fn($value): string => htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 $averageSale = $completedOrders > 0 ? (float)$totalSales / $completedOrders : 0;
+
+if ($reportError === null && ($_GET['export'] ?? null) === 'csv') {
+    require __DIR__ . '/includes/sales_csv.php';
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -33,6 +38,7 @@ $averageSale = $completedOrders > 0 ? (float)$totalSales / $completedOrders : 0;
             <input type="date" id="report-to" name="to" value="<?= $salesEscape($end?->format('Y-m-d') ?? '') ?>" required>
         </div>
         <button type="submit">Apply</button>
+        <button type="submit" name="export" value="csv">Export CSV</button>
         <a href="sales_reports.php">Reset</a>
     </form>
 
