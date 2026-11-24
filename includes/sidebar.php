@@ -23,6 +23,7 @@ $role = $_SESSION['role'] ?? 'Cashier';
         <a href="inventory.php" class="<?= $currentPage === 'inventory.php' ? 'active' : '' ?>">Inventory</a>
         <?php if (in_array($role, ['Admin', 'Manager'], true)): ?>
             <a href="sales_reports.php" class="<?= $currentPage === 'sales_reports.php' ? 'active' : '' ?>">Sales Reports</a>
+            <a href="audit_log.php" class="<?= $currentPage === 'audit_log.php' ? 'active' : '' ?>">Audit Log</a>
             <a href="#">User Management</a>
         <?php endif; ?>
     </nav>

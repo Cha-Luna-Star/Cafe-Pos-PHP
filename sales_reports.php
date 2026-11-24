@@ -11,7 +11,7 @@ $averageSale = $completedOrders > 0 ? (float)$totalSales / $completedOrders : 0;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cafe POS | Sales Reports</title>
-    <link rel="stylesheet" href="assets/css/sales_reports.css">
+    <link rel="stylesheet" href="assets/css/reports.css">
     <link rel="stylesheet" href="assets/css/sidebar.css">
 </head>
 <body>
@@ -22,7 +22,7 @@ $averageSale = $completedOrders > 0 ? (float)$totalSales / $completedOrders : 0;
     <h1>Sales Reports</h1>
 </header>
 
-<main class="sales-report">
+<main class="report-content">
     <form method="get" class="report-filters">
         <div>
             <label for="report-from">From</label>

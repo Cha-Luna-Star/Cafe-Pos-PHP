@@ -16,7 +16,7 @@ body {
     margin: 0;
     font-size: 24px;
 }
-.sales-report {
+.report-content {
     padding: clamp(14px, 3vw, 30px);
 }
 .report-filters {
@@ -30,6 +30,7 @@ body {
     margin-bottom: 6px;
 }
 .report-filters input,
+.report-filters select,
 .report-filters button {
     max-width: 100%;
     padding: 9px 12px;
@@ -100,4 +101,32 @@ body {
 }
 .report-error {
     color: #b42318;
+}
+
+.audit-entries {
+    margin-top: 20px;
+}
+.audit-log .report-table th,
+.audit-log .report-table td {
+    text-align: left;
+    white-space: normal;
+    vertical-align: top;
+}
+.audit-log .report-table td:first-child {
+    white-space: nowrap;
+}
+.audit-log .report-table .audit-details {
+    min-width: 14rem;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+.audit-pages {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+}
+.audit-pages a {
+    color: #76543b;
 }
