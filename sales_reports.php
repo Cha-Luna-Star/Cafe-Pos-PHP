@@ -91,6 +91,26 @@ if ($reportError === null && ($_GET['export'] ?? null) === 'csv') {
                         </table>
                     </div>
                 </section>
+                <section class="report-section">
+                    <h2>Best-Selling Items</h2>
+                    <?php if (!$bestSellingItems): ?>
+                        <p>No item sales in this date range.</p>
+                    <?php else: ?>
+                        <div class="report-table">
+                            <table aria-label="Best-selling items">
+                                <thead><tr><th scope="col">Item</th><th scope="col">Units Sold</th></tr></thead>
+                                <tbody>
+                                    <?php foreach ($bestSellingItems as $row): ?>
+                                        <tr>
+                                            <th scope="row"><?= $salesEscape($row['item_name']) ?></th>
+                                            <td><?= number_format((int)$row['units_sold']) ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                </section>
             </div>
         <?php endif; ?>
     <?php endif; ?>

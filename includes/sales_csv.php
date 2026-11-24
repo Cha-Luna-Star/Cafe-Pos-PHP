@@ -15,19 +15,28 @@ header('Cache-Control: no-store');
 $output = fopen('php://output', 'wb');
 fwrite($output, "\xEF\xBB\xBF");
 
-fputcsv($output, ['Section', 'Date', 'Payment Method', 'Completed Orders', 'Sales (PHP)', 'Average Order (PHP)'], ',', '"', '', "\r\n");
-fputcsv($output, ['Summary', '', '', $completedOrders, $totalSales, number_format($averageSale, 2, '.', '')], ',', '"', '', "\r\n");
+$writeRow = static function (array $values) use ($output): void {
+    fputcsv($output, $values, ',', '"', '', "\r\n");
+};
+$safeText = static function (string $value): string {
+    return preg_match('/\A[\s\x00-\x1f\x{200B}-\x{200F}\x{202A}-\x{202E}\x{2060}\x{FEFF}]*[=+\-@\x{FF1D}\x{FF0B}\x{FF0D}\x{FF20}]/u', $value)
+        ? "'" . $value
+        : $value;
+};
+
+$writeRow(['Section', 'Date', 'Payment Method', 'Completed Orders', 'Sales (PHP)', 'Average Order (PHP)', 'Item', 'Units Sold']);
+$writeRow(['Summary', '', '', $completedOrders, $totalSales, number_format($averageSale, 2, '.', ''), '', '']);
 
 foreach ($dailySales as $row) {
-    fputcsv($output, ['Daily Sales', $row['sale_date'], '', $row['order_count'], $row['sales'], ''], ',', '"', '', "\r\n");
+    $writeRow(['Daily Sales', $row['sale_date'], '', $row['order_count'], $row['sales'], '', '', '']);
 }
 
 foreach ($paymentSales as $row) {
-    $method = $row['payment_method'];
-    if (preg_match('/\A[\s\x00-\x1f\x{200B}-\x{200F}\x{202A}-\x{202E}\x{2060}\x{FEFF}]*[=+\-@＝＋－＠]/u', $method)) {
-        $method = "'" . $method;
-    }
-    fputcsv($output, ['Payment Method', '', $method, $row['order_count'], $row['sales'], ''], ',', '"', '', "\r\n");
+    $writeRow(['Payment Method', '', $safeText($row['payment_method']), $row['order_count'], $row['sales'], '', '', '']);
+}
+
+foreach ($bestSellingItems as $row) {
+    $writeRow(['Best-Selling Items', '', '', '', '', '', $safeText($row['item_name']), $row['units_sold']]);
 }
 
 fclose($output);
