@@ -27,7 +27,8 @@ header a {
 
 main {
     display: grid;
-    grid-template-columns: 1fr 350px;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+    align-items: start;
     gap: 25px;
     padding: 30px;
 }
@@ -110,7 +111,7 @@ button:disabled {
     width: 100%;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 1000px) {
     main {
         grid-template-columns: 1fr;
     }
@@ -236,4 +237,84 @@ button:disabled {
     margin: 0;
     padding: 8px;
     font-size: 13px;
+}
+
+.pos-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+#cart-shortcut {
+    display: none;
+    color: #62452f;
+}
+.cart-section {
+    position: sticky;
+    top: 16px;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - 32px);
+    min-width: 0;
+    overflow-y: auto;
+}
+#cart-items {
+    min-height: 46px;
+    overflow-y: auto;
+    margin-top: 8px;
+}
+.cart-total {
+    margin: 10px 0 16px;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+#checkout-form {
+    flex-shrink: 0;
+    gap: 8px;
+}
+#cash-summary,
+#checkout-message {
+    font-size: 14px;
+    line-height: 1.4;
+}
+#cash-summary[data-short="true"],
+#checkout-message[data-error="true"] {
+    color: #b42318;
+}
+#cash-summary:empty,
+#checkout-message:empty {
+    display: none;
+}
+#checkout-btn:not(:disabled) {
+    background: #15803d;
+}
+.quantity-controls button:first-child:not(:disabled),
+#close-receipt-btn {
+    background: #dc2626;
+}
+@media (max-width: 1000px) {
+    .cart-section {
+        position: static;
+        max-height: none;
+        overflow-y: visible;
+    }
+    #cart-items {
+        max-height: 50vh;
+    }
+    #cart-shortcut {
+        display: inline;
+    }
+}
+@media (max-width: 620px) {
+    main {
+        padding: 12px;
+    }
+    .menu-section,
+    .cart-section {
+        padding: 12px;
+    }
+    .menu-grid {
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr));
+    }
 }

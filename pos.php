@@ -35,7 +35,10 @@ require_once __DIR__ . '/controllers/pos.php';
 
 <main>
     <section class="menu-section">
-        <h2>Menu</h2>
+        <div class="pos-section-heading">
+            <h2>Menu</h2>
+            <a href="#current-order" id="cart-shortcut">View cart (0)</a>
+        </div>
 
         <div class="categories">
             <button type="button" onclick="filterCategory('all')">
@@ -92,16 +95,19 @@ require_once __DIR__ . '/controllers/pos.php';
 
                     <button type="button"
                             data-item="<?= $json ?>"
+                            data-menu-id="<?= (int)$item['id'] ?>"
+                            data-stock="<?= (int)$item['sellable_quantity'] ?>"
+                            <?= (int)$item['sellable_quantity'] === 0 ? 'disabled' : '' ?>
                             onclick="addToCart(JSON.parse(this.dataset.item))">
-                        Add to Cart
+                        <?= (int)$item['sellable_quantity'] > 0 ? 'Add to Cart' : 'Out of Stock' ?>
                     </button>
                 </div>
             <?php endforeach; ?>
         </div>
     </section>
 
-    <aside class="cart-section">
-        <h2>Current Order</h2>
+    <aside class="cart-section" id="current-order" aria-labelledby="current-order-heading">
+        <h2 id="current-order-heading">Current Order</h2>
 
         <div id="cart-items">
             <p>No items added.</p>
@@ -136,7 +142,8 @@ require_once __DIR__ . '/controllers/pos.php';
 
             <div id="cash-fields">
                 <label for="amount-tendered">Amount Tendered</label>
-                <input type="number" id="amount-tendered" min="0" step="0.01">
+                <input type="number" id="amount-tendered" min="0" step="0.01" inputmode="decimal" aria-describedby="cash-summary">
+                <p id="cash-summary" aria-live="polite"></p>
             </div>
 
             <div id="reference-fields" hidden>
@@ -144,10 +151,10 @@ require_once __DIR__ . '/controllers/pos.php';
                 <input type="text" id="ref-number" maxlength="100">
             </div>
 
-            <p id="checkout-message" role="status"></p>
+            <p id="checkout-message" role="status" aria-live="polite"></p>
 
             <button type="submit" id="checkout-btn" disabled>
-                Checkout
+                Place Order
             </button>
         </form>
     </aside>
@@ -180,7 +187,7 @@ require_once __DIR__ . '/controllers/pos.php';
 
         <div class="receipt-actions">
             <button type="button" onclick="window.print()">Print</button>
-            <button type="button" onclick="closeReceipt()">Close</button>
+            <button type="button" id="close-receipt-btn" onclick="closeReceipt()">Close</button>
         </div>
     </div>
 </dialog>

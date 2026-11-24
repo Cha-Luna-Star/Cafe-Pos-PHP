@@ -1,5 +1,14 @@
 
 let cart = [];
+let checkoutBusy = false;
+
+const menuButtons = Array.from(document.querySelectorAll("[data-menu-id]"));
+const stockByItem = new Map(menuButtons.map(button => [Number(button.dataset.menuId), Number(button.dataset.stock)]));
+
+function remainingStock(id) {
+    const inCart = cart.reduce((total, item) => total + (item.id === id ? item.quantity : 0), 0);
+    return Math.max(0, (stockByItem.get(id) ?? 0) - inCart);
+}
 
 function filterCategory(categoryId) {
     document.querySelectorAll(".menu-card").forEach(card => {
@@ -12,6 +21,8 @@ function filterCategory(categoryId) {
 }
 
 function addToCart(item) {
+    if (checkoutBusy || remainingStock(item.id) <= 0) return;
+
     if (item.is_addon) {
         const hasMainItem = cart.some(entry => !entry.is_addon);
 
@@ -49,6 +60,7 @@ function addToCart(item) {
     );
 
     if (existing) {
+        if (existing.quantity >= 100) return;
         existing.quantity++;
     } else {
         cart.push({
@@ -68,7 +80,10 @@ function addToCart(item) {
 }
 
 function changeQuantity(index, amount) {
-    cart[index].quantity += amount;
+    const item = cart[index];
+    if (checkoutBusy || !item || (amount > 0 && (item.quantity >= 100 || remainingStock(item.id) <= 0))) return;
+
+    item.quantity += amount;
 
     if (cart[index].quantity <= 0) {
         cart.splice(index, 1);
@@ -141,7 +156,7 @@ function renderCart() {
                     entry.temperature === item.temperature
                 );
 
-                if (duplicate) {
+                if (duplicate && duplicate.quantity + item.quantity <= 100) {
                     duplicate.quantity += item.quantity;
                     cart.splice(cart.indexOf(item), 1);
                 }
@@ -177,7 +192,7 @@ function renderCart() {
                     entry.temperature === item.temperature
                 );
 
-                if (duplicate) {
+                if (duplicate && duplicate.quantity + item.quantity <= 100) {
                     duplicate.quantity += item.quantity;
                     cart.splice(cart.indexOf(item), 1);
                 }
@@ -196,6 +211,7 @@ function renderCart() {
 
         const minus = document.createElement("button");
         minus.textContent = "-";
+        minus.setAttribute("aria-label", "Remove one " + item.name);
         minus.onclick = () => changeQuantity(index, -1);
 
         const quantity = document.createElement("span");
@@ -203,6 +219,8 @@ function renderCart() {
 
         const plus = document.createElement("button");
         plus.textContent = "+";
+        plus.setAttribute("aria-label", "Add one " + item.name);
+        plus.disabled = item.quantity >= 100 || remainingStock(item.id) === 0;
         plus.onclick = () => changeQuantity(index, 1);
 
         controls.append(minus, quantity, plus);
@@ -231,47 +249,86 @@ function renderCart() {
         total * (1 - discountRate) * 100
     ) / 100;
 
-    document.getElementById("cart-total").textContent =
-        `₱${discountedTotal.toFixed(2)}`;
+    currentTotal = discountedTotal;
+    document.getElementById("cart-total").textContent = "₱" + discountedTotal.toFixed(2);
+    const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
+    document.getElementById("cart-shortcut").textContent = "View cart (" + itemCount + ")";
 
-    document.getElementById("checkout-btn").disabled =
-        cart.length === 0 || checkoutBusy;
+    for (const button of menuButtons) {
+        const id = Number(button.dataset.menuId);
+        button.disabled = remainingStock(id) === 0;
+        button.textContent = button.disabled
+            ? (stockByItem.get(id) > 0 ? "All Stock in Cart" : "Out of Stock")
+            : "Add to Cart";
+    }
+    checkoutButton.disabled = cart.length === 0 || checkoutBusy;
+    updateCashSummary();
 }
 
 const checkoutForm = document.getElementById("checkout-form");
 const paymentMethod = document.getElementById("payment-method");
 const cashFields = document.getElementById("cash-fields");
 const referenceFields = document.getElementById("reference-fields");
+const cashAmount = document.getElementById("amount-tendered");
+const refNumber = document.getElementById("ref-number");
+const cashSummary = document.getElementById("cash-summary");
 const checkoutMessage = document.getElementById("checkout-message");
 const checkoutButton = document.getElementById("checkout-btn");
+const menuSection = document.querySelector(".menu-section");
+const cartItems = document.getElementById("cart-items");
+let currentTotal = 0;
 
-let checkoutBusy = false;
+function updateCashSummary() {
+    const cash = paymentMethod.value === "Cash";
+    cashFields.hidden = !cash;
+    referenceFields.hidden = cash;
+    cashAmount.required = cash;
+    refNumber.required = !cash;
+    cashAmount.disabled = !cash || checkoutBusy;
+    refNumber.disabled = cash || checkoutBusy;
 
-paymentMethod.addEventListener("change", () => {
-    const isCash = paymentMethod.value === "Cash";
+    const received = cashAmount.valueAsNumber;
+    const short = cash && cart.length > 0 && Number.isFinite(received) &&
+        Math.round(received * 100) < Math.round(currentTotal * 100);
+    cashAmount.setCustomValidity(short ? "Amount tendered is below the order total." : "");
+    cashSummary.dataset.short = String(short);
 
-    cashFields.hidden = !isCash;
-    referenceFields.hidden = isCash;
-
-    document.getElementById("amount-tendered").required = isCash;
-    document.getElementById("ref-number").required = !isCash;
-});
-
-paymentMethod.dispatchEvent(new Event("change"));
-
-checkoutForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    if (checkoutBusy || cart.length === 0) {
+    if (!cash || cart.length === 0 || !Number.isFinite(received)) {
+        cashSummary.textContent = "";
         return;
     }
 
-    checkoutBusy = true;
-    checkoutButton.disabled = true;
-    checkoutMessage.textContent = "Processing checkout...";
+    const difference = Math.abs(Math.round(received * 100) - Math.round(currentTotal * 100)) / 100;
+    cashSummary.textContent = short
+        ? "Still due: ₱" + difference.toFixed(2)
+        : "Change: ₱" + difference.toFixed(2);
+}
 
+function setCheckoutBusy(busy) {
+    checkoutBusy = busy;
+    menuSection.inert = busy;
+    cartItems.inert = busy;
+    checkoutButton.textContent = busy ? "Placing order…" : "Place Order";
+    checkoutButton.disabled = busy || cart.length === 0;
+    for (const field of checkoutForm.querySelectorAll("select")) {
+        field.disabled = busy;
+    }
+    updateCashSummary();
+}
+
+paymentMethod.addEventListener("change", updateCashSummary);
+cashAmount.addEventListener("input", updateCashSummary);
+document.getElementById("discount-type").addEventListener("change", renderCart);
+renderCart();
+
+checkoutForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (checkoutBusy || cart.length === 0) return;
+
+    const submittedCart = cart;
+    const paidCash = paymentMethod.value === "Cash";
     const data = {
-        items: cart.map(item => ({
+        items: submittedCart.map(item => ({
             id: item.id,
             quantity: item.quantity,
             size: item.size ?? "Regular",
@@ -280,10 +337,15 @@ checkoutForm.addEventListener("submit", async (event) => {
         order_type: document.getElementById("order-type").value,
         discount_type: document.getElementById("discount-type").value,
         payment_method: paymentMethod.value,
-        amount_tendered: document.getElementById("amount-tendered").value,
-        ref_number: document.getElementById("ref-number").value
+        amount_tendered: paidCash ? cashAmount.valueAsNumber : 0,
+        ref_number: paidCash ? "" : refNumber.value.trim()
     };
 
+    setCheckoutBusy(true);
+    checkoutMessage.dataset.error = "false";
+    checkoutMessage.textContent = "Placing order…";
+
+    let result;
     try {
         const response = await fetch("controllers/checkout.php", {
             method: "POST",
@@ -294,39 +356,35 @@ checkoutForm.addEventListener("submit", async (event) => {
             body: JSON.stringify(data)
         });
 
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-            throw new Error(result.error || "Checkout failed.");
+        result = await response.json();
+        if (!response.ok || !result?.success) {
+            checkoutMessage.dataset.error = "true";
+            checkoutMessage.textContent = result?.error || "The order could not be placed.";
+            return;
         }
-
-        showReceipt(result, data);
-
-        cart = [];
-        checkoutForm.reset();
-        paymentMethod.dispatchEvent(new Event("change"));
-        checkoutMessage.textContent = "";
-        renderCart();
-
-    } catch (error) {
-        checkoutMessage.textContent = error.message;
+    } catch {
+        checkoutMessage.dataset.error = "true";
+        checkoutMessage.textContent = "Could not confirm the order. Check Order History before trying again.";
+        return;
     } finally {
-        checkoutBusy = false;
-        renderCart();
+        setCheckoutBusy(false);
     }
+
+    for (const item of submittedCart) {
+        stockByItem.set(item.id, Math.max(0, (stockByItem.get(item.id) ?? 0) - item.quantity));
+    }
+    cart = [];
+    checkoutForm.reset();
+    checkoutMessage.textContent = "";
+    renderCart();
+    showReceipt(result, data, submittedCart);
 });
 
-document.getElementById("discount-type").addEventListener(
-    "change",
-    renderCart
-);
-
-
-function showReceipt(result, orderData) {
+function showReceipt(result, orderData, submittedCart) {
     const modal = document.getElementById("receipt-modal");
     const money = value => `₱${Number(value).toFixed(2)}`;
 
-    const subtotal = cart.reduce(
+    const subtotal = submittedCart.reduce(
         (sum, item) => sum + item.price * item.quantity,
         0
     );
@@ -368,7 +426,7 @@ function showReceipt(result, orderData) {
     const itemsContainer = document.getElementById("receipt-items");
     itemsContainer.replaceChildren();
 
-    cart.forEach(item => {
+    submittedCart.forEach(item => {
         const row = document.createElement("p");
 
         row.textContent =
