@@ -33,6 +33,7 @@ $staffEscape = static fn($value): string => htmlspecialchars(
         <section class="report-section" aria-labelledby="staff-create-heading">
             <h2 id="staff-create-heading">Add Staff Account</h2>
             <form method="post" action="staff_accounts.php" class="report-filters">
+                <input type="hidden" name="staff_action" value="create">
                 <input type="hidden" name="csrf_token" value="<?= $staffEscape(sessionCsrfToken()) ?>">
                 <div>
                     <label for="new-staff-username">Username</label>
@@ -87,6 +88,9 @@ $staffEscape = static fn($value): string => htmlspecialchars(
     <?php elseif (!$staffAccounts): ?>
         <p class="report-empty">No staff accounts match these filters.</p>
     <?php else: ?>
+        <?php if ($staffResetError !== null): ?>
+            <p class="report-error" role="alert"><?= $staffEscape($staffResetError) ?></p>
+        <?php endif; ?>
         <section class="report-section staff-results" aria-label="Matching staff accounts">
             <div class="report-table">
                 <table aria-label="Staff accounts">
@@ -94,6 +98,9 @@ $staffEscape = static fn($value): string => htmlspecialchars(
                         <tr>
                             <th scope="col">Username</th>
                             <th scope="col">Role</th>
+                            <?php if (($_SESSION['role'] ?? '') === 'Admin'): ?>
+                                <th scope="col">Password</th>
+                            <?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
@@ -101,6 +108,26 @@ $staffEscape = static fn($value): string => htmlspecialchars(
                             <tr>
                                 <th scope="row"><?= $staffEscape($staffAccount['username']) ?></th>
                                 <td><?= $staffEscape($staffAccount['role'] ?? 'Unassigned') ?></td>
+                                <?php if (($_SESSION['role'] ?? '') === 'Admin'): ?>
+                                    <td>
+                                        <?php if (in_array($staffAccount['role'], $creatableStaffRoles, true)): ?>
+                                            <details>
+                                                <summary>Reset Password</summary>
+                                                <form method="post" action="staff_accounts.php" class="report-filters">
+                                                    <input type="hidden" name="staff_action" value="reset_password">
+                                                    <input type="hidden" name="user_id" value="<?= (int)$staffAccount['id'] ?>">
+                                                    <input type="hidden" name="csrf_token" value="<?= $staffEscape(sessionCsrfToken()) ?>">
+                                                    <div>
+                                                        <label for="reset-password-<?= (int)$staffAccount['id'] ?>">New password for <?= $staffEscape($staffAccount['username']) ?></label>
+                                                        <input type="password" id="reset-password-<?= (int)$staffAccount['id'] ?>" name="password"
+                                                            autocomplete="new-password" minlength="12" required>
+                                                    </div>
+                                                    <button type="submit">Reset Password</button>
+                                                </form>
+                                            </details>
+                                        <?php endif; ?>
+                                    </td>
+                                <?php endif; ?>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

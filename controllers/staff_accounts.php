@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/../includes/auth_session.php';
+startAuthSession();
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
@@ -14,13 +15,24 @@ if (!in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)) {
 $creatableStaffRoles = ['Cashier', 'Manager'];
 $staffRoles = ['Admin', 'Manager', 'Cashier'];
 $staffCreateError = null;
+$staffResetError = null;
 $staffNotice = $_SESSION['staff_account_notice'] ?? null;
 unset($_SESSION['staff_account_notice']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $staffCreateError = require __DIR__ . '/../includes/create_staff_account.php';
     if (($_SESSION['role'] ?? '') !== 'Admin') {
+        http_response_code(403);
         exit('Permission denied.');
+    }
+
+    $staffAction = $_POST['staff_action'] ?? 'create';
+    if ($staffAction === 'create') {
+        $staffCreateError = require __DIR__ . '/../includes/create_staff_account.php';
+    } elseif ($staffAction === 'reset_password') {
+        $staffResetError = require __DIR__ . '/../includes/reset_staff_password.php';
+    } else {
+        http_response_code(400);
+        exit('Invalid staff account action.');
     }
 }
 $staffSearch = $_GET['q'] ?? '';

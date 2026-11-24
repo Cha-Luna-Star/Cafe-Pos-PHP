@@ -55,11 +55,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ");
                 $update->execute([$newHash, $user['id'], $storedHash]);
 
-                if ($update->rowCount() !== 1) {
+                if ($update->rowCount() === 1) {
+                    $storedHash = $newHash;
+                } else {
                     $current = $connection->prepare('SELECT password FROM dbo.users WHERE id = ?');
                     $current->execute([$user['id']]);
                     $currentHash = $current->fetchColumn();
                     $verified = is_string($currentHash) && password_verify($password, $currentHash);
+                    $storedHash = $currentHash;
                 }
             }
 
@@ -68,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['role'] = $user['role'];
+                $_SESSION['password_fingerprint'] = hash('sha256', $storedHash);
                 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                 session_write_close();
                 recordAuthenticationAuditEvent('Login', 'Signed in.', $connection);

@@ -9,7 +9,7 @@ require_once __DIR__ . '/includes/auth_session.php';
 require_once __DIR__ . '/includes/mutation_request.php';
 require_once __DIR__ . '/includes/audit_event.php';
 
-startAuthSession();
+startAuthSession(false);
 
 if (!isset($_SESSION['user_id']) || !hasValidCsrfToken($_POST['csrf_token'] ?? null)) {
     http_response_code(403);

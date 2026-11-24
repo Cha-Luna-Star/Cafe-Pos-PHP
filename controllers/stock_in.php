@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/../includes/auth_session.php';
+startAuthSession();
 header('Content-Type: application/json');
 
 if (!isset($_SESSION['user_id']) ||
