@@ -6,6 +6,10 @@ $staffEscape = static fn($value): string => htmlspecialchars(
     ENT_QUOTES | ENT_SUBSTITUTE,
     'UTF-8'
 );
+$retryResetId = $staffResetError !== null ? requestSqlInt($_POST['user_id'] ?? null) : false;
+$retryAccountVisible = $retryResetId !== false && array_any($staffAccounts, static fn(array $account): bool =>
+    (int)$account['id'] === $retryResetId && in_array($account['role'], $creatableStaffRoles, true)
+);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -15,6 +19,7 @@ $staffEscape = static fn($value): string => htmlspecialchars(
     <title>Cafe POS | Staff Accounts</title>
     <link rel="stylesheet" href="assets/css/reports.css">
     <link rel="stylesheet" href="assets/css/sidebar.css">
+    <script src="assets/js/staff_accounts.js" defer></script>
 </head>
 <body>
 
@@ -89,14 +94,15 @@ $staffEscape = static fn($value): string => htmlspecialchars(
         <p class="report-note">Apply the staff account status database migration to enable deactivation.</p>
     <?php endif; ?>
 
+    <?php if ($staffResetError !== null && !$retryAccountVisible): ?>
+        <p class="report-error" role="alert"><?= $staffEscape($staffResetError) ?></p>
+    <?php endif; ?>
+
     <?php if ($staffError !== null): ?>
         <p class="report-error" role="alert"><?= $staffEscape($staffError) ?></p>
     <?php elseif (!$staffAccounts): ?>
         <p class="report-empty">No staff accounts match these filters.</p>
     <?php else: ?>
-        <?php if ($staffResetError !== null): ?>
-            <p class="report-error" role="alert"><?= $staffEscape($staffResetError) ?></p>
-        <?php endif; ?>
         <section class="report-section staff-results" aria-label="Matching staff accounts">
             <div class="report-table">
                 <table aria-label="Staff accounts">
@@ -123,27 +129,18 @@ $staffEscape = static fn($value): string => htmlspecialchars(
                                 <?php if (($_SESSION['role'] ?? '') === 'Admin'): ?>
                                     <td>
                                         <?php if (in_array($staffAccount['role'], $creatableStaffRoles, true)): ?>
-                                            <details>
-                                                <summary>Reset Password</summary>
-                                                <form method="post" action="staff_accounts.php" class="report-filters">
-                                                    <input type="hidden" name="staff_action" value="reset_password">
-                                                    <input type="hidden" name="user_id" value="<?= (int)$staffAccount['id'] ?>">
-                                                    <input type="hidden" name="csrf_token" value="<?= $staffEscape(sessionCsrfToken()) ?>">
-                                                    <div>
-                                                        <label for="reset-password-<?= (int)$staffAccount['id'] ?>">New password for <?= $staffEscape($staffAccount['username']) ?></label>
-                                                        <input type="password" id="reset-password-<?= (int)$staffAccount['id'] ?>" name="password"
-                                                            autocomplete="new-password" minlength="12" required>
-                                                    </div>
-                                                    <button type="submit">Reset Password</button>
-                                                </form>
-                                            </details>
+                                            <button type="button" class="staff-row-action" data-reset-staff
+                                                data-staff-id="<?= (int)$staffAccount['id'] ?>"
+                                                data-staff-name="<?= $staffEscape($staffAccount['username']) ?>">
+                                                Reset Password
+                                            </button>
                                             <?php if ($staffStatusAvailable): ?>
                                                 <?php
                                                 $isActive = (int)$staffAccount['is_active'] === 1;
                                                 $statusAction = $isActive ? 'Deactivate' : 'Reactivate';
                                                 ?>
                                                 <details>
-                                                    <summary><?= $statusAction ?> Account</summary>
+                                                    <summary class="staff-row-action"><?= $statusAction ?> Account</summary>
                                                     <form method="post" action="staff_accounts.php" class="report-filters">
                                                         <input type="hidden" name="staff_action" value="change_status">
                                                         <input type="hidden" name="user_id" value="<?= (int)$staffAccount['id'] ?>">
@@ -164,6 +161,28 @@ $staffEscape = static fn($value): string => htmlspecialchars(
         </section>
     <?php endif; ?>
 </main>
+
+<?php if (($_SESSION['role'] ?? '') === 'Admin'): ?>
+    <dialog id="staff-reset-dialog" class="staff-action-dialog" aria-labelledby="reset-staff-heading"
+        data-retry-id="<?= (int)$retryResetId ?>">
+        <form method="post" action="staff_accounts.php">
+            <h2 id="reset-staff-heading">Reset Password</h2>
+            <p>Account <strong id="reset-staff-name"></strong></p>
+            <input type="hidden" name="staff_action" value="reset_password">
+            <input type="hidden" name="user_id" id="reset-staff-id">
+            <input type="hidden" name="csrf_token" value="<?= $staffEscape(sessionCsrfToken()) ?>">
+            <label for="reset-staff-password">New password</label>
+            <input type="password" id="reset-staff-password" name="password" autocomplete="new-password"
+                minlength="12" aria-describedby="reset-staff-help" required>
+            <small id="reset-staff-help">Use at least 12 characters. Saving signs this person out of existing sessions.</small>
+            <p id="reset-staff-error" class="report-error" role="alert" hidden><?= $staffEscape($staffResetError) ?></p>
+            <div class="staff-dialog-buttons">
+                <button type="button" id="cancel-staff-reset">Cancel</button>
+                <button type="submit">Reset Password</button>
+            </div>
+        </form>
+    </dialog>
+<?php endif; ?>
 
 </body>
 </html>
