@@ -90,7 +90,22 @@ function inventoryCellValue(cell) {
     return (cell.dataset.number ?? cell.dataset.value ?? cell.textContent).trim();
 }
 
+const sortIndicators = {
+    text: { idle: "A–Z", asc: "A–Z", desc: "Z–A", first: "A to Z", last: "Z to A" },
+    date: { idle: "Oldest", asc: "Oldest", desc: "Newest", first: "oldest first", last: "newest first" },
+    number: { idle: "⇅", asc: "↑", desc: "↓", first: "lowest first", last: "highest first" }
+};
+
+function updateSortIndicator(button, direction = "idle") {
+    const indicators = sortIndicators[button.dataset.type];
+    const label = button.querySelector(".sort-label").textContent;
+    button.dataset.direction = direction;
+    button.querySelector(".sort-indicator").textContent = indicators[direction];
+    button.title = "Sort by " + label + ", " + (direction === "asc" ? indicators.last : indicators.first);
+}
+
 document.querySelectorAll(".sort-header").forEach(button => {
+    updateSortIndicator(button);
     button.addEventListener("click", () => {
         const tbody = document.getElementById(button.dataset.table);
         const column = Number(button.dataset.column);
@@ -100,14 +115,12 @@ document.querySelectorAll(".sort-header").forEach(button => {
         document.querySelectorAll(
             `.sort-header[data-table="${button.dataset.table}"]`
         ).forEach(header => {
-            header.dataset.direction = "";
+            updateSortIndicator(header);
             header.closest("th").removeAttribute("aria-sort");
-            header.querySelector("span").textContent = "⇅";
         });
 
-        button.dataset.direction = ascending ? "asc" : "desc";
+        updateSortIndicator(button, ascending ? "asc" : "desc");
         button.closest("th").setAttribute("aria-sort", ascending ? "ascending" : "descending");
-        button.querySelector("span").textContent = ascending ? "↑" : "↓";
 
         const rows = Array.from(tbody.children).filter(row =>
             button.dataset.table !== "current-stock-body" ||
@@ -513,7 +526,7 @@ document.querySelectorAll(".export-csv-btn").forEach(button => {
         const table = tbody.closest("table");
 
         const headers = Array.from(table.querySelectorAll("thead > tr:first-child > th"))
-            .map(th => quoteInventoryCsv(th.textContent.replace(/[⇅↑↓]/g, "").trim()));
+            .map(th => quoteInventoryCsv((th.querySelector(".sort-label") ?? th).textContent.trim()));
 
         const rows = Array.from(tbody.querySelectorAll(":scope > tr"))
             .filter(row =>

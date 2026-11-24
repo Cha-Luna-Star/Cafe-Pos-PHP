@@ -165,12 +165,12 @@ th {
     color: #76543b;
     background: transparent;
 }
-.sort-header span {
+.sort-header .sort-indicator {
     color: #888;
     font-size: 16px;
 }
-.sort-header[data-direction="asc"] span,
-.sort-header[data-direction="desc"] span {
+.sort-header[data-direction="asc"] .sort-indicator,
+.sort-header[data-direction="desc"] .sort-indicator {
     color: #76543b;
 }
 

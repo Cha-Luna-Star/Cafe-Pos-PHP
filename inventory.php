@@ -121,6 +121,9 @@ require_once __DIR__ . '/includes/inventory_dates.php';
         </div>
     </section>
     <div class="inventory-tabs">
+        <button type="button" class="inventory-tab active" data-target="current-stock-section">Current Stock</button>
+        <button type="button" class="inventory-tab" data-target="batch-history-section">Batch History</button>
+        <button type="button" class="inventory-tab" data-target="stock-movement-section">Stock Movements</button>
         <?php if ($canManageInventory): ?>
             <button type="button" class="inventory-tab"
                 data-target="reconciliation-section">
@@ -130,9 +133,6 @@ require_once __DIR__ . '/includes/inventory_dates.php';
                 Reconciliation History
             </button>
         <?php endif; ?>
-        <button type="button" class="inventory-tab active" data-target="current-stock-section">Current Stock</button>
-        <button type="button" class="inventory-tab" data-target="batch-history-section">Batch History</button>
-        <button type="button" class="inventory-tab" data-target="stock-movement-section">Stock Movements</button>
         <?php if ($canManageInventory): ?>
             <button type="button" class="inventory-tab"
                 data-target="archived-ingredients-section">
@@ -165,11 +165,11 @@ require_once __DIR__ . '/includes/inventory_dates.php';
             <table>
                 <thead>
                     <tr>
-                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="0" data-type="text">Type <span aria-hidden="true">⇅</span></button></th>
-                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="1" data-type="text">Item <span aria-hidden="true">⇅</span></button></th>
-                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="2" data-type="number">Stock <span aria-hidden="true">⇅</span></button></th>
-                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="3" data-type="text">Unit <span aria-hidden="true">⇅</span></button></th>
-                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="4" data-type="text">Status <span aria-hidden="true">⇅</span></button></th>
+                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="0" data-type="text"><span class="sort-label">Type</span> <span class="sort-indicator" aria-hidden="true">A–Z</span></button></th>
+                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="1" data-type="text"><span class="sort-label">Item</span> <span class="sort-indicator" aria-hidden="true">A–Z</span></button></th>
+                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="2" data-type="number"><span class="sort-label">Stock</span> <span class="sort-indicator" aria-hidden="true">⇅</span></button></th>
+                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="3" data-type="text"><span class="sort-label">Unit</span> <span class="sort-indicator" aria-hidden="true">A–Z</span></button></th>
+                        <th><button type="button" class="sort-header" data-table="current-stock-body" data-column="4" data-type="text"><span class="sort-label">Status</span> <span class="sort-indicator" aria-hidden="true">A–Z</span></button></th>
                     </tr>
                 </thead>
                 <tbody id="current-stock-body">
@@ -353,15 +353,15 @@ require_once __DIR__ . '/includes/inventory_dates.php';
             <table>
             <thead>
                 <tr>
-                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="0" data-type="text">Type <span aria-hidden="true">⇅</span></button></th>
-                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="1" data-type="text">Item <span aria-hidden="true">⇅</span></button></th>
-                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="2" data-type="number">Remaining <span aria-hidden="true">⇅</span></button></th>
-                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="3" data-type="number">Cost/Unit <span aria-hidden="true">⇅</span></button></th>
-                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="4" data-type="date">Received <span aria-hidden="true">⇅</span></button></th>
-                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="5" data-type="date">Expiration <span aria-hidden="true">⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="0" data-type="text"><span class="sort-label">Type</span> <span class="sort-indicator" aria-hidden="true">A–Z</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="1" data-type="text"><span class="sort-label">Item</span> <span class="sort-indicator" aria-hidden="true">A–Z</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="2" data-type="number"><span class="sort-label">Remaining</span> <span class="sort-indicator" aria-hidden="true">⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="3" data-type="number"><span class="sort-label">Cost/Unit</span> <span class="sort-indicator" aria-hidden="true">⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="4" data-type="date"><span class="sort-label">Received</span> <span class="sort-indicator" aria-hidden="true">Oldest</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="5" data-type="date"><span class="sort-label">Expiration</span> <span class="sort-indicator" aria-hidden="true">Oldest</span></button></th>
                     <th>Status</th>
-                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="7" data-type="text">Supplier <span aria-hidden="true">⇅</span></button></th>
-                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="8" data-type="number">Remaining Value <span aria-hidden="true">⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="7" data-type="text"><span class="sort-label">Supplier</span> <span class="sort-indicator" aria-hidden="true">A–Z</span></button></th>
+                    <th><button type="button" class="sort-header" data-table="batch-history-body" data-column="8" data-type="number"><span class="sort-label">Remaining Value</span> <span class="sort-indicator" aria-hidden="true">⇅</span></button></th>
                 </tr>
             </thead>
                 <tbody id="batch-history-body">
