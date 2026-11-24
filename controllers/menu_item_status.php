@@ -10,6 +10,7 @@ if (!isset($_SESSION['user_id']) ||
 }
 
 require_once __DIR__ . '/../includes/mutation_request.php';
+require_once __DIR__ . '/../includes/audit_event.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Allow: POST');
@@ -38,22 +39,39 @@ if ($id === false || !in_array($action, ['archive', 'restore'], true)) {
 try {
     $throwDatabaseConnectionError = true;
     require_once __DIR__ . '/../config/database.php';
+    $connection->beginTransaction();
+
+    $archived = $action === 'archive' ? 1 : 0;
     $stmt = $connection->prepare("
         UPDATE dbo.menu_items
         SET is_archived = ?
+        OUTPUT INSERTED.name, DELETED.is_archived AS previous_archived
         WHERE id = ?
     ");
 
-    $stmt->execute([$action === 'archive' ? 1 : 0, $id]);
+    $stmt->execute([$archived, $id]);
+    $item = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt->closeCursor();
 
-    if ($stmt->rowCount() !== 1) {
+    if (!$item) {
+        $connection->rollBack();
         http_response_code(404);
         echo json_encode(["success" => false, "message" => "Menu item not found."]);
         exit;
     }
 
+    if ($item['previous_archived'] === null || (int)$item['previous_archived'] !== $archived) {
+        $auditAction = $archived ? 'Menu Item Archived' : 'Menu Item Restored';
+        recordAuditEvent($connection, $auditAction, "Menu item #$id ({$item['name']}).");
+    }
+    $connection->commit();
+
     echo json_encode(["success" => true]);
-} catch (PDOException $e) {
+} catch (Throwable $e) {
+    if (isset($connection) && $connection->inTransaction()) {
+        $connection->rollBack();
+    }
+
     error_log($e->getMessage());
     http_response_code(500);
     echo json_encode(["success" => false, "message" => "Unable to update item."]);

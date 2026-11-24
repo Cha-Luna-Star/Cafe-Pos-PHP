@@ -16,6 +16,7 @@ if (!in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)) {
 
 require_once __DIR__ . '/../includes/mutation_request.php';
 require_once __DIR__ . '/../includes/product_stock.php';
+require_once __DIR__ . '/../includes/audit_event.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Allow: POST');
@@ -69,7 +70,9 @@ try {
     );
     $categoryStmt->execute([$categoryId]);
 
-    if (!$categoryStmt->fetchColumn()) {
+    $categoryExists = (int)$categoryStmt->fetchColumn() > 0;
+    $categoryStmt->closeCursor();
+    if (!$categoryExists) {
         http_response_code(422);
         echo json_encode(["success" => false, "message" => "Invalid category."]);
         exit;
@@ -82,6 +85,7 @@ try {
         exit;
     }
 
+    $connection->beginTransaction();
     $params = [$name, (float)$price, $categoryId, $available, $hasTemp, $hasSizes];
     if ($id > 0) {
         $thresholdUpdate = '';
@@ -103,11 +107,13 @@ try {
         $params[] = $id;
         $stmt->execute($params);
         if ($stmt->rowCount() !== 1) {
+            $connection->rollBack();
             http_response_code(404);
             echo json_encode(["success" => false, "message" => "Menu item not found."]);
             exit;
         }
 
+        $auditAction = "Menu Item Updated";
         $message = "Item updated successfully.";
     } else {
         $thresholdColumn = '';
@@ -121,16 +127,37 @@ try {
             INSERT INTO dbo.menu_items
             (name, price, category_id, available, stock_qty,
              discount, has_temp_option, has_sizes, is_archived$thresholdColumn)
+            OUTPUT INSERTED.id
             VALUES (?, ?, ?, ?, 0, 0, ?, ?, 0$thresholdPlaceholder)
         ");
 
         $stmt->execute($params);
 
+        $id = $stmt->fetchColumn();
+        $stmt->closeCursor();
+        if ($id === false) {
+            throw new RuntimeException('The new menu item ID was unavailable.');
+        }
+
+        $auditAction = "Menu Item Created";
         $message = "Item added successfully.";
     }
 
+    $amount = number_format((float)$price, 2, '.', '');
+    $availability = $available ? 'Available' : 'Unavailable';
+    $details = "Menu item #$id ($name). Price: $amount PHP. Category #$categoryId. $availability.";
+    if ($threshold !== null) {
+        $details .= " Low stock threshold: $threshold.";
+    }
+    recordAuditEvent($connection, $auditAction, $details);
+    $connection->commit();
+
     echo json_encode(["success" => true, "message" => $message]);
-} catch (PDOException $e) {
+} catch (Throwable $e) {
+    if (isset($connection) && $connection->inTransaction()) {
+        $connection->rollBack();
+    }
+
     error_log($e->getMessage());
     http_response_code(500);
     echo json_encode(["success" => false, "message" => "Unable to save item."]);
