@@ -11,6 +11,7 @@ if (!isset($_SESSION['user_id']) ||
 
 require_once __DIR__ . '/../includes/mutation_request.php';
 require_once __DIR__ . '/../includes/inventory_dates.php';
+require_once __DIR__ . '/../includes/audit_event.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -88,13 +89,13 @@ try {
 
     if ($type === 'Ingredient') {
         $stmt = $connection->prepare("
-            SELECT id
+            SELECT name
             FROM dbo.ingredients WITH (UPDLOCK, HOLDLOCK)
             WHERE id = ? AND is_archived = 0
         ");
     } else {
         $stmt = $connection->prepare("
-            SELECT id
+            SELECT name
             FROM dbo.menu_items WITH (UPDLOCK, HOLDLOCK)
             WHERE id = ? AND is_archived = 0
         ");
@@ -102,7 +103,9 @@ try {
 
     $stmt->execute([$id]);
 
-    if (!$stmt->fetchColumn()) {
+    $itemName = $stmt->fetchColumn();
+    $stmt->closeCursor();
+    if ($itemName === false) {
         throw new RuntimeException('Item not found.');
     }
 
@@ -164,6 +167,13 @@ try {
         $notes,
         $_SESSION['user_id']
     ]);
+
+    $amount = number_format((float)$quantity, $type === 'Product' ? 0 : 3, '.', '');
+    recordAuditEvent(
+        $connection,
+        'Inventory Restock',
+        "Received $amount for $type #$id ($itemName), batch #$batchId."
+    );
 
     $connection->commit();
 

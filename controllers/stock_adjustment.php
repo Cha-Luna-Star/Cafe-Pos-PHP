@@ -13,6 +13,7 @@ if (
 
 require_once __DIR__ . '/../includes/mutation_request.php';
 require_once __DIR__ . '/../includes/inventory_dates.php';
+require_once __DIR__ . '/../includes/audit_event.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -91,20 +92,20 @@ try {
     $connection->beginTransaction();
 
     $stmt = $connection->prepare("
-        SELECT stock_qty
+        SELECT name, stock_qty
         FROM $table WITH (UPDLOCK, HOLDLOCK)
         WHERE id = ? AND is_archived = 0
     ");
 
     $stmt->execute([$id]);
-    $currentStock = $stmt->fetchColumn();
+    $item = $stmt->fetch(PDO::FETCH_ASSOC);
     $stmt->closeCursor();
 
-    if ($currentStock === false) {
+    if (!$item) {
         throw new RuntimeException('Item not found.');
     }
 
-    if ($action === 'Remove' && $quantity > (float)$currentStock) {
+    if ($action === 'Remove' && $quantity > (float)$item['stock_qty']) {
         throw new RuntimeException('Insufficient stock.');
     }
 
@@ -209,6 +210,14 @@ try {
         ");
         $stmt->execute([$quantity, $id]);
     }
+
+    $amount = number_format($quantity, $type === 'Product' ? 0 : 3, '.', '');
+    $direction = $action === 'Add' ? 'Added' : 'Removed';
+    recordAuditEvent(
+        $connection,
+        'Inventory Stock Edit',
+        "$direction $amount for $type #$id ({$item['name']}), batch #$batchId ($movementType). Reason: $reason"
+    );
 
     $connection->commit();
 
