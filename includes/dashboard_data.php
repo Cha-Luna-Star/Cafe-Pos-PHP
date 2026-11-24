@@ -7,6 +7,7 @@ if (!isset($canViewSales)) {
 
 require_once __DIR__ . '/../includes/inventory_dates.php';
 require_once __DIR__ . '/../includes/product_stock.php';
+require_once __DIR__ . '/../includes/sales_items.php';
 
 $dashboardError = null;
 $today = inventoryToday();
@@ -22,6 +23,7 @@ $chartStart = match ($range) {
     default => $today->modify('-6 days')
 };
 $chartPeriods = [];
+$dashboardBestSellers = [];
 
 try {
     $throwDatabaseConnectionError = true;
@@ -71,6 +73,10 @@ try {
                 'orders' => (int)($periodTotals[$period]['orders'] ?? 0)
             ];
         }
+    }
+
+    if ($canViewSales && $chartStart !== null) {
+        $dashboardBestSellers = bestSellingMenuItems($connection, $chartStart->format('Y-m-d'), $todayDate);
     }
 
     $recentOrders = $connection->query("

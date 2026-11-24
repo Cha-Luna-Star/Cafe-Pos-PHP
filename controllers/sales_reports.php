@@ -12,6 +12,7 @@ if (!in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)) {
 }
 
 require_once __DIR__ . '/../includes/inventory_dates.php';
+require_once __DIR__ . '/../includes/sales_items.php';
 
 $today = inventoryToday();
 $startValue = $_GET['from'] ?? $today->modify('-6 days')->format('Y-m-d');
@@ -75,23 +76,7 @@ try {
     }
 
     $stmt->closeCursor();
-    $stmt = $connection->prepare("
-        WITH item_totals AS (
-            SELECT oi.menu_item_id, SUM(CAST(oi.quantity AS bigint)) AS units_sold
-            FROM dbo.order_items oi
-            JOIN dbo.orders o ON o.id = oi.order_id
-            WHERE $completedInRange
-            GROUP BY oi.menu_item_id
-        )
-        SELECT TOP (10)
-            COALESCE(m.name, CONCAT('Item #', t.menu_item_id)) AS item_name,
-            t.units_sold
-        FROM item_totals t
-        LEFT JOIN dbo.menu_items m ON m.id = t.menu_item_id
-        ORDER BY t.units_sold DESC, item_name, t.menu_item_id
-    ");
-    $stmt->execute($reportDates);
-    $bestSellingItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $bestSellingItems = bestSellingMenuItems($connection, $start->format('Y-m-d'), $end->format('Y-m-d'));
 } catch (Throwable $e) {
     error_log('Sales report failed: ' . $e->getMessage());
     http_response_code(500);
