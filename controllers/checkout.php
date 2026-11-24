@@ -109,12 +109,39 @@ try {
     $coldCupId = $specialIngredients['Cups (Cold)'] ?? null;
     $iceId = $specialIngredients['Ice'] ?? null;
 
+    $menuIds = [];
     foreach ($items as $item) {
         if (!is_array($item)) {
             failCheckout('Invalid cart item.');
         }
-
         $id = filter_var($item['id'] ?? null, FILTER_VALIDATE_INT);
+        if (!$id || $id <= 0 || $id > 2147483647) {
+            failCheckout('Invalid item or quantity.');
+        }
+        $menuIds[$id] = true;
+    }
+
+    ksort($menuIds, SORT_NUMERIC);
+    $menuItems = [];
+    foreach (array_keys($menuIds) as $id) {
+        $stmt = $connection->prepare("
+            SELECT id, name, price, stock_qty, has_sizes, has_temp_option
+            FROM dbo.menu_items WITH (UPDLOCK, HOLDLOCK)
+            WHERE id = ?
+              AND available = 1
+              AND is_archived = 0
+        ");
+        $stmt->execute([$id]);
+        $menu = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt->closeCursor();
+        if (!$menu) {
+            failCheckout('Menu item is unavailable.');
+        }
+        $menuItems[$id] = $menu;
+    }
+
+    foreach ($items as $item) {
+        $id = (int)$item['id'];
         $quantity = filter_var($item['quantity'] ?? null, FILTER_VALIDATE_INT);
         $size = $item['size'] ?? 'Regular';
         $temperature = $item['temperature'] ?? null;
@@ -126,7 +153,7 @@ try {
             failCheckout('Invalid temperature.');
         }
 
-        if (!$id || $id <= 0 || !$quantity || $quantity < 1 || $quantity > 100) {
+        if (!$quantity || $quantity < 1 || $quantity > 100) {
             failCheckout('Invalid item or quantity.');
         }
 
@@ -134,15 +161,7 @@ try {
             failCheckout('Invalid size.');
         }
 
-        $stmt = $connection->prepare("
-            SELECT id, name, price, stock_qty, has_sizes, has_temp_option
-            FROM dbo.menu_items WITH (UPDLOCK, HOLDLOCK)
-            WHERE id = ?
-              AND available = 1
-              AND is_archived = 0
-        ");
-        $stmt->execute([$id]);
-        $menu = $stmt->fetch(PDO::FETCH_ASSOC);
+        $menu = $menuItems[$id];
 
         if ((int)$menu['has_temp_option'] === 1) {
             if (!in_array($temperature, ['Hot', 'Iced'], true)) {
@@ -220,7 +239,13 @@ $validatedItems[] = [
 
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $recipe) {
             $ingredientId = (int)$recipe['ingredient_id'];
-            $needed = (float)$recipe['quantity_needed'] * $quantity;
+            $recipeQuantity = (float)$recipe['quantity_needed'];
+            $roundedQuantity = round($recipeQuantity, 3);
+            if (!is_finite($recipeQuantity) || $roundedQuantity <= 0 ||
+                abs($recipeQuantity - $roundedQuantity) > 0.00000001) {
+                failCheckout('A recipe has an invalid ingredient quantity.');
+            }
+            $needed = $roundedQuantity * $quantity;
 
             if (
                 $temperature === 'Iced' &&
@@ -242,23 +267,25 @@ $validatedItems[] = [
         }
     }
 
-    ksort($ingredientNeeds);
 
+    ksort($ingredientNeeds, SORT_NUMERIC);
     foreach ($ingredientNeeds as $ingredientId => $needed) {
-        if ($needed <= 0) {
-            continue;
-        }
+        $needed = round($needed, 3);
 
         $stmt = $connection->prepare("
             SELECT stock_qty
             FROM dbo.ingredients WITH (UPDLOCK, HOLDLOCK)
-            WHERE id = ?
+            WHERE id = ? AND is_archived = 0
         ");
         $stmt->execute([$ingredientId]);
 
         $stock = $stmt->fetchColumn();
 
-        if ($stock === false || (float)$stock + 0.000001 < $needed) {
+        if ($stock === false) {
+            failCheckout('An ingredient is unavailable.');
+        }
+
+        if ($stock === null || (float)$stock + 0.000001 < $needed) {
             failCheckout('Insufficient ingredient stock.');
         }
 
@@ -415,19 +442,16 @@ $validatedItems[] = [
         }
     }
 
-    ksort($ingredientNeeds);
 
     foreach ($ingredientNeeds as $ingredientId => $needed) {
-        if ($needed <= 0) {
-            continue;
-        }
+        $needed = round($needed, 3);
 
         $stmt = $connection->prepare("
             UPDATE dbo.ingredients
-            SET stock_qty = stock_qty - ?
-            WHERE id = ? AND stock_qty >= ?
+            SET stock_qty = CASE WHEN stock_qty <= ? THEN 0 ELSE stock_qty - ? END
+            WHERE id = ? AND stock_qty + 0.000001 >= ?
         ");
-        $stmt->execute([$needed, $ingredientId, $needed]);
+        $stmt->execute([$needed, $needed, $ingredientId, $needed]);
 
         if ($stmt->rowCount() !== 1) {
             failCheckout('Insufficient ingredient stock.');

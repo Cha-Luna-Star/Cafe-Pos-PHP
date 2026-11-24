@@ -97,7 +97,7 @@ try {
     $stmt = $connection->prepare("
         SELECT stock_qty
         FROM $table WITH (UPDLOCK, HOLDLOCK)
-        WHERE id = ?
+        WHERE id = ? AND is_archived = 0
     ");
 
     $stmt->execute([$id]);
@@ -200,14 +200,11 @@ try {
             throw new RuntimeException('Insufficient batch stock.');
         }
 
-        $archiveCondition = $type === 'Product'
-            ? 'AND is_archived = 0'
-            : '';
 
         $stmt = $connection->prepare("
             UPDATE $table
             SET stock_qty = stock_qty - ?
-            WHERE id = ? $archiveCondition
+            WHERE id = ?
         ");
         $stmt->execute([$quantity, $id]);
     }

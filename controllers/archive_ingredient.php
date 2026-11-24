@@ -87,6 +87,20 @@ try {
     }
 
     $stmt = $connection->prepare("
+        SELECT TOP (1) 1
+        FROM dbo.ingredient_usage iu
+        JOIN dbo.orders o ON o.id = iu.order_id
+        WHERE iu.ingredient_id = ? AND o.status = 'Pending'
+    ");
+    $stmt->execute([$id]);
+    $usedByPendingOrder = $stmt->fetchColumn() !== false;
+    $stmt->closeCursor();
+
+    if ($usedByPendingOrder) {
+        throw new RuntimeException('Ingredient is used by a pending order.');
+    }
+
+    $stmt = $connection->prepare("
         UPDATE dbo.ingredients
         SET is_archived = 1
         WHERE id = ?

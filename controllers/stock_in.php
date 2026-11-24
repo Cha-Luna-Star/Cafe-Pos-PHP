@@ -52,6 +52,10 @@ try {
         throw new RuntimeException('Product quantity must be a whole number.');
     }
 
+    if ($type === 'Ingredient' && ((float)$quantity < 0.001 || round((float)$quantity, 3) !== (float)$quantity)) {
+        throw new RuntimeException('Ingredient quantity must use at most 3 decimal places.');
+    }
+
     if (strlen($supplier) > 150 || strlen($notes) > 500) {
         throw new RuntimeException('Supplier or notes are too long.');
     }
@@ -85,7 +89,7 @@ try {
         $stmt = $connection->prepare("
             SELECT id
             FROM dbo.ingredients WITH (UPDLOCK, HOLDLOCK)
-            WHERE id = ?
+            WHERE id = ? AND is_archived = 0
         ");
     } else {
         $stmt = $connection->prepare("

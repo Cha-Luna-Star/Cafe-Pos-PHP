@@ -39,10 +39,27 @@ try {
 
     $connection->beginTransaction();
 
+    $stmt = $connection->prepare("
+        SELECT status
+        FROM dbo.orders WITH (UPDLOCK, HOLDLOCK)
+        WHERE id = ?
+    ");
+    $stmt->execute([$orderId]);
+    $status = $stmt->fetchColumn();
+    $stmt->closeCursor();
+
+    if ($status === false) {
+        throw new RuntimeException('Order not found.');
+    }
+
+    if ($status !== 'Pending') {
+        throw new RuntimeException('Only pending orders can be updated.');
+    }
+
     if ($action === 'Cancelled') {
         $stmt = $connection->prepare("
             SELECT item_type, item_id, batch_id, quantity
-            FROM dbo.stock_movements WITH (UPDLOCK, HOLDLOCK)
+            FROM dbo.stock_movements
             WHERE movement_type = 'Sale'
             AND remarks = ?
             ORDER BY id
@@ -116,6 +133,40 @@ try {
             throw new RuntimeException('Stock movement history does not match the order.');
         }
 
+        ksort($expectedProducts, SORT_NUMERIC);
+        ksort($expectedIngredients, SORT_NUMERIC);
+
+        $stmt = $connection->prepare("
+            SELECT id
+            FROM dbo.menu_items WITH (UPDLOCK, HOLDLOCK)
+            WHERE id = ? AND stock_qty >= 0
+        ");
+        foreach (array_keys($expectedProducts) as $id) {
+            $stmt->execute([$id]);
+            $available = $stmt->fetchColumn() !== false;
+            $stmt->closeCursor();
+            if (!$available) {
+                throw new RuntimeException('Unable to restore product stock.');
+            }
+        }
+
+        $stmt = $connection->prepare("
+            SELECT is_archived, stock_qty
+            FROM dbo.ingredients WITH (UPDLOCK, HOLDLOCK)
+            WHERE id = ?
+        ");
+        foreach (array_keys($expectedIngredients) as $id) {
+            $stmt->execute([$id]);
+            $ingredient = $stmt->fetch(PDO::FETCH_ASSOC);
+            $stmt->closeCursor();
+            if (!$ingredient || $ingredient['stock_qty'] === null || (float)$ingredient['stock_qty'] < 0) {
+                throw new RuntimeException('Unable to restore ingredient stock.');
+            }
+            if ((int)$ingredient['is_archived'] === 1) {
+                throw new RuntimeException('Restore the archived ingredient before cancelling this order.');
+            }
+        }
+
         foreach ($movements as $movement) {
             $type = $movement['item_type'];
             $id = (int)$movement['item_id'];
@@ -135,7 +186,7 @@ try {
             $stmt = $connection->prepare("
                 UPDATE $batchTable
                 SET quantity = quantity + ?
-                WHERE id = ? AND $foreignKey = ?
+                WHERE id = ? AND $foreignKey = ? AND quantity >= 0
             ");
             $stmt->execute([$quantity, $batchId, $id]);
 
@@ -169,23 +220,6 @@ try {
                 $_SESSION['user_id']
             ]);
         }
-    }
-
-    $stmt = $connection->prepare("
-        SELECT status
-        FROM dbo.orders WITH (UPDLOCK, HOLDLOCK)
-        WHERE id = ?
-    ");
-    $stmt->execute([$orderId]);
-    $status = $stmt->fetchColumn();
-    $stmt->closeCursor();
-
-    if ($status === false) {
-        throw new RuntimeException('Order not found.');
-    }
-
-    if ($status !== 'Pending') {
-        throw new RuntimeException('Only pending orders can be updated.');
     }
 
     $stmt = $connection->prepare("
