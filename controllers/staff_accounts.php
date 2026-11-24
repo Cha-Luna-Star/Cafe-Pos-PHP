@@ -11,7 +11,18 @@ if (!in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)) {
     exit('Permission denied.');
 }
 
+$creatableStaffRoles = ['Cashier', 'Manager'];
 $staffRoles = ['Admin', 'Manager', 'Cashier'];
+$staffCreateError = null;
+$staffNotice = $_SESSION['staff_account_notice'] ?? null;
+unset($_SESSION['staff_account_notice']);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $staffCreateError = require __DIR__ . '/../includes/create_staff_account.php';
+    if (($_SESSION['role'] ?? '') !== 'Admin') {
+        exit('Permission denied.');
+    }
+}
 $staffSearch = $_GET['q'] ?? '';
 $staffRole = $_GET['role'] ?? '';
 $staffAccounts = [];

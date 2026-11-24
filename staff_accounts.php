@@ -25,6 +25,43 @@ $staffEscape = static fn($value): string => htmlspecialchars(
 </header>
 
 <main class="report-content staff-accounts">
+    <?php if ($staffNotice !== null): ?>
+        <p role="status"><?= $staffEscape($staffNotice) ?></p>
+    <?php endif; ?>
+
+    <?php if (($_SESSION['role'] ?? '') === 'Admin'): ?>
+        <section class="report-section" aria-labelledby="staff-create-heading">
+            <h2 id="staff-create-heading">Add Staff Account</h2>
+            <form method="post" action="staff_accounts.php" class="report-filters">
+                <input type="hidden" name="csrf_token" value="<?= $staffEscape(sessionCsrfToken()) ?>">
+                <div>
+                    <label for="new-staff-username">Username</label>
+                    <input id="new-staff-username" name="username" maxlength="100"
+                        value="<?= $staffEscape($_POST['username'] ?? '') ?>" required>
+                </div>
+                <div>
+                    <label for="new-staff-role">Role</label>
+                    <select id="new-staff-role" name="staff_role" required>
+                        <?php foreach ($creatableStaffRoles as $roleOption): ?>
+                            <option value="<?= $staffEscape($roleOption) ?>" <?= ($_POST['staff_role'] ?? '') === $roleOption ? 'selected' : '' ?>>
+                                <?= $staffEscape($roleOption) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div>
+                    <label for="new-staff-password">Initial Password</label>
+                    <input type="password" id="new-staff-password" name="password"
+                        autocomplete="new-password" minlength="12" required>
+                </div>
+                <button type="submit">Create Account</button>
+            </form>
+            <?php if ($staffCreateError !== null): ?>
+                <p class="report-error" role="alert"><?= $staffEscape($staffCreateError) ?></p>
+            <?php endif; ?>
+        </section>
+    <?php endif; ?>
+
     <form method="get" class="report-filters">
         <div>
             <label for="staff-search">Username</label>
