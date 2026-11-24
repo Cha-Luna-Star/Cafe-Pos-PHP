@@ -33,6 +33,7 @@ require_once __DIR__ . '/controllers/inventory.php';
         <div class="inventory-actions">
             <button type="button" id="stock-in-btn">+ Stock In</button>
             <button type="button" id="adjust-stock-btn">Adjust Stock</button>
+            <button type="button" id="add-ingredient-btn">+ Ingredient</button>
         </div>
     <?php endif; ?>
 </header>
@@ -95,27 +96,27 @@ require_once __DIR__ . '/controllers/inventory.php';
     ?>
 
     <section class="inventory-summary">
-        <div class="summary-card">
+        <div class="summary-card" data-filter="all" role="button" tabindex="0">
             <span>Total Items</span>
             <strong><?= $totalItems ?></strong>
         </div>
 
-        <div class="summary-card low-stock-card">
+        <div class="summary-card low-stock-card" data-filter="low-stock" role="button" tabindex="0">
             <span>Low Stock</span>
             <strong><?= $lowStockCount ?></strong>
         </div>
 
-        <div class="summary-card out-of-stock-card">
+        <div class="summary-card out-of-stock-card" data-filter="out-of-stock" role="button" tabindex="0">
             <span>Out of Stock</span>
             <strong><?= $outOfStockCount ?></strong>
         </div>
 
-        <div class="summary-card expiring-card">
+        <div class="summary-card expiring-card" data-filter="expiring-soon" role="button" tabindex="0">
             <span>Expiring Soon</span>
             <strong><?= $expiringSoonCount ?></strong>
         </div>
 
-        <div class="summary-card expired-card">
+        <div class="summary-card expired-card" data-filter="expired" role="button" tabindex="0">
             <span>Expired</span>
             <strong><?= $expiredCount ?></strong>
         </div>
@@ -168,7 +169,8 @@ require_once __DIR__ . '/controllers/inventory.php';
                             'name' => $item['name'],
                             'stock' => (float)$item['stock_qty'],
                             'unit' => $item['unit'],
-                            'threshold' => (float)$item['low_stock_threshold']
+                            'threshold' => (float)$item['low_stock_threshold'],
+                            'cost' => (float)$item['cost_per_unit']
                         ];
                     }
 
@@ -209,6 +211,19 @@ require_once __DIR__ . '/controllers/inventory.php';
                                     <span class="stock-status <?= $statusClass ?>">
                                         <?= $stockStatus ?>
                                     </span>
+                                    <?php if (
+                                        $item['type'] === 'Ingredient' &&
+                                        in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)
+                                    ): ?>
+                                        <button type="button" class="edit-ingredient-btn"
+                                            data-id="<?= $item['id'] ?>"
+                                            data-name="<?= htmlspecialchars($item['name'], ENT_QUOTES) ?>"
+                                            data-unit="<?= htmlspecialchars($item['unit'], ENT_QUOTES) ?>"
+                                            data-threshold="<?= $item['threshold'] ?>"
+                                            data-cost="<?= $item['cost'] ?>">
+                                            Edit
+                                        </button>
+                                    <?php endif; ?>
                                     <span class="stock-expand-arrow" aria-hidden="true"></span>
                                 </div>
                             </td>
@@ -567,5 +582,39 @@ require_once __DIR__ . '/controllers/inventory.php';
 </dialog>
 <?php endif; ?>
 
+<?php if (in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)): ?>
+<dialog id="ingredient-dialog">
+    <form id="ingredient-form">
+        <h2 id="ingredient-dialog-title">Add Ingredient</h2>
+
+        <input type="hidden" id="ingredient-id">
+
+        <label for="ingredient-name">Ingredient Name</label>
+        <input type="text" id="ingredient-name" maxlength="100" required>
+
+        <label for="ingredient-unit">Unit</label>
+        <select id="ingredient-unit" required>
+            <option value="g">Grams (g)</option>
+            <option value="kg">Kilograms (kg)</option>
+            <option value="ml">Milliliters (ml)</option>
+            <option value="L">Liters (L)</option>
+            <option value="pcs">Pieces (pcs)</option>
+        </select>
+
+        <label for="ingredient-threshold">Low Stock Threshold</label>
+        <input type="number" id="ingredient-threshold" min="0" step="0.001" required>
+
+        <label for="ingredient-cost">Cost Per Unit (₱)</label>
+        <input type="number" id="ingredient-cost" min="0" step="0.01" required>
+
+        <p id="ingredient-message" role="status"></p>
+
+        <div class="dialog-actions">
+            <button type="button" id="cancel-ingredient-btn">Cancel</button>
+            <button type="submit" id="save-ingredient-btn">Save Ingredient</button>
+        </div>
+    </form>
+</dialog>
+<?php endif; ?>
 </body>
 </html>

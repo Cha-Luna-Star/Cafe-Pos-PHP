@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../config/database.php';
 
 $ingredients = $connection->query("
-    SELECT id, name, unit, stock_qty, low_stock_threshold
+    SELECT id, name, unit, stock_qty, low_stock_threshold, cost_per_unit
     FROM dbo.ingredients
     ORDER BY name
 ")->fetchAll(PDO::FETCH_ASSOC);

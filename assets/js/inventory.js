@@ -603,3 +603,130 @@ document.querySelectorAll(".inventory-tab").forEach(tab => {
         paginateInventory(tableMap[target]);
     });
 });
+
+document.querySelectorAll(".summary-card[data-filter]").forEach(card => {
+    function applySummaryFilter() {
+        const filter = card.dataset.filter;
+        const isBatch = ["expiring-soon", "expired"].includes(filter);
+
+        if (isBatch) {
+            document.querySelector(
+                '[data-target="batch-history-section"]'
+            ).click();
+
+            document.getElementById("batch-search").value = "";
+            document.getElementById("batch-type-filter").value = "";
+            document.getElementById("batch-expiration-filter").value = filter;
+
+            filterBatchHistory();
+        } else {
+            document.querySelector(
+                '[data-target="current-stock-section"]'
+            ).click();
+
+            document.getElementById("stock-search").value = "";
+            document.getElementById("stock-type-filter").value = "";
+            document.getElementById("stock-status-filter").value =
+                filter === "all" ? "" : filter;
+
+            filterCurrentStock();
+        }
+
+        document.querySelectorAll(".summary-card").forEach(item => {
+            item.classList.toggle("selected", item === card);
+        });
+    }
+
+    card.addEventListener("click", applySummaryFilter);
+
+    card.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            applySummaryFilter();
+        }
+    });
+});
+
+const ingredientDialog = document.getElementById("ingredient-dialog");
+const ingredientForm = document.getElementById("ingredient-form");
+
+if (ingredientDialog && ingredientForm) {
+    document.getElementById("add-ingredient-btn").addEventListener("click", () => {
+        ingredientForm.reset();
+        document.getElementById("ingredient-unit").disabled = false;
+        document.getElementById("ingredient-id").value = "";
+        document.getElementById("ingredient-dialog-title").textContent = "Add Ingredient";
+        document.getElementById("ingredient-message").textContent = "";
+        ingredientDialog.showModal();
+    });
+
+    document.getElementById("cancel-ingredient-btn").addEventListener("click", () => {
+        ingredientDialog.close();
+    });
+
+    ingredientForm.addEventListener("submit", async event => {
+        event.preventDefault();
+
+        const message = document.getElementById("ingredient-message");
+        const saveButton = document.getElementById("save-ingredient-btn");
+
+        saveButton.disabled = true;
+        message.textContent = "";
+
+        try {
+            const response = await fetch("controllers/save_ingredient.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    csrf_token: csrfToken,
+                    name: document.getElementById("ingredient-name").value.trim(),
+                    unit: document.getElementById("ingredient-unit").value,
+                    threshold: Number(document.getElementById("ingredient-threshold").value),
+                    cost: Number(document.getElementById("ingredient-cost").value)
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Unable to save ingredient.");
+            }
+
+            window.location.reload();
+
+        } catch (error) {
+            message.textContent = error.message;
+        } finally {
+            saveButton.disabled = false;
+        }
+    });
+}
+
+document.querySelectorAll(".edit-ingredient-btn").forEach(button => {
+    button.addEventListener("click", event => {
+        event.stopPropagation();
+
+        ingredientForm.reset();
+
+        document.getElementById("ingredient-dialog-title").textContent = "Edit Ingredient";
+        document.getElementById("ingredient-id").value = button.dataset.id;
+        document.getElementById("ingredient-name").value = button.dataset.name;
+
+        const unit = document.getElementById("ingredient-unit");
+
+        if (!Array.from(unit.options).some(option => option.value === button.dataset.unit)) {
+            unit.add(new Option(button.dataset.unit, button.dataset.unit));
+        }
+
+        unit.value = button.dataset.unit;
+        unit.disabled = true;
+
+        document.getElementById("ingredient-threshold").value = button.dataset.threshold;
+        document.getElementById("ingredient-cost").value = button.dataset.cost;
+        document.getElementById("ingredient-message").textContent = "";
+
+        ingredientDialog.showModal();
+    });
+});

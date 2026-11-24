@@ -537,3 +537,79 @@ th {
     align-items: center;
     gap: 15px;
 }
+
+.summary-card[data-filter] {
+    cursor: pointer;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.summary-card[data-filter]:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.summary-card.selected,
+.summary-card:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+#ingredient-dialog {
+    width: min(460px, 95%);
+    max-height: 90vh;
+    border: none;
+    border-radius: 12px;
+    padding: 25px;
+    overflow-y: auto;
+}
+#ingredient-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+}
+#ingredient-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+#ingredient-form input,
+#ingredient-form select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font: inherit;
+}
+#cancel-ingredient-btn {
+    background: #dc2626;
+    color: white;
+}
+#cancel-ingredient-btn:hover {
+    background: #b91c1c;
+}
+#save-ingredient-btn {
+    background: #16a34a;
+    color: white;
+}
+#save-ingredient-btn:hover {
+    background: #15803d;
+}
+#ingredient-message {
+    color: #b42318;
+}
+
+.edit-ingredient-btn {
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-left: auto;
+}
+.edit-ingredient-btn:hover {
+    background: #1d4ed8;
+}
+#ingredient-unit:disabled {
+    background: #f3f4f6;
+    color: #666;
+    cursor: not-allowed;
+}
