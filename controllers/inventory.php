@@ -82,12 +82,12 @@ $reconciliation = $connection->query("
         'Ingredient' AS item_type,
         i.id,
         i.name,
-        i.stock_qty AS recorded_stock,
-        COALESCE(b.batch_stock, 0) AS batch_stock,
-        i.stock_qty - COALESCE(b.batch_stock, 0) AS difference
+        TRY_CONVERT(decimal(18,3), i.stock_qty) AS recorded_stock,
+        TRY_CONVERT(decimal(18,3), COALESCE(b.batch_stock, 0)) AS batch_stock,
+        TRY_CONVERT(decimal(18,3), i.stock_qty) - TRY_CONVERT(decimal(18,3), COALESCE(b.batch_stock, 0)) AS difference
     FROM dbo.ingredients i
     LEFT JOIN (
-        SELECT ingredient_id, SUM(quantity) AS batch_stock
+        SELECT ingredient_id, SUM(TRY_CONVERT(decimal(18,3), quantity)) AS batch_stock
         FROM dbo.inventory_batches
         GROUP BY ingredient_id
     ) b ON i.id = b.ingredient_id
@@ -99,12 +99,12 @@ $reconciliation = $connection->query("
         'Product' AS item_type,
         m.id,
         m.name,
-        m.stock_qty AS recorded_stock,
-        COALESCE(b.batch_stock, 0) AS batch_stock,
-        m.stock_qty - COALESCE(b.batch_stock, 0) AS difference
+        TRY_CONVERT(decimal(18,3), m.stock_qty) AS recorded_stock,
+        TRY_CONVERT(decimal(18,3), COALESCE(b.batch_stock, 0)) AS batch_stock,
+        TRY_CONVERT(decimal(18,3), m.stock_qty) - TRY_CONVERT(decimal(18,3), COALESCE(b.batch_stock, 0)) AS difference
     FROM dbo.menu_items m
     LEFT JOIN (
-        SELECT menu_item_id, SUM(quantity) AS batch_stock
+        SELECT menu_item_id, SUM(TRY_CONVERT(decimal(18,3), quantity)) AS batch_stock
         FROM dbo.product_batches
         GROUP BY menu_item_id
     ) b ON m.id = b.menu_item_id

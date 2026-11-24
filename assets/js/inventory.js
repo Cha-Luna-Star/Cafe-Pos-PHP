@@ -925,7 +925,65 @@ if (reconcileDialog && reconcileForm) {
         reconcileDialog.close();
     });
 
-    reconcileForm.addEventListener("submit", event => {
-        event.preventDefault();
+    const saveButton = document.getElementById("save-reconcile-btn");
+    const cancelButton = document.getElementById("cancel-reconcile-btn");
+    const message = document.getElementById("reconcile-message");
+
+    reconcileDialog.addEventListener("cancel", event => {
+        if (saveButton.disabled) {
+            event.preventDefault();
+        }
     });
+
+    reconcileForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        if (saveButton.disabled) {
+            return;
+        }
+
+        saveButton.disabled = true;
+        cancelButton.disabled = true;
+        message.textContent = "Saving correction…";
+
+        try {
+            const response = await fetch("controllers/reconcile_stock.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    csrf_token: csrfToken,
+                    item_id: Number(document.getElementById("reconcile-id").value),
+                    item_type: document.getElementById("reconcile-type").value,
+                    expected_recorded_stock: document.getElementById("reconcile-recorded").value,
+                    expected_batch_stock: document.getElementById("reconcile-batch").value,
+                    reason: document.getElementById("reconcile-reason").value,
+                    confirmed: document.getElementById("reconcile-confirm").checked
+                })
+            });
+            const result = await response.json();
+            message.textContent = result.message;
+
+            if (response.ok && result.success) {
+                const filterIds = ["reconciliation-search", "reconciliation-type-filter", "reconciliation-status-filter"];
+                const filters = filterIds.map(id => document.getElementById(id).value);
+                history.replaceState({ ...history.state, reconciliationFilters: filters }, "");
+                window.location.reload();
+                return;
+            }
+        } catch {
+            message.textContent = "Unable to verify the correction. Refresh to check the current stock.";
+        }
+
+        saveButton.disabled = false;
+        cancelButton.disabled = false;
+    });
+}
+if (history.state?.reconciliationFilters) {
+    const { reconciliationFilters, ...state } = history.state;
+    history.replaceState(state, "");
+    ["reconciliation-search", "reconciliation-type-filter", "reconciliation-status-filter"]
+        .forEach((id, index) => {
+            document.getElementById(id).value = reconciliationFilters[index];
+        });
+    document.querySelector('.inventory-tab[data-target="reconciliation-section"]').click();
+    filterReconciliation();
 }

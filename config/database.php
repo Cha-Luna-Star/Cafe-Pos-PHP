@@ -14,6 +14,10 @@ try {
     $connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 } catch (PDOException $e) {
+    if (!empty($throwDatabaseConnectionError)) {
+        throw $e;
+    }
+
     die("Database connection failed: " . $e->getMessage());
 }
 

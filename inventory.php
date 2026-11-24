@@ -582,7 +582,7 @@ require_once __DIR__ . '/controllers/inventory.php';
                             </span>
                         </td>
                         <td>
-                            <?php if (!$matched): ?>
+                            <?php if (!$matched && in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)): ?>
                                 <button type="button" class="reconcile-btn"
                                     data-id="<?= $item['id'] ?>"
                                     data-type="<?= htmlspecialchars($item['item_type']) ?>"
@@ -591,7 +591,7 @@ require_once __DIR__ . '/controllers/inventory.php';
                                     data-batch="<?= $item['batch_stock'] ?>">
                                     Resolve
                                 </button>
-                            <?php else: ?>
+                            <?php elseif ($matched): ?>
                                 <span>Matched</span>
                             <?php endif; ?>
                         </td>
