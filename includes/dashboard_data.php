@@ -15,10 +15,26 @@ $todayDate = $today->format('Y-m-d');
 $tomorrowDate = $today->modify('+1 day')->format('Y-m-d');
 $rangeLabels = ['7-days' => '7 Days', '1-month' => '1 Month', 'all-time' => 'All Time'];
 $requestedRange = $_GET['range'] ?? '';
+$requestedDate = $_GET['date'] ?? '';
+$selectedDate = is_string($requestedDate) ? parseInventoryDate($requestedDate) : null;
+$rangeError = null;
 $range = is_string($requestedRange) && isset($rangeLabels[$requestedRange]) ? $requestedRange : '7-days';
+if ($requestedRange === 'date') {
+    if ($selectedDate && $selectedDate <= $today) {
+        $range = 'date';
+    } else {
+        $rangeError = 'Choose a valid date on or before today.';
+    }
+}
+
 $isMonthly = $range === 'all-time';
+$isHourly = $range === 'date';
+$chartEnd = $isHourly ? $selectedDate : $today;
+$chartEndDate = $chartEnd->format('Y-m-d');
+$chartStop = $chartEnd->modify('+1 day');
 $chartStart = match ($range) {
     'all-time' => null,
+    'date' => $selectedDate,
     '1-month' => $today->modify('-29 days'),
     default => $today->modify('-6 days')
 };
@@ -42,17 +58,21 @@ try {
     $todayOrders = (int)$totals['orders'];
 
     if ($canViewSales) {
-        $dateFormat = $isMonthly ? 'char(7)' : 'char(10)';
+        $periodExpression = match ($range) {
+            'date' => 'DATEPART(hour, created_at)',
+            'all-time' => 'CONVERT(char(7), created_at, 23)',
+            default => 'CONVERT(char(10), created_at, 23)'
+        };
         $startCondition = $isMonthly ? '' : 'AND created_at >= CONVERT(date, ?, 23)';
         $stmt = $connection->prepare("
-            SELECT CONVERT($dateFormat, created_at, 23) AS period, COUNT_BIG(*) AS orders,
+            SELECT $periodExpression AS period, COUNT_BIG(*) AS orders,
                 SUM(CASE WHEN status = 'Completed' THEN CAST(COALESCE(total, 0) AS decimal(19,2)) ELSE 0 END) AS sales
             FROM dbo.orders
             WHERE created_at < CONVERT(date, ?, 23) $startCondition
-            GROUP BY CONVERT($dateFormat, created_at, 23)
+            GROUP BY $periodExpression
             ORDER BY period
         ");
-        $params = [$tomorrowDate];
+        $params = [$chartStop->format('Y-m-d')];
         if (!$isMonthly) {
             $params[] = $chartStart->format('Y-m-d');
         }
@@ -64,11 +84,13 @@ try {
             $chartStart = parseInventoryDate(array_key_first($periodTotals) . '-01');
         }
 
-        $step = $isMonthly ? '+1 month' : '+1 day';
-        for ($date = $chartStart; $date !== null && $date <= $today; $date = $date->modify($step)) {
-            $period = $date->format($isMonthly ? 'Y-m' : 'Y-m-d');
+        $step = $isHourly ? '+1 hour' : ($isMonthly ? '+1 month' : '+1 day');
+        $periodFormat = $isHourly ? 'G' : ($isMonthly ? 'Y-m' : 'Y-m-d');
+        $labelFormat = $isHourly ? 'g A' : ($isMonthly ? 'M Y' : 'M j');
+        for ($date = $chartStart; $date !== null && $date < $chartStop; $date = $date->modify($step)) {
+            $period = $date->format($periodFormat);
             $chartPeriods[] = [
-                'label' => $date->format($isMonthly ? 'M Y' : 'M j'),
+                'label' => $date->format($labelFormat),
                 'sales' => (float)($periodTotals[$period]['sales'] ?? 0),
                 'orders' => (int)($periodTotals[$period]['orders'] ?? 0)
             ];
@@ -76,7 +98,7 @@ try {
     }
 
     if ($canViewSales && $chartStart !== null) {
-        $dashboardBestSellers = bestSellingMenuItems($connection, $chartStart->format('Y-m-d'), $todayDate);
+        $dashboardBestSellers = bestSellingMenuItems($connection, $chartStart->format('Y-m-d'), $chartEndDate);
     }
 
     $recentOrders = $connection->query("

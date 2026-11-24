@@ -106,7 +106,7 @@ $dashboardMoney = static fn($value): string => '&#8369;' . number_format((float)
                     <div class="dashboard-panel-heading">
                         <h2 id="trend-heading">Sales and Order Trends</h2>
                         <?php if ($chartStart !== null): ?>
-                            <a href="sales_reports.php?from=<?= $chartStart->format('Y-m-d') ?>&amp;to=<?= $todayDate ?>">Open Sales Reports</a>
+                            <a href="sales_reports.php?from=<?= $chartStart->format('Y-m-d') ?>&amp;to=<?= $chartEndDate ?>">Open Sales Reports</a>
                         <?php endif; ?>
                     </div>
 
@@ -116,6 +116,19 @@ $dashboardMoney = static fn($value): string => '&#8369;' . number_format((float)
                                 <?= $range === $value ? 'aria-current="page"' : '' ?>><?= $label ?></a>
                         <?php endforeach; ?>
                     </nav>
+
+                    <form method="get" action="dashboard.php" class="dashboard-date-filter">
+                        <input type="hidden" name="range" value="date">
+                        <label for="trend-date">Specific Date</label>
+                        <input type="date" id="trend-date" name="date"
+                            value="<?= $isHourly ? $chartEndDate : $todayDate ?>" max="<?= $todayDate ?>" required>
+                        <button type="submit">Show Date</button>
+                    </form>
+                    <?php if ($rangeError !== null): ?>
+                        <p class="dashboard-error" role="alert"><?= $escapeDashboard($rangeError) ?></p>
+                    <?php elseif ($isHourly): ?>
+                        <p class="dashboard-chart-caption"><?= $chartEnd->format('F j, Y') ?> by hour</p>
+                    <?php endif; ?>
 
                     <?php if (!$chartPeriods): ?>
                         <p>No orders to chart yet.</p>
@@ -158,6 +171,15 @@ $dashboardMoney = static fn($value): string => '&#8369;' . number_format((float)
                             <p class="dashboard-chart-caption">Units sold on completed orders</p>
                             <?php if (!$dashboardBestSellers): ?>
                                 <p>No completed item sales in this range.</p>
+                            <?php elseif (count($dashboardBestSellers) === 1): ?>
+                                <?php
+                                $item = $dashboardBestSellers[0];
+                                $units = (int)$item['units_sold'];
+                                ?>
+                                <p class="dashboard-single-seller">
+                                    <?= $escapeDashboard($item['item_name']) ?>
+                                    <strong><?= number_format($units) ?> <?= $units === 1 ? 'unit sold' : 'units sold' ?></strong>
+                                </p>
                             <?php else: ?>
                                 <?php $topUnits = max(1, max(array_column($dashboardBestSellers, 'units_sold'))); ?>
                                 <dl class="dashboard-chart-values">
