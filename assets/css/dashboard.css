@@ -67,9 +67,6 @@ header p {
 }
 
 @media (max-width: 600px) {
-    .sidebar {
-        width: 180px;
-    }
 
     .main-content {
         padding: 20px;

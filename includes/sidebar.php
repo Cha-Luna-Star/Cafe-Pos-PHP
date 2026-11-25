@@ -4,33 +4,41 @@ $role = $_SESSION['role'] ?? 'Cashier';
 ?>
 
 <aside class="sidebar">
-    <h2>Cafe POS</h2>
+    <div class="sidebar-heading">
+        <h2>Cafe POS</h2>
+        <button type="button" id="sidebar-toggle" class="sidebar-toggle" aria-controls="sidebar-links" aria-expanded="true" hidden>
+            Menu
+        </button>
+    </div>
 
-    <nav>
-        <a href="dashboard.php" class="<?= $currentPage === 'dashboard.php' ? 'active' : '' ?>">
-            Dashboard
-        </a>
+    <div class="sidebar-links" id="sidebar-links">
+        <nav aria-label="Main navigation">
+            <a href="dashboard.php" class="<?= $currentPage === 'dashboard.php' ? 'active' : '' ?>">
+                Dashboard
+            </a>
 
-        <a href="pos.php" class="<?= $currentPage === 'pos.php' ? 'active' : '' ?>">
-            New Order
-        </a>
+            <a href="pos.php" class="<?= $currentPage === 'pos.php' ? 'active' : '' ?>">
+                New Order
+            </a>
 
-        <a href="orders.php" class="<?= in_array($currentPage, ['orders.php', 'order_details.php']) ? 'active' : '' ?>">
-            Order History
-        </a>
+            <a href="orders.php" class="<?= in_array($currentPage, ['orders.php', 'order_details.php']) ? 'active' : '' ?>">
+                Order History
+            </a>
 
-        <a href="menu_management.php" class="<?= $currentPage === 'menu_management.php' ? 'active' : '' ?>">Menu Management</a>
-        <a href="inventory.php" class="<?= $currentPage === 'inventory.php' ? 'active' : '' ?>">Inventory</a>
-        <?php if (in_array($role, ['Admin', 'Manager'], true)): ?>
-            <a href="sales_reports.php" class="<?= $currentPage === 'sales_reports.php' ? 'active' : '' ?>">Sales Reports</a>
-            <a href="audit_log.php" class="<?= $currentPage === 'audit_log.php' ? 'active' : '' ?>">Audit Log</a>
-            <a href="staff_accounts.php" class="<?= $currentPage === 'staff_accounts.php' ? 'active' : '' ?>">Staff Accounts</a>
-        <?php endif; ?>
-    </nav>
+            <a href="menu_management.php" class="<?= $currentPage === 'menu_management.php' ? 'active' : '' ?>">Menu Management</a>
+            <a href="inventory.php" class="<?= $currentPage === 'inventory.php' ? 'active' : '' ?>">Inventory</a>
+            <?php if (in_array($role, ['Admin', 'Manager'], true)): ?>
+                <a href="sales_reports.php" class="<?= $currentPage === 'sales_reports.php' ? 'active' : '' ?>">Sales Reports</a>
+                <a href="audit_log.php" class="<?= $currentPage === 'audit_log.php' ? 'active' : '' ?>">Audit Log</a>
+                <a href="staff_accounts.php" class="<?= $currentPage === 'staff_accounts.php' ? 'active' : '' ?>">Staff Accounts</a>
+            <?php endif; ?>
+        </nav>
 
-    <form action="logout.php" method="post" class="logout">
-        <?php require_once __DIR__ . '/mutation_request.php'; ?>
-        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(sessionCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
-        <button type="submit">Logout</button>
-    </form>
+        <form action="logout.php" method="post" class="logout">
+            <?php require_once __DIR__ . '/mutation_request.php'; ?>
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(sessionCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
+            <button type="submit">Logout</button>
+        </form>
+    </div>
 </aside>
+<script src="assets/js/sidebar.js" defer></script>
