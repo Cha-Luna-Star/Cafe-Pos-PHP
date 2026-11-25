@@ -36,13 +36,13 @@ main {
 }
 .orders-table {
     width: 100%;
-    min-width: 1260px;
+    min-width: 1100px;
     table-layout: fixed;
     border-collapse: collapse;
 }
 .orders-table th,
 .orders-table td {
-    padding: 10px 14px;
+    padding: 10px 12px;
     text-align: left;
     vertical-align: middle;
     white-space: nowrap;
@@ -53,8 +53,7 @@ main {
     top: 0;
     z-index: 1;
     height: 52px;
-    background: #29221e;
-    color: white;
+    background: #fafafa;
     font-size: 14px;
 }
 .orders-table td {
@@ -74,10 +73,10 @@ main {
 .order-action-group {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
 }
 .order-action-group button {
-    padding: 10px 16px;
+    padding: 6px 10px;
     border: none;
     border-radius: 6px;
     color: white;
@@ -187,29 +186,25 @@ main {
     color: white;
     cursor: pointer;
 }
-.orders-table {
-    --sort-label-color: white;
-    --sort-indicator-color: #d9c9bd;
-    --sort-active-color: #ffde7b;
-}
-.orders-table thead th:nth-child(1) {
-    width: 108px;
+.orders-table thead th:nth-child(1),
+.orders-table thead th:nth-child(6) {
+    width: 9%;
 }
 .orders-table thead th:nth-child(2) {
-    width: 192px;
+    width: 16%;
+}
+.orders-table thead th:nth-child(3) {
+    width: 13%;
 }
 .orders-table thead th:nth-child(4) {
-    width: 140px;
+    width: 12%;
 }
 .orders-table thead th:nth-child(5),
 .orders-table thead th:nth-child(7) {
-    width: 120px;
-}
-.orders-table thead th:nth-child(6) {
-    width: 112px;
+    width: 10%;
 }
 .orders-table thead th:nth-child(8) {
-    width: 270px;
+    width: 21%;
 }
 
 .orders-table tbody tr[hidden] {
@@ -222,7 +217,7 @@ main {
 }
 #order-update-notice {
     margin-bottom: 15px;
-    padding: 10px 14px;
+    padding: 10px 12px;
     border: 1px solid #bbf7d0;
     border-radius: 8px;
     background: #f0fdf4;

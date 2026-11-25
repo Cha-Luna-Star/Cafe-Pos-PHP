@@ -19,9 +19,11 @@ require_once __DIR__ . '/controllers/menu_management.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cafe POS | Menu Management</title>
+    <link rel="stylesheet" href="assets/css/table_sort.css">
     <link rel="stylesheet" href="assets/css/menu_management.css">
     <link rel="stylesheet" href="assets/css/sidebar.css">
     <meta name="csrf-token" content="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
+    <script src="assets/js/table_sort.js" defer></script>
     <script src="assets/js/menu_management.js" defer></script>
 </head>
 <body>
@@ -58,12 +60,12 @@ require_once __DIR__ . '/controllers/menu_management.php';
         <table>
             <thead>
                 <tr>
-                    <th>Item</th>
-                    <th>Category</th>
-                    <th>Price</th>
-                    <th>Stock</th>
-                    <th>Low Stock Threshold</th>
-                    <th>Status</th>
+                    <th><button type="button" class="sort-header" data-type="text"><span class="sort-label">Item</span> <span class="sort-indicator" aria-hidden="true">A–Z</span></button></th>
+                    <th><button type="button" class="sort-header" data-type="text"><span class="sort-label">Category</span> <span class="sort-indicator" aria-hidden="true">A–Z</span></button></th>
+                    <th><button type="button" class="sort-header" data-type="number"><span class="sort-label">Price</span> <span class="sort-indicator" aria-hidden="true">⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-type="number"><span class="sort-label">Stock</span> <span class="sort-indicator" aria-hidden="true">⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-type="number"><span class="sort-label">Low Stock Threshold</span> <span class="sort-indicator" aria-hidden="true">⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-type="text"><span class="sort-label">Status</span> <span class="sort-indicator" aria-hidden="true">A–Z</span></button></th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -79,9 +81,9 @@ require_once __DIR__ . '/controllers/menu_management.php';
                         data-category="<?= (int)$item['category_id'] ?>"
                         data-status="<?= strtolower($status) ?>"
                     >
-                        <td><?= htmlspecialchars($item['name']) ?></td>
+                        <td title="<?= htmlspecialchars($item['name'], ENT_QUOTES) ?>"><?= htmlspecialchars($item['name']) ?></td>
                         <td><?= htmlspecialchars($item['category_name'] ?? 'Uncategorized') ?></td>
-                        <td>₱<?= number_format((float)$item['price'], 2) ?></td>
+                        <td data-number="<?= (float)$item['price'] ?>">₱<?= number_format((float)$item['price'], 2) ?></td>
                         <td><?= (int)$item['stock_qty'] ?></td>
                         <td><?= (int)$item['low_stock_threshold'] ?></td>
                         <td>
@@ -117,6 +119,9 @@ require_once __DIR__ . '/controllers/menu_management.php';
                         </td>
                     </tr>
                 <?php endforeach; ?>
+                <tr id="menu-empty" <?= $menuItems ? 'hidden' : '' ?>>
+                    <td colspan="7"><?= $menuItems ? 'No menu items match your filters.' : 'No menu items yet.' ?></td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -182,31 +187,7 @@ require_once __DIR__ . '/controllers/menu_management.php';
     </form>
 </dialog>
 
-<script>
-const search = document.getElementById("menu-search");
-const categoryFilter = document.getElementById("category-filter");
-const statusFilter = document.getElementById("status-filter");
 
-function filterMenu() {
-    const keyword = search.value.toLowerCase().trim();
-    const category = categoryFilter.value;
-    const status = statusFilter.value;
-
-    document.querySelectorAll("#menu-table tr").forEach(row => {
-        const matchesSearch = row.dataset.name.includes(keyword);
-        const matchesCategory =
-            category === "all" || row.dataset.category === category;
-        const matchesStatus =
-            status === "all" || row.dataset.status === status;
-
-        row.hidden = !(matchesSearch && matchesCategory && matchesStatus);
-    });
-}
-
-search.addEventListener("input", filterMenu);
-categoryFilter.addEventListener("change", filterMenu);
-statusFilter.addEventListener("change", filterMenu);
-</script>
 
 </body>
 </html>

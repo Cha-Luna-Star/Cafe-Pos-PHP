@@ -176,3 +176,55 @@ confirmSubmit.addEventListener("click", async () => {
         confirmSubmit.disabled = false;
     }
 });
+
+const menuTable = document.getElementById("menu-table");
+const menuRows = Array.from(menuTable.querySelectorAll("tr[data-name]"));
+const emptyMenu = document.getElementById("menu-empty");
+const menuSearch = document.getElementById("menu-search");
+const categoryFilter = document.getElementById("category-filter");
+const statusFilter = document.getElementById("status-filter");
+
+function filterMenu() {
+    const keyword = menuSearch.value.toLowerCase().trim();
+    const category = categoryFilter.value;
+    const status = statusFilter.value;
+
+    for (const row of menuRows) {
+        row.hidden = !row.dataset.name.includes(keyword) ||
+            (category !== "all" && row.dataset.category !== category) ||
+            (status !== "all" && row.dataset.status !== status);
+    }
+    emptyMenu.hidden = menuRows.some(row => !row.hidden);
+}
+
+menuSearch.addEventListener("input", filterMenu);
+categoryFilter.addEventListener("change", filterMenu);
+statusFilter.addEventListener("change", filterMenu);
+
+const menuHeadings = menuTable.closest("table").querySelectorAll(".sort-header");
+menuHeadings.forEach((heading, index) => {
+    updateSortIndicator(heading);
+    heading.addEventListener("click", () => {
+        const ascending = heading.dataset.direction !== "asc";
+        for (const button of menuHeadings) {
+            updateSortIndicator(button);
+            button.closest("th").removeAttribute("aria-sort");
+        }
+        updateSortIndicator(heading, ascending ? "asc" : "desc");
+        heading.closest("th").setAttribute("aria-sort", ascending ? "ascending" : "descending");
+
+        menuRows.sort((a, b) => {
+            const left = a.cells[index];
+            const right = b.cells[index];
+            const comparison = heading.dataset.type === "number"
+                ? Number(left.dataset.number ?? left.textContent.trim()) - Number(right.dataset.number ?? right.textContent.trim())
+                : left.textContent.trim().localeCompare(right.textContent.trim(), undefined, { sensitivity: "base" });
+            return ascending ? comparison : -comparison;
+        });
+        for (const row of menuRows) {
+            menuTable.insertBefore(row, emptyMenu);
+        }
+        menuTable.closest(".table-wrapper").scrollTo({ top: 0 });
+    });
+});
+filterMenu();

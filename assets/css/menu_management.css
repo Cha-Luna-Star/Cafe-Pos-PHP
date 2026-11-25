@@ -48,20 +48,55 @@ button {
 .table-wrapper {
     background: white;
     border-radius: 10px;
-    overflow-x: auto;
+    height: min(612px, 72dvh);
+    overflow: auto;
+    scrollbar-gutter: stable;
 }
 table {
     width: 100%;
+    min-width: 1010px;
+    table-layout: fixed;
     border-collapse: collapse;
 }
 th,
 td {
-    padding: 16px;
+    padding: 10px 12px;
     text-align: left;
     border-bottom: 1px solid #eee;
 }
 th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    height: 52px;
     background: #fafafa;
+}
+.table-wrapper td {
+    height: 56px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.table-wrapper th:nth-child(2),
+.table-wrapper th:nth-child(7) {
+    width: 15%;
+}
+.table-wrapper th:nth-child(3),
+.table-wrapper th:nth-child(4) {
+    width: 9%;
+}
+.table-wrapper th:nth-child(5) {
+    width: 19%;
+}
+.table-wrapper th:nth-child(6) {
+    width: 12%;
+}
+.table-wrapper tbody tr:hover {
+    background: #faf8f6;
+}
+#menu-empty td {
+    text-align: center;
+    color: #555;
 }
 .status {
     display: inline-block;
