@@ -10,15 +10,49 @@ function remainingStock(id) {
     return Math.max(0, (stockByItem.get(id) ?? 0) - inCart);
 }
 
-function filterCategory(categoryId) {
-    document.querySelectorAll(".menu-card").forEach(card => {
-        card.style.display =
-            categoryId === "all" ||
-            Number(card.dataset.category) === categoryId
-                ? "block"
-                : "none";
+const menuSearch = document.getElementById("pos-menu-search");
+const clearMenuSearch = document.getElementById("clear-pos-menu-search");
+const categoryButtons = Array.from(document.querySelectorAll("[data-menu-category]"));
+const menuCards = Array.from(document.querySelectorAll(".menu-card"));
+const menuEmpty = document.getElementById("pos-menu-empty");
+const menuResultCount = document.getElementById("pos-menu-result-count");
+let selectedMenuCategory = "all";
+
+function normalizeMenuSearch(value) {
+    return value.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+}
+
+function filterMenuCards() {
+    const terms = normalizeMenuSearch(menuSearch.value).trim().split(/\s+/).filter(Boolean);
+    let matches = 0;
+    for (const card of menuCards) {
+        const name = normalizeMenuSearch(card.dataset.menuName);
+        const inCategory = selectedMenuCategory === "all" || card.dataset.category === selectedMenuCategory;
+        card.hidden = !inCategory || !terms.every(term => name.includes(term));
+        if (!card.hidden) matches++;
+    }
+
+    menuEmpty.hidden = matches !== 0;
+    menuResultCount.textContent = matches + (matches === 1 ? " item" : " items");
+    clearMenuSearch.disabled = menuSearch.value === "";
+}
+
+menuSearch.addEventListener("input", filterMenuCards);
+clearMenuSearch.addEventListener("click", () => {
+    menuSearch.value = "";
+    filterMenuCards();
+    menuSearch.focus();
+});
+for (const button of categoryButtons) {
+    button.addEventListener("click", () => {
+        selectedMenuCategory = button.dataset.menuCategory;
+        for (const category of categoryButtons) {
+            category.setAttribute("aria-pressed", String(category === button));
+        }
+        filterMenuCards();
     });
 }
+filterMenuCards();
 
 function addToCart(item) {
     if (checkoutBusy || remainingStock(item.id) <= 0) return;

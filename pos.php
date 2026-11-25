@@ -40,19 +40,29 @@ require_once __DIR__ . '/controllers/pos.php';
             <a href="#current-order" id="cart-shortcut">View cart (0)</a>
         </div>
 
-        <div class="categories">
-            <button type="button" onclick="filterCategory('all')">
+        <div class="pos-menu-search">
+            <label for="pos-menu-search">Find an item</label>
+            <div>
+                <input type="search" id="pos-menu-search" placeholder="Search menu items" autocomplete="off">
+                <button type="button" id="clear-pos-menu-search" disabled>Clear Search</button>
+            </div>
+        </div>
+
+        <div class="categories" role="group" aria-label="Menu categories">
+            <button type="button" data-menu-category="all" aria-pressed="true">
                 All
             </button>
 
             <?php foreach ($categories as $category): ?>
                 <button type="button"
-                    onclick="filterCategory(<?= (int)$category['id'] ?>)">
+                    data-menu-category="<?= (int)$category['id'] ?>" aria-pressed="false">
                     <?= htmlspecialchars($category['name']) ?>
                 </button>
             <?php endforeach; ?>
         </div>
 
+        <p id="pos-menu-result-count" class="pos-menu-result-count" role="status"></p>
+        <p id="pos-menu-empty" class="pos-menu-empty" hidden>No menu items match your search and category.</p>
         <div class="menu-grid">
             <?php foreach ($menuItems as $item): ?>
                 <?php
@@ -85,7 +95,8 @@ require_once __DIR__ . '/controllers/pos.php';
                 ?>
 
                 <div class="menu-card"
-                     data-category="<?= (int)$item['category_id'] ?>">
+                     data-category="<?= (int)$item['category_id'] ?>"
+                     data-menu-name="<?= htmlspecialchars($item['name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
 
                     <h3><?= htmlspecialchars($item['name']) ?></h3>
 
