@@ -4,13 +4,14 @@
     min-height: 100dvh;
     place-items: center;
     padding: clamp(16px, 4vw, 56px);
-    background: #4a362b url("../images/coffee_bg.png") left center / cover no-repeat;
+    background: #f7f3ef;
 }
 
 .login-layout {
     display: grid;
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-    width: min(100%, 65rem);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    width: min(100%, 86rem);
+    min-height: min(42rem, 85dvh);
     overflow: hidden;
     border: 1px solid #e5dcd4;
     border-radius: 20px;
@@ -18,37 +19,32 @@
     box-shadow: 0 8px 28px #52392412;
 }
 
+.login-visual {
+    background: #493429 url("../images/login-coffee.jpg") 28% center / cover no-repeat;
+}
+
 .login-brand {
-    display: grid;
-    place-content: center;
-    justify-items: center;
-    gap: 12px;
-    padding: clamp(24px, 5vw, 64px);
+    display: inline-flex;
+    margin-bottom: 28px;
+    padding: 11px 16px;
+    border-radius: var(--ui-radius);
     background: #493429;
-    color: #f9eee6;
-    text-align: center;
 }
 
 .login-brand img {
-    width: min(100%, 18rem);
+    width: min(100%, 12rem);
     height: auto;
-}
-
-.login-brand p {
-    margin: 0;
-    font-size: 0.875rem;
-    font-weight: 650;
 }
 
 .login-content {
     display: grid;
     place-items: center;
     min-width: 0;
-    padding: clamp(24px, 6vw, 72px);
+    padding: clamp(24px, 5vw, 72px);
 }
 
 .login-box {
-    width: min(100%, 24rem);
+    width: min(100%, 36rem);
 }
 
 .login-box h1 {
@@ -65,7 +61,7 @@
 #login-form,
 .login-field {
     display: grid;
-    gap: 16px;
+    gap: 20px;
 }
 
 .login-field {
@@ -79,7 +75,7 @@
 
 .login-field .ui-field {
     width: 100%;
-    min-height: 44px;
+    min-height: 52px;
     font-size: 1rem;
 }
 
@@ -94,8 +90,8 @@
 }
 
 .login-password-toggle {
-    width: 44px;
-    min-height: 44px;
+    width: 52px;
+    min-height: 52px;
     padding: 0;
     border: 1px solid #b5a293;
     border-radius: var(--ui-radius);
@@ -145,7 +141,7 @@
 
 .login-submit {
     width: 100%;
-    min-height: 44px;
+    min-height: 52px;
 }
 
 .login-status {
@@ -156,14 +152,16 @@
     clip-path: inset(50%);
 }
 
-@media (max-width: 720px) {
+@media (max-width: 760px) {
     .login-layout {
         grid-template-columns: minmax(0, 1fr);
-        max-width: 30rem;
+        max-width: 36rem;
+        min-height: 0;
     }
 
-    .login-brand img {
-        width: min(100%, 12rem);
+    .login-visual {
+        min-height: clamp(140px, 30vw, 230px);
+        background-position: center;
     }
 }
 
