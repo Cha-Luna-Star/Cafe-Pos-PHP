@@ -144,9 +144,9 @@ require __DIR__ . '/includes/sidebar.php';
             <h2>Current Stock</h2>
             <div class="inventory-stock-actions">
                 <?php if ($canManageInventory): ?>
+                    <button data-tone="positive" class="ui-button" type="button" id="add-ingredient-btn">+ Add Ingredient</button>
                     <button data-tone="positive" class="ui-button" type="button" id="stock-in-btn">+ Stock In</button>
                     <button data-tone="info" class="ui-button" type="button" id="adjust-stock-btn">Adjust Stock</button>
-                    <button data-tone="positive" class="ui-button" type="button" id="add-ingredient-btn">+ Add Ingredient</button>
                 <?php endif; ?>
                 <button data-tone="outline" type="button" class="ui-button export-csv-btn" data-table="current-stock-body" data-filename="current_stock.csv">Export CSV</button>
             </div>
