@@ -134,7 +134,7 @@ require __DIR__ . '/includes/sidebar.php';
     <aside class="ui-panel cart-section" id="current-order" aria-labelledby="current-order-heading">
         <div class="pos-section-heading">
             <h2 id="current-order-heading">Current Order <span id="cart-count" class="ui-badge">0</span></h2>
-            <button class="ui-button" data-tone="danger" type="button" id="clear-cart" disabled>Clear Cart</button>
+            <button class="ui-button" type="button" id="clear-cart" disabled>Clear Cart</button>
         </div>
 
         <p class="cart-empty" id="cart-empty"><strong>Your cart is empty</strong><br>Add an item from the menu to start an order.</p>
