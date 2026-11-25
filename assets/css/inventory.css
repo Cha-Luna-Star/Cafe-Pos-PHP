@@ -229,42 +229,6 @@ th {
     margin-bottom: 15px;
 }
 
-.sort-header {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: #333;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-}
-.sort-header:hover {
-    color: #76543b;
-    background: transparent;
-}
-.sort-header .sort-indicator {
-    inline-size: 3ch;
-    flex: none;
-    color: #888;
-    font-size: 13px;
-    text-align: center;
-}
-.sort-header[data-type="date"] .sort-indicator {
-    inline-size: 6.5ch;
-}
-.sort-header[data-type="number"] .sort-indicator {
-    inline-size: 1.4em;
-    font-size: 16px;
-}
-.sort-header[data-direction="asc"] .sort-indicator,
-.sort-header[data-direction="desc"] .sort-indicator {
-    color: #76543b;
-}
-
 .stock-status {
     display: inline-block;
     min-width: 110px;

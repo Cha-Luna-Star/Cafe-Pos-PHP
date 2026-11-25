@@ -21,9 +21,11 @@ require_once __DIR__ . '/includes/inventory_dates.php';
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cafe POS | Inventory</title>
+<link rel="stylesheet" href="assets/css/table_sort.css">
 <link rel="stylesheet" href="assets/css/inventory.css">
 <link rel="stylesheet" href="assets/css/sidebar.css">
 <meta name="csrf-token" content="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
+<script src="assets/js/table_sort.js" defer></script>
 <script src="assets/js/inventory.js" defer></script>
 </head>
 <body>

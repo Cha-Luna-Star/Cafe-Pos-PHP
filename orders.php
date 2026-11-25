@@ -41,10 +41,14 @@ function escape($value): string {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cafe POS | Order History</title>
 
+    <link rel="stylesheet" href="assets/css/table_sort.css">
+
     <link rel="stylesheet" href="assets/css/orders.css">
     <link rel="stylesheet" href="assets/css/sidebar.css">
 
     <meta name="csrf-token" content="<?= escape($_SESSION['csrf_token']) ?>">
+
+    <script src="assets/js/table_sort.js" defer></script>
 
     <script src="assets/js/orders.js" defer></script>
 </head>
@@ -94,13 +98,13 @@ function escape($value): string {
 
             <thead>
                 <tr>
-                    <th data-sort="number">Order #</th>
-                    <th data-sort="date">Date</th>
-                    <th data-sort="text">Cashier</th>
-                    <th data-sort="text">Order Type</th>
-                    <th data-sort="text">Payment</th>
-                    <th data-sort="number">Total</th>
-                    <th data-sort="text">Status</th>
+                    <th><button type="button" class="sort-header" data-type="number"><span class="sort-label">Order #</span> <span class="sort-indicator" aria-hidden="true">⇅</span></button></th>
+                    <th aria-sort="descending"><button type="button" class="sort-header" data-type="date" data-direction="desc"><span class="sort-label">Date</span> <span class="sort-indicator" aria-hidden="true">Newest</span></button></th>
+                    <th><button type="button" class="sort-header" data-type="text"><span class="sort-label">Cashier</span> <span class="sort-indicator" aria-hidden="true">A–Z</span></button></th>
+                    <th><button type="button" class="sort-header" data-type="text"><span class="sort-label">Order Type</span> <span class="sort-indicator" aria-hidden="true">A–Z</span></button></th>
+                    <th><button type="button" class="sort-header" data-type="text"><span class="sort-label">Payment</span> <span class="sort-indicator" aria-hidden="true">A–Z</span></button></th>
+                    <th><button type="button" class="sort-header" data-type="number"><span class="sort-label">Total</span> <span class="sort-indicator" aria-hidden="true">⇅</span></button></th>
+                    <th><button type="button" class="sort-header" data-type="text"><span class="sort-label">Status</span> <span class="sort-indicator" aria-hidden="true">A–Z</span></button></th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -142,7 +146,7 @@ function escape($value): string {
                             <?= escape($displayDate) ?>
                         </td>
 
-                        <td>
+                        <td title="<?= escape($order['username'] ?? 'Unknown') ?>">
                             <?= escape($order['username'] ?? 'Unknown') ?>
                         </td>
 

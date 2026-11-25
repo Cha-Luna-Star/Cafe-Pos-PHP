@@ -126,16 +126,17 @@ document.addEventListener("DOMContentLoaded", () => {
         filterOrders();
     }
 
-    let sortColumn = -1;
-    let sortAscending = true;
+    let sortColumn = 1;
+    let sortAscending = false;
 
-    const headings = ordersTable.querySelectorAll("thead th[data-sort]");
+    const headings = ordersTable.querySelectorAll("thead .sort-header");
     headings.forEach((header, index) => {
+        updateSortIndicator(header, header.dataset.direction);
         header.addEventListener("click", () => {
             sortAscending = sortColumn === index ? !sortAscending : true;
             sortColumn = index;
 
-            const type = header.dataset.sort;
+            const type = header.dataset.type;
 
             rows.sort((a, b) => {
                 let valueA = a.cells[index].textContent.trim();
@@ -159,11 +160,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
             rows.forEach(row => tableBody.insertBefore(row, empty));
 
-            ordersTable.querySelectorAll("thead th").forEach(th => {
-                th.classList.remove("sort-asc", "sort-desc");
-            });
-
-            header.classList.add(sortAscending ? "sort-asc" : "sort-desc");
+            for (const heading of headings) {
+                updateSortIndicator(heading);
+                heading.closest("th").removeAttribute("aria-sort");
+            }
+            updateSortIndicator(header, sortAscending ? "asc" : "desc");
+            header.closest("th").setAttribute("aria-sort", sortAscending ? "ascending" : "descending");
+            ordersTable.closest(".orders-table-wrapper").scrollTo({ top: 0 });
         });
     });
     if (history.state?.ordersAfterSave) {
@@ -174,8 +177,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         const heading = headings[ordersAfterSave.sortColumn];
         if (heading) {
-            heading.click();
-            if (!ordersAfterSave.sortAscending) heading.click();
+            if (sortColumn !== ordersAfterSave.sortColumn) heading.click();
+            if (sortAscending !== ordersAfterSave.sortAscending) heading.click();
         }
 
         const notice = document.getElementById("order-update-notice");

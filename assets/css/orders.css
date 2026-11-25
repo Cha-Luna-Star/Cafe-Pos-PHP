@@ -27,30 +27,40 @@ main {
 }
 .orders-table-wrapper {
     width: 100%;
-    overflow-x: auto;
+    height: min(612px, 72dvh);
+    overflow: auto;
+    scrollbar-gutter: stable;
     background: white;
     border-radius: 10px;
     border: 1px solid #e5e5e5;
 }
 .orders-table {
     width: 100%;
-    min-width: 1100px;
+    min-width: 1260px;
+    table-layout: fixed;
     border-collapse: collapse;
 }
 .orders-table th,
 .orders-table td {
-    padding: 20px 22px;
+    padding: 10px 14px;
     text-align: left;
     vertical-align: middle;
     white-space: nowrap;
     border-bottom: 1px solid #eee;
 }
 .orders-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    height: 52px;
     background: #29221e;
     color: white;
     font-size: 14px;
 }
 .orders-table td {
+    height: 56px;
+    overflow: hidden;
+    text-overflow: ellipsis;
     font-size: 14px;
 }
 .orders-table tbody tr:hover {
@@ -60,9 +70,6 @@ main {
     color: #76543b;
     text-decoration: none;
     font-weight: 600;
-}
-.orders-table .order-actions {
-    min-width: 290px;
 }
 .order-action-group {
     display: flex;
@@ -133,36 +140,6 @@ main {
     margin-top: 12px;
 }
 
-/* More spacious layout */
-main {
-    padding: 40px;
-}
-.orders-table-wrapper {
-    width: 100%;
-    overflow-x: auto;
-}
-.orders-table {
-    width: 100%;
-    min-width: 0;
-}
-
-.orders-table th,
-.orders-table td {
-    padding: 24px 28px;
-    line-height: 1.5;
-}
-.orders-table .order-actions {
-    width: 1%;
-    min-width: 0;
-    white-space: nowrap;
-}
-.order-action-group {
-    gap: 16px;
-}
-.order-action-group button {
-    padding: 12px 18px;
-}
-
 /* Order status badges */
 .status-badge {
     display: inline-block;
@@ -210,22 +187,31 @@ main {
     color: white;
     cursor: pointer;
 }
-.orders-table th[data-sort] {
-    cursor: pointer;
-    user-select: none;
+.orders-table {
+    --sort-label-color: white;
+    --sort-indicator-color: #d9c9bd;
+    --sort-active-color: #ffde7b;
 }
-.orders-table th[data-sort]::after {
-    content: " ⇅";
-    opacity: 0.5;
+.orders-table thead th:nth-child(1) {
+    width: 108px;
 }
-.orders-table th.sort-asc::after {
-    content: " ↑";
-    opacity: 1;
+.orders-table thead th:nth-child(2) {
+    width: 192px;
 }
-.orders-table th.sort-desc::after {
-    content: " ↓";
-    opacity: 1;
+.orders-table thead th:nth-child(4) {
+    width: 140px;
 }
+.orders-table thead th:nth-child(5),
+.orders-table thead th:nth-child(7) {
+    width: 120px;
+}
+.orders-table thead th:nth-child(6) {
+    width: 112px;
+}
+.orders-table thead th:nth-child(8) {
+    width: 270px;
+}
+
 .orders-table tbody tr[hidden] {
     display: none;
 }
