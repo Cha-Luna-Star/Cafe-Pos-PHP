@@ -1,6 +1,7 @@
 
 let cart = [];
 let checkoutBusy = false;
+const money = value => "\u20b1" + Number(value).toFixed(2);
 
 const menuButtons = Array.from(document.querySelectorAll("[data-menu-id]"));
 const stockByItem = new Map(menuButtons.map(button => [Number(button.dataset.menuId), Number(button.dataset.stock)]));
@@ -56,12 +57,15 @@ filterMenuCards();
 
 function addToCart(item) {
     if (checkoutBusy || remainingStock(item.id) <= 0) return;
+    const notice = document.getElementById("pos-menu-notice");
+    notice.hidden = true;
 
     if (item.is_addon) {
         const hasMainItem = cart.some(entry => !entry.is_addon);
 
         if (!hasMainItem) {
-            alert("Add a regular menu item before selecting an add-on.");
+            notice.textContent = "Add a regular menu item before selecting an add-on.";
+            notice.hidden = false;
             return;
         }
     }
@@ -132,11 +136,7 @@ function renderCart() {
 
     let total = 0;
 
-    if (cart.length === 0) {
-        const empty = document.createElement("p");
-        empty.textContent = "No items added.";
-        container.appendChild(empty);
-    }
+    document.getElementById("cart-empty").hidden = cart.length !== 0;
 
     cart.forEach((item, index) => {
         const subtotal = item.price * item.quantity;
@@ -145,15 +145,26 @@ function renderCart() {
         const row = document.createElement("div");
         row.className = "cart-item";
 
-        const details = document.createElement("div");
+        const heading = document.createElement("div");
+        heading.className = "cart-item-heading";
+        const details = document.createElement("strong");
         details.textContent = item.name;
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "ui-button ui-button-sm";
+        remove.dataset.tone = "danger";
+        remove.textContent = "Remove";
+        remove.setAttribute("aria-label", "Remove " + item.name + " from cart");
+        remove.addEventListener("click", () => changeQuantity(index, -item.quantity));
+        heading.append(details, remove);
 
         const optionsRow = document.createElement("div");
         optionsRow.className = "cart-options";
 
         if (item.sizes && item.sizes.length > 0) {
             const sizeSelect = document.createElement("select");
-            sizeSelect.className = "ui-field size-select";
+            sizeSelect.className = "ui-field";
+            sizeSelect.setAttribute("aria-label", item.name + " size");
 
             item.sizes.forEach(size => {
                 const option = document.createElement("option");
@@ -197,7 +208,8 @@ function renderCart() {
 
         if (item.temperature !== null && item.temperature !== undefined) {
             const temperatureSelect = document.createElement("select");
-            temperatureSelect.className = "ui-field temperature-select";
+            temperatureSelect.className = "ui-field";
+            temperatureSelect.setAttribute("aria-label", item.name + " temperature");
 
             ["Hot", "Iced"].forEach(temp => {
                 const option = document.createElement("option");
@@ -254,13 +266,16 @@ function renderCart() {
 
         controls.append(minus, quantity, plus);
 
-        row.appendChild(details);
+        row.appendChild(heading);
 
         if (optionsRow.children.length > 0) {
             row.appendChild(optionsRow);
         }
 
-        row.append(price, controls);
+        const bottom = document.createElement("div");
+        bottom.className = "cart-item-bottom";
+        bottom.append(controls, price);
+        row.appendChild(bottom);
         container.appendChild(row);
     });
 
@@ -274,21 +289,29 @@ function renderCart() {
     const discountType = document.getElementById("discount-type").value;
     const discountRate = discountRates[discountType] ?? 0;
 
-    const discountedTotal = Math.round(
-        total * (1 - discountRate) * 100
-    ) / 100;
+    const subtotal = Math.round(total * 100) / 100;
+    const discountedTotal = Math.round(subtotal * (1 - discountRate) * 100) / 100;
+    document.getElementById("cart-subtotal").textContent = money(subtotal);
+    document.getElementById("cart-discount").textContent = money(subtotal - discountedTotal);
+    document.getElementById("cart-tax").textContent = money(discountedTotal - discountedTotal / 1.12);
 
     currentTotal = discountedTotal;
-    document.getElementById("cart-total").textContent = "₱" + discountedTotal.toFixed(2);
+    document.getElementById("cart-total").textContent = money(discountedTotal);
     const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
+    document.getElementById("cart-count").textContent = itemCount;
+    clearCartButton.disabled = !cart.length || checkoutBusy;
     document.getElementById("cart-shortcut").textContent = "View cart (" + itemCount + ")";
 
     for (const button of menuButtons) {
         const id = Number(button.dataset.menuId);
-        button.disabled = remainingStock(id) === 0;
-        button.textContent = button.disabled
-            ? (stockByItem.get(id) > 0 ? "All Stock in Cart" : "Out of Stock")
-            : "Add to Cart";
+        const available = button.dataset.available === "true";
+        const inStock = stockByItem.get(id) > 0;
+        button.disabled = !available || remainingStock(id) === 0;
+        button.textContent = !available ? "Unavailable" : !inStock ? "Out of stock"
+            : button.disabled ? "All stock in cart" : "Add to Cart";
+        const badge = button.closest(".menu-card").querySelector(".menu-card-status");
+        badge.dataset.tone = !available ? "" : inStock ? "positive" : "danger";
+        badge.textContent = !available ? "Unavailable" : inStock ? "Available" : "Out of stock";
     }
     checkoutButton.disabled = cart.length === 0 || checkoutBusy;
     updateCashSummary();
@@ -303,6 +326,9 @@ const refNumber = document.getElementById("ref-number");
 const cashSummary = document.getElementById("cash-summary");
 const checkoutMessage = document.getElementById("checkout-message");
 const checkoutButton = document.getElementById("checkout-btn");
+const clearCartButton = document.getElementById("clear-cart");
+const checkoutConfirm = document.getElementById("checkout-confirm");
+const confirmButton = document.getElementById("checkout-confirm-button");
 const menuSection = document.querySelector(".menu-section");
 const cartItems = document.getElementById("cart-items");
 let currentTotal = 0;
@@ -337,7 +363,8 @@ function setCheckoutBusy(busy) {
     checkoutBusy = busy;
     menuSection.inert = busy;
     cartItems.inert = busy;
-    checkoutButton.textContent = busy ? "Placing order…" : "Place Order";
+    checkoutButton.textContent = busy ? "Placing order..." : "Checkout";
+    clearCartButton.disabled = busy || !cart.length;
     checkoutButton.disabled = busy || cart.length === 0;
     for (const field of checkoutForm.querySelectorAll("select")) {
         field.disabled = busy;
@@ -350,10 +377,56 @@ cashAmount.addEventListener("input", updateCashSummary);
 document.getElementById("discount-type").addEventListener("change", renderCart);
 renderCart();
 
-checkoutForm.addEventListener("submit", async event => {
-    event.preventDefault();
-    if (checkoutBusy || cart.length === 0) return;
+function showCheckoutError(message, field) {
+    checkoutMessage.dataset.error = "true";
+    checkoutMessage.textContent = message;
+    if (field) {
+        field.setAttribute("aria-invalid", "true");
+        field.focus();
+    }
+}
 
+function clearCheckoutError() {
+    checkoutMessage.textContent = "";
+    cashAmount.removeAttribute("aria-invalid");
+    refNumber.removeAttribute("aria-invalid");
+}
+
+checkoutForm.addEventListener("input", clearCheckoutError);
+clearCartButton.addEventListener("click", () => {
+    if (checkoutBusy) return;
+    cart = [];
+    checkoutForm.reset();
+    clearCheckoutError();
+    renderCart();
+    menuSearch.focus();
+});
+
+checkoutForm.addEventListener("submit", event => {
+    event.preventDefault();
+    if (checkoutBusy || !cart.length || checkoutConfirm.open) return;
+    clearCheckoutError();
+    const field = paymentMethod.value === "Cash" ? cashAmount : refNumber;
+    if (field === refNumber && !refNumber.value.trim()) {
+        showCheckoutError("Enter a payment reference number.", field);
+        return;
+    }
+    if (!field.validity.valid) {
+        showCheckoutError(field === cashAmount && !cashAmount.value
+            ? "Enter the amount tendered." : field.validationMessage, field);
+        return;
+    }
+
+    document.getElementById("review-order-type").textContent = document.getElementById("order-type").value;
+    document.getElementById("review-payment").textContent = paymentMethod.value;
+    document.getElementById("review-total").textContent = money(currentTotal);
+    checkoutConfirm.showModal();
+});
+
+document.getElementById("checkout-back").addEventListener("click", () => checkoutConfirm.close());
+confirmButton.addEventListener("click", async () => {
+    if (!checkoutConfirm.open || checkoutBusy || !cart.length) return;
+    checkoutConfirm.close();
     const submittedCart = cart;
     const paidCash = paymentMethod.value === "Cash";
     const data = {
@@ -404,14 +477,13 @@ checkoutForm.addEventListener("submit", async event => {
     }
     cart = [];
     checkoutForm.reset();
-    checkoutMessage.textContent = "";
+    clearCheckoutError();
     renderCart();
     showReceipt(result, data, submittedCart);
 });
 
 function showReceipt(result, orderData, submittedCart) {
     const modal = document.getElementById("receipt-modal");
-    const money = value => `₱${Number(value).toFixed(2)}`;
 
     const subtotal = submittedCart.reduce(
         (sum, item) => sum + item.price * item.quantity,

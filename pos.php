@@ -33,11 +33,11 @@ $appHeaderBack = ['dashboard.php', 'Back to Dashboard'];
 require __DIR__ . '/includes/sidebar.php';
 ?>
 
-<main class="ui-page">
+<main class="ui-page pos-layout">
     <section class="ui-panel menu-section">
         <div class="pos-section-heading">
             <h2>Menu</h2>
-            <a href="#current-order" id="cart-shortcut">View cart (0)</a>
+            <a href="#current-order" id="cart-shortcut" class="ui-button" data-tone="outline">View cart (0)</a>
         </div>
 
         <div class="pos-menu-search">
@@ -61,6 +61,7 @@ require __DIR__ . '/includes/sidebar.php';
             <?php endforeach; ?>
         </div>
 
+        <p id="pos-menu-notice" class="pos-notice" role="status" hidden></p>
         <p id="pos-menu-result-count" class="pos-menu-result-count" role="status"></p>
         <p id="pos-menu-empty" class="pos-menu-empty" hidden>No menu items match your search and category.</p>
         <div class="menu-grid">
@@ -87,6 +88,14 @@ require __DIR__ . '/includes/sidebar.php';
                     'sizes' => $itemSizes
                 ];
 
+                $imageName = trim(preg_replace('/[^a-z0-9]+/', '_', strtolower($item['name'])), '_');
+                $imagePath = 'assets/images/' . $imageName . '.png';
+                $hasImage = $imageName !== '' && is_file(__DIR__ . '/' . $imagePath);
+                $available = (int)$item['available'] === 1;
+                $inStock = (int)$item['sellable_quantity'] > 0;
+                $status = !$available ? 'Unavailable' : ($inStock ? 'Available' : 'Out of stock');
+                $tone = !$available ? '' : ($inStock ? 'positive' : 'danger');
+
                 $json = htmlspecialchars(
                     json_encode($itemData, JSON_HEX_APOS | JSON_HEX_QUOT),
                     ENT_QUOTES,
@@ -98,83 +107,116 @@ require __DIR__ . '/includes/sidebar.php';
                      data-category="<?= (int)$item['category_id'] ?>"
                      data-menu-name="<?= htmlspecialchars($item['name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
 
-                    <h3><?= htmlspecialchars($item['name']) ?></h3>
-
-                    <p>
-                        ₱<?= number_format((float)$item['price'], 2) ?>
-                    </p>
-
-                    <button data-tone="positive" class="ui-button" type="button"
-                            data-item="<?= $json ?>"
-                            data-menu-id="<?= (int)$item['id'] ?>"
-                            data-stock="<?= (int)$item['sellable_quantity'] ?>"
-                            <?= (int)$item['sellable_quantity'] === 0 ? 'disabled' : '' ?>
-                            onclick="addToCart(JSON.parse(this.dataset.item))">
-                        <?= (int)$item['sellable_quantity'] > 0 ? 'Add to Cart' : 'Out of Stock' ?>
-                    </button>
+                    <div class="menu-card-image">
+                        <?php if ($hasImage): ?>
+                            <img src="<?= htmlspecialchars($imagePath, ENT_QUOTES, 'UTF-8') ?>" alt="" loading="lazy" decoding="async">
+                        <?php else: ?>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 7h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V7Zm13 1h2a2 2 0 0 1 0 4h-2M3 21h18"/></svg>
+                        <?php endif; ?>
+                    </div>
+                    <div class="menu-card-content">
+                        <span class="ui-badge menu-card-status" data-tone="<?= $tone ?>"><?= $status ?></span>
+                        <h3><?= htmlspecialchars($item['name']) ?></h3>
+                        <p class="menu-price">&#8369;<?= number_format((float)$item['price'], 2) ?></p>
+                        <button data-tone="positive" class="ui-button" type="button"
+                                data-item="<?= $json ?>"
+                                data-menu-id="<?= (int)$item['id'] ?>"
+                                data-available="<?= $available ? 'true' : 'false' ?>"
+                                data-stock="<?= $available ? (int)$item['sellable_quantity'] : 0 ?>"
+                                <?= !$available || !$inStock ? 'disabled' : '' ?>
+                                onclick="addToCart(JSON.parse(this.dataset.item))">
+                            <?= $available && $inStock ? 'Add to Cart' : $status ?>
+                        </button>
+                    </div>
                 </div>
             <?php endforeach; ?>
         </div>
     </section>
 
-    <aside class="cart-section" id="current-order" aria-labelledby="current-order-heading">
-        <h2 id="current-order-heading">Current Order</h2>
-
-        <div id="cart-items">
-            <p>No items added.</p>
+    <aside class="ui-panel cart-section" id="current-order" aria-labelledby="current-order-heading">
+        <div class="pos-section-heading">
+            <h2 id="current-order-heading">Current Order <span id="cart-count" class="ui-badge">0</span></h2>
+            <button class="ui-button" data-tone="danger" type="button" id="clear-cart" disabled>Clear Cart</button>
         </div>
 
-        <div class="cart-total">
-            <strong>Total:</strong>
-            <strong id="cart-total">₱0.00</strong>
-        </div>
+        <p class="cart-empty" id="cart-empty"><strong>Your cart is empty</strong><br>Add an item from the menu to start an order.</p>
+        <div id="cart-items"></div>
 
-        <form id="checkout-form">
-            <label for="order-type">Order Type</label>
-            <select class="ui-field" id="order-type" required>
-                <option value="Dine In">Dine In</option>
-                <option value="Take Out">Take Out</option>
-            </select>
+        <dl class="cart-summary">
+            <div><dt>Subtotal</dt><dd id="cart-subtotal">&#8369;0.00</dd></div>
+            <div><dt>Discount</dt><dd id="cart-discount">&#8369;0.00</dd></div>
+            <div><dt>VAT included</dt><dd id="cart-tax">&#8369;0.00</dd></div>
+            <div class="cart-total"><dt>Total</dt><dd id="cart-total">&#8369;0.00</dd></div>
+        </dl>
 
-            <label for="discount-type">Discount</label>
-            <select class="ui-field" id="discount-type">
-                <option value="None">None</option>
-                <option value="PWD">PWD (20%)</option>
-                <option value="Student">Student (10%)</option>
-                <option value="Senior Citizen">Senior Citizen (20%)</option>
-            </select>
+        <form id="checkout-form" novalidate>
+            <div class="checkout-selects">
+                <div class="checkout-field">
+                    <label for="order-type">Order Type</label>
+                    <select class="ui-field" id="order-type" required>
+                    <option value="Dine In">Dine In</option>
+                    <option value="Take Out">Take Out</option>
+                    </select>
+                </div>
 
-            <label for="payment-method">Payment Method</label>
-            <select class="ui-field" id="payment-method">
-                <option value="Cash">Cash</option>
-                <option value="Card">Card</option>
-                <option value="E-Wallet">E-Wallet</option>
-            </select>
+                <div class="checkout-field">
+                    <label for="discount-type">Discount</label>
+                    <select class="ui-field" id="discount-type">
+                    <option value="None">None</option>
+                    <option value="PWD">PWD (20%)</option>
+                    <option value="Student">Student (10%)</option>
+                    <option value="Senior Citizen">Senior Citizen (20%)</option>
+                    </select>
+                </div>
 
-            <div id="cash-fields">
+                <div class="checkout-field">
+                    <label for="payment-method">Payment Method</label>
+                    <select class="ui-field" id="payment-method">
+                    <option value="Cash">Cash</option>
+                    <option value="Card">Card</option>
+                    <option value="E-Wallet">E-Wallet</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <div id="cash-fields" class="checkout-field">
                 <label for="amount-tendered">Amount Tendered</label>
-                <input class="ui-field" type="number" id="amount-tendered" min="0" step="0.01" inputmode="decimal" aria-describedby="cash-summary">
+                <input class="ui-field" type="number" id="amount-tendered" min="0" step="0.01" inputmode="decimal" aria-describedby="cash-summary checkout-message">
                 <p id="cash-summary" aria-live="polite"></p>
             </div>
 
-            <div id="reference-fields" hidden>
+            <div id="reference-fields" class="checkout-field" hidden>
                 <label for="ref-number">Reference Number</label>
-                <input class="ui-field" type="text" id="ref-number" maxlength="100">
+                <input class="ui-field" type="text" id="ref-number" maxlength="100" aria-describedby="checkout-message">
             </div>
 
             <p id="checkout-message" role="status" aria-live="polite"></p>
 
             <button data-tone="positive" class="ui-button" type="submit" id="checkout-btn" disabled>
-                Place Order
+                Checkout
             </button>
         </form>
     </aside>
 </main>
 
+<dialog class="ui-dialog pos-confirm" id="checkout-confirm" aria-labelledby="checkout-confirm-title">
+    <h2 id="checkout-confirm-title">Confirm checkout</h2>
+    <dl id="checkout-review" class="cart-summary">
+        <div><dt>Order type</dt><dd id="review-order-type"></dd></div>
+        <div><dt>Payment</dt><dd id="review-payment"></dd></div>
+        <div class="cart-total"><dt>Total</dt><dd id="review-total"></dd></div>
+    </dl>
+    <div class="receipt-actions">
+        <button class="ui-button" type="button" id="checkout-back">Back</button>
+        <button class="ui-button" data-tone="positive" type="button" id="checkout-confirm-button">Confirm Order</button>
+    </div>
+</dialog>
+
 <dialog class="ui-dialog" id="receipt-modal" aria-labelledby="receipt-dialog-title">
     <div class="receipt">
         <h2 id="receipt-dialog-title">Cafe POS</h2>
-        <p>Order Receipt</p>
+        <p class="receipt-caption">Order complete</p>
         <hr>
 
         <p>Order #: <span id="receipt-order"></span></p>
