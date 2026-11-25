@@ -19,9 +19,10 @@ $retryAccountVisible = $retryResetId !== false && array_any($staffAccounts, stat
     <title>Cafe POS | Staff Accounts</title>
     <link rel="stylesheet" href="assets/css/reports.css">
     <link rel="stylesheet" href="assets/css/sidebar.css">
+    <link rel="stylesheet" href="assets/css/table_sort.css">
     <script src="assets/js/staff_accounts.js" defer></script>
 </head>
-<body>
+<body class="table-page">
 
 <?php
 $appPageTitle = 'Staff Accounts';
@@ -59,7 +60,7 @@ require __DIR__ . '/includes/sidebar.php';
                     <input type="password" id="new-staff-password" name="password"
                         autocomplete="new-password" minlength="12" required>
                 </div>
-                <button type="submit" class="staff-action-positive">Create Account</button>
+                <button type="submit">Create Account</button>
             </form>
             <?php if ($staffCreateError !== null): ?>
                 <p class="report-error" role="alert"><?= $staffEscape($staffCreateError) ?></p>
@@ -67,7 +68,7 @@ require __DIR__ . '/includes/sidebar.php';
         </section>
     <?php endif; ?>
 
-    <form method="get" class="report-filters">
+    <form method="get" class="report-filters" aria-label="Filter staff accounts">
         <div>
             <label for="staff-search">Username</label>
             <input type="search" id="staff-search" name="q" maxlength="100" value="<?= $staffEscape($staffSearch) ?>">
@@ -83,7 +84,7 @@ require __DIR__ . '/includes/sidebar.php';
                 <?php endforeach; ?>
             </select>
         </div>
-        <button type="submit" class="staff-action-positive">Apply</button>
+        <button type="submit">Apply</button>
         <button type="submit" class="staff-action-danger" form="clear-staff-filters">Reset Filters</button>
     </form>
     <form id="clear-staff-filters" method="get" action="staff_accounts.php" hidden></form>
@@ -107,32 +108,35 @@ require __DIR__ . '/includes/sidebar.php';
     <?php elseif (!$staffAccounts): ?>
         <p class="report-empty">No staff accounts match these filters.</p>
     <?php else: ?>
-        <section class="report-section staff-results" aria-label="Matching staff accounts">
-            <div class="report-table">
-                <table aria-label="Staff accounts">
-                    <thead>
+        <section class="report-section report-table staff-results table-scroll-panel" aria-label="Matching staff accounts" tabindex="0">
+            <table aria-label="Staff accounts">
+                <thead>
+                    <tr>
+                        <th scope="col">Username</th>
+                        <th scope="col">Role</th>
+                        <?php if ($staffStatusAvailable): ?>
+                            <th scope="col">Account Status</th>
+                        <?php endif; ?>
+                        <?php if (($_SESSION['role'] ?? '') === 'Admin'): ?>
+                            <th scope="col" class="staff-actions-column">Actions</th>
+                        <?php endif; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($staffAccounts as $staffAccount): ?>
+                        <?php $isActive = $staffStatusAvailable && (int)$staffAccount['is_active'] === 1; ?>
                         <tr>
-                            <th scope="col">Username</th>
-                            <th scope="col">Role</th>
+                            <th scope="row"><?= $staffEscape($staffAccount['username']) ?></th>
+                            <td><?= $staffEscape($staffAccount['role'] ?? 'Unassigned') ?></td>
                             <?php if ($staffStatusAvailable): ?>
-                                <th scope="col">Account Status</th>
+                                <td>
+                                    <span class="staff-status<?= $isActive ? ' staff-status-active' : '' ?>"><?= $isActive ? 'Active' : 'Inactive' ?></span>
+                                </td>
                             <?php endif; ?>
                             <?php if (($_SESSION['role'] ?? '') === 'Admin'): ?>
-                                <th scope="col">Actions</th>
-                            <?php endif; ?>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($staffAccounts as $staffAccount): ?>
-                            <tr>
-                                <th scope="row"><?= $staffEscape($staffAccount['username']) ?></th>
-                                <td><?= $staffEscape($staffAccount['role'] ?? 'Unassigned') ?></td>
-                                <?php if ($staffStatusAvailable): ?>
-                                    <td><?= (int)$staffAccount['is_active'] === 1 ? 'Active' : 'Inactive' ?></td>
-                                <?php endif; ?>
-                                <?php if (($_SESSION['role'] ?? '') === 'Admin'): ?>
-                                    <td>
-                                        <?php if (in_array($staffAccount['role'], $creatableStaffRoles, true)): ?>
+                                <td>
+                                    <?php if (in_array($staffAccount['role'], $creatableStaffRoles, true)): ?>
+                                        <div class="staff-row-actions">
                                             <button type="button" class="staff-row-action staff-action-danger" data-reset-staff
                                                 data-staff-id="<?= (int)$staffAccount['id'] ?>"
                                                 data-staff-name="<?= $staffEscape($staffAccount['username']) ?>">
@@ -140,20 +144,19 @@ require __DIR__ . '/includes/sidebar.php';
                                             </button>
                                             <?php if ($staffStatusAvailable): ?>
                                                 <?php
-                                                $isActive = (int)$staffAccount['is_active'] === 1;
                                                 $statusAction = $isActive ? 'Deactivate' : 'Reactivate';
                                                 $statusStyle = $isActive ? 'staff-action-danger' : 'staff-action-positive';
                                                 ?>
                                                 <?php $nextRole = $staffAccount['role'] === 'Cashier' ? 'Manager' : 'Cashier'; ?>
                                                 <details>
-                                                    <summary class="staff-row-action staff-action-positive">Change Role</summary>
+                                                    <summary class="staff-row-action">Change Role</summary>
                                                     <form method="post" action="staff_accounts.php" class="report-filters">
                                                         <input type="hidden" name="staff_action" value="change_role">
                                                         <input type="hidden" name="user_id" value="<?= (int)$staffAccount['id'] ?>">
                                                         <input type="hidden" name="csrf_token" value="<?= $staffEscape(sessionCsrfToken()) ?>">
                                                         <input type="hidden" name="current_role" value="<?= $staffEscape($staffAccount['role']) ?>">
                                                         <input type="hidden" name="new_role" value="<?= $staffEscape($nextRole) ?>">
-                                                        <button type="submit" class="staff-action-positive">
+                                                        <button type="submit">
                                                             Change <?= $staffEscape($staffAccount['username']) ?> to <?= $staffEscape($nextRole) ?>
                                                         </button>
                                                     </form>
@@ -169,14 +172,14 @@ require __DIR__ . '/includes/sidebar.php';
                                                     </form>
                                                 </details>
                                             <?php endif; ?>
-                                        <?php endif; ?>
-                                    </td>
-                                <?php endif; ?>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
+                                        </div>
+                                    <?php endif; ?>
+                                </td>
+                            <?php endif; ?>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </section>
     <?php endif; ?>
 </main>

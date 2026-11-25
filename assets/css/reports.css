@@ -122,30 +122,128 @@ body {
     color: #76543b;
 }
 
-.staff-results {
-    margin-top: 20px;
+.staff-accounts {
+    gap: 16px;
 }
-.staff-accounts .report-table th,
-.staff-accounts .report-table td {
+
+.staff-accounts > p {
+    margin: 0;
+}
+
+.staff-accounts .report-filters label,
+.staff-accounts .report-table {
+    font-size: 14px;
+}
+
+.staff-accounts .report-filters > div {
+    min-width: 0;
+}
+
+.staff-accounts .report-filters input:not([type="hidden"]) {
+    width: min(100%, 220px);
+}
+
+.staff-accounts .report-filters select {
+    min-width: 110px;
+}
+
+.staff-accounts .report-filters button {
+    font-size: 14px;
+}
+
+.staff-results {
+    padding: 0;
+}
+
+.staff-results table {
+    min-width: 360px;
+    table-layout: fixed;
+}
+
+.staff-results table:has(.staff-actions-column) {
+    min-width: 760px;
+}
+
+.staff-results .staff-actions-column {
+    width: 400px;
+}
+
+.staff-accounts .staff-results th,
+.staff-accounts .staff-results td {
+    padding: 12px 14px;
     text-align: left;
     overflow-wrap: anywhere;
     white-space: normal;
 }
 
+.staff-results thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #faf8f6;
+}
+
+.staff-results tbody tr:hover {
+    background: #faf8f6;
+}
+
+.staff-status {
+    display: inline-block;
+    padding: 4px 9px;
+    border-radius: 6px;
+    background: #efedeb;
+    color: #554e48;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.staff-status-active {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.staff-row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.staff-row-actions details[open] {
+    flex-basis: 100%;
+}
+
+.staff-row-actions details form {
+    margin-top: 8px;
+}
+
 .staff-row-action {
     display: inline-block;
-    margin: 3px 0;
-    padding: 6px 10px;
+    padding: 6px 9px;
     border: 1px solid #d6c9c0;
     border-radius: 6px;
     background: white;
     color: #62452f;
     font: inherit;
+    font-size: 13px;
+    line-height: 1.25;
     cursor: pointer;
 }
+
 .staff-row-action:hover {
     background: #faf8f6;
 }
+
+.staff-accounts .staff-row-action.staff-action-danger {
+    background: #fff;
+    color: #b42318;
+    border-color: #e4b4ae;
+}
+
+.staff-accounts .staff-row-action.staff-action-danger:hover {
+    background: #fff0ef;
+}
+
 .staff-action-dialog {
     width: min(420px, 92vw);
     max-height: 90vh;
@@ -186,34 +284,34 @@ body {
 }
 .staff-dialog-buttons button {
     padding: 8px 12px;
-    border: 0;
+    border: 1px solid #d6c9c0;
     border-radius: 6px;
-    background: #16a34a;
-    color: white;
+    background: white;
+    color: #62452f;
     font: inherit;
     cursor: pointer;
 }
-.staff-dialog-buttons button[type="button"] {
-    background: #dc2626;
+.staff-dialog-buttons button[type="button"]:hover {
+    background: #faf8f6;
 }
 
 .staff-accounts .staff-action-danger,
 .staff-action-dialog .staff-action-danger {
-    border-color: #dc2626;
-    background: #dc2626;
+    border-color: #b42318;
+    background: #b42318;
     color: white;
 }
 .staff-accounts .staff-action-positive {
-    border-color: #16a34a;
-    background: #16a34a;
+    border-color: #287a48;
+    background: #287a48;
     color: white;
 }
 .staff-accounts .staff-action-danger:hover,
 .staff-action-dialog .staff-action-danger:hover {
-    border-color: #b91c1c;
-    background: #b91c1c;
+    border-color: #921c15;
+    background: #921c15;
 }
 .staff-accounts .staff-action-positive:hover {
-    border-color: #15803d;
-    background: #15803d;
+    border-color: #20633a;
+    background: #20633a;
 }
