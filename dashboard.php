@@ -36,12 +36,12 @@ require __DIR__ . '/includes/sidebar.php';
 
 <main class="ui-page dashboard">
     <nav class="dashboard-actions" aria-label="Quick actions">
-        <a data-tone="positive" class="ui-button" href="pos.php"><?php $navIcon($navLinks['pos.php'][1]); ?> New Order</a>
+        <a data-tone="positive" class="ui-button" href="pos.php"><?php $navIcon($navLinks['pos.php'][1]); ?> New Order <span class="dashboard-action-arrow" aria-hidden="true">?</span></a>
         <?php if ($canViewSales): ?>
-            <a data-tone="positive" class="ui-button" href="inventory.php?action=stock-in"><?php $navIcon($navLinks['inventory.php'][1]); ?> Stock In</a>
+            <a data-tone="positive" class="ui-button" href="inventory.php?action=stock-in"><?php $navIcon($navLinks['inventory.php'][1]); ?> Stock In <span class="dashboard-action-arrow" aria-hidden="true">?</span></a>
         <?php endif; ?>
-        <a data-tone="info" class="ui-button" href="menu_management.php"><?php $navIcon($navLinks['menu_management.php'][1]); ?> Menu Management</a>
-        <a data-tone="outline" class="ui-button" href="orders.php"><?php $navIcon($navLinks['orders.php'][1]); ?> Order History</a>
+        <a data-tone="info" class="ui-button" href="menu_management.php"><?php $navIcon($navLinks['menu_management.php'][1]); ?> Menu Management <span class="dashboard-action-arrow" aria-hidden="true">?</span></a>
+        <a data-tone="outline" class="ui-button" href="orders.php"><?php $navIcon($navLinks['orders.php'][1]); ?> Order History <span class="dashboard-action-arrow" aria-hidden="true">?</span></a>
     </nav>
 
     <?php if ($dashboardError !== null): ?>

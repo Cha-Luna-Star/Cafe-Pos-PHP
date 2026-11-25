@@ -25,6 +25,17 @@
     gap: 8px;
 }
 
+.dashboard-action-arrow {
+    margin-inline-start: 4px;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.dashboard-actions .ui-button:is(:hover, :focus-visible) {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
 .dashboard-stats,
 .dashboard-grid {
     display: grid;
