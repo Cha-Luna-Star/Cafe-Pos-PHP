@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
             selectedAction = button.dataset.action;
 
             confirmMessage.textContent =
-                `Are you sure you want to ${selectedAction.toLowerCase()} order #${selectedOrder}?`;
+                `Are you sure you want to ${selectedAction === "Completed" ? "complete" : "cancel"} order #${selectedOrder}?`;
 
             statusError.textContent = "";
             statusDialog.showModal();
@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     confirmButton.addEventListener("click", async () => {
-        if (!selectedOrder || !selectedAction) return;
+        if (confirmButton.disabled || !selectedOrder || !selectedAction) return;
 
         confirmButton.disabled = true;
         statusError.textContent = "";
@@ -58,6 +58,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 throw new Error(result.message || "Unable to update order.");
             }
 
+            history.replaceState({
+                ...history.state,
+                ordersAfterSave: {
+                    filters: filters.map(field => field.value),
+                    sortColumn,
+                    sortAscending,
+                    message: result.message || "Order updated."
+                }
+            }, "");
             window.location.reload();
 
         } catch (error) {
@@ -71,6 +80,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const paymentFilter = document.getElementById("payment-filter");
     const dateFilter = document.getElementById("date-filter");
     const clearFilters = document.getElementById("clear-filters");
+    const filters = [searchInput, statusFilter, paymentFilter, dateFilter];
+    const empty = document.getElementById("orders-empty");
     const ordersTable = document.getElementById("orders-table");
     const tableBody = ordersTable.querySelector("tbody");
     const rows = Array.from(tableBody.querySelectorAll("tr"))
@@ -84,7 +95,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         rows.forEach(row => {
             const orderId = row.cells[0].textContent.trim().toLowerCase();
-            const orderDate = row.cells[1].textContent.trim();
             const cashier = row.cells[2].textContent.trim().toLowerCase();
             const orderPayment = row.cells[4].textContent.trim().toLowerCase();
             const orderStatus = row.cells[6].textContent.trim().toLowerCase();
@@ -95,9 +105,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const matchesDate = !date || row.dataset.date === date;
             row.hidden = !(matchesSearch && matchesStatus && matchesPayment && matchesDate);
         });
+        empty.hidden = rows.some(row => !row.hidden);
     }
 
-    [searchInput, statusFilter, paymentFilter, dateFilter].forEach(element => {
+    filters.forEach(element => {
         element.addEventListener("input", filterOrders);
     });
 
@@ -118,7 +129,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let sortColumn = -1;
     let sortAscending = true;
 
-    ordersTable.querySelectorAll("thead th[data-sort]").forEach((header, index) => {
+    const headings = ordersTable.querySelectorAll("thead th[data-sort]");
+    headings.forEach((header, index) => {
         header.addEventListener("click", () => {
             sortAscending = sortColumn === index ? !sortAscending : true;
             sortColumn = index;
@@ -145,7 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return sortAscending ? result : -result;
             });
 
-            rows.forEach(row => tableBody.appendChild(row));
+            rows.forEach(row => tableBody.insertBefore(row, empty));
 
             ordersTable.querySelectorAll("thead th").forEach(th => {
                 th.classList.remove("sort-asc", "sort-desc");
@@ -154,4 +166,21 @@ document.addEventListener("DOMContentLoaded", () => {
             header.classList.add(sortAscending ? "sort-asc" : "sort-desc");
         });
     });
+    if (history.state?.ordersAfterSave) {
+        const { ordersAfterSave, ...state } = history.state;
+        history.replaceState(state, "");
+        filters.forEach((field, index) => {
+            field.value = ordersAfterSave.filters[index];
+        });
+        const heading = headings[ordersAfterSave.sortColumn];
+        if (heading) {
+            heading.click();
+            if (!ordersAfterSave.sortAscending) heading.click();
+        }
+
+        const notice = document.getElementById("order-update-notice");
+        notice.hidden = false;
+        notice.textContent = ordersAfterSave.message;
+    }
+    filterOrders();
 });

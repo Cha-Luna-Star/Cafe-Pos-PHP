@@ -58,6 +58,7 @@ function escape($value): string {
 </header>
 
 <main>
+    <p id="order-update-notice" role="status" hidden></p>
 
     <div class="order-filters">
         <input
@@ -80,7 +81,7 @@ function escape($value): string {
             <option value="E-Wallet">E-Wallet</option>
         </select>
 
-        <input type="date" id="date-filter">
+        <input type="date" id="date-filter" aria-label="Order date">
 
         <button type="button" id="clear-filters">
             Clear
@@ -201,15 +202,9 @@ function escape($value): string {
 
                 <?php endforeach; ?>
 
-                <?php if (empty($orders)): ?>
-
-                    <tr>
-                        <td colspan="8">
-                            No orders found.
-                        </td>
-                    </tr>
-
-                <?php endif; ?>
+                <tr id="orders-empty" <?= $orders ? 'hidden' : '' ?>>
+                    <td colspan="8"><?= $orders ? 'No orders match your filters.' : 'No orders yet.' ?></td>
+                </tr>
 
             </tbody>
 
