@@ -1,35 +1,8 @@
-* {
-    box-sizing: border-box;
-}
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
-    color: #333;
-}
-button {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 6px;
-    background: #76543b;
-    color: white;
-    cursor: pointer;
-}
-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-.inventory-page {
-    padding: 30px;
-}
 .inventory-page h2 {
     margin: 0 0 20px;
 }
 .inventory-table {
-    background: white;
-    border-radius: 10px;
     overflow-x: auto;
-    margin-bottom: 35px;
 }
 .inventory-section > .inventory-table > table {
     table-layout: fixed;
@@ -111,21 +84,13 @@ th,
 td {
     padding: 15px;
     text-align: left;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--ui-border);
 }
 th {
-    background: #fafafa;
+    background: var(--ui-subtle);
 }
 #stock-dialog {
-    width: min(460px, 95%);
-    max-height: 90vh;
-    border: none;
-    border-radius: 12px;
-    padding: 25px;
     overflow-y: auto;
-}
-#stock-dialog::backdrop {
-    background: rgba(0, 0, 0, 0.5);
 }
 #stock-form {
     display: flex;
@@ -136,10 +101,6 @@ th {
 #stock-form select,
 #stock-form textarea {
     width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font: inherit;
 }
 .dialog-actions {
     display: flex;
@@ -148,9 +109,6 @@ th {
 }
 .dialog-actions button {
     flex: 1;
-}
-#cancel-stock-btn {
-    background: #777;
 }
 #stock-message {
     color: #b42318;
@@ -168,11 +126,6 @@ th {
     margin: 0;
 }
 .inventory-heading select {
-    padding: 10px 14px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background: white;
-    font-size: 14px;
     min-width: 190px;
 }
 @media (max-width: 600px) {
@@ -182,26 +135,17 @@ th {
     }
 }
 
-.stock-row {
-    cursor: pointer;
-}
-.stock-row:hover {
-    background: #f8f5f2;
-}
 .stock-row.expanded {
     background: #f1ebe5;
 }
-.stock-details[hidden] {
-    display: none;
-}
 .stock-details > td {
     padding: 15px 25px;
-    background: #fafafa;
+    background: var(--ui-subtle);
 }
 .batch-details {
     padding: 15px;
     background: white;
-    border: 1px solid #eee;
+    border: 1px solid var(--ui-border);
     border-radius: 8px;
 }
 .batch-details strong {
@@ -209,58 +153,6 @@ th {
     margin-bottom: 15px;
 }
 
-.stock-status {
-    display: inline-block;
-    min-width: 110px;
-    padding: 7px 12px;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    text-align: center;
-}
-.stock-status.in-stock {
-    background: #dcfce7;
-    color: #166534;
-}
-.stock-status.low-stock {
-    background: #fef3c7;
-    color: #92400e;
-}
-.stock-status.out-of-stock {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-.expiration-status {
-    display: inline-block;
-    min-width: 115px;
-    padding: 7px 12px;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    text-align: center;
-}
-.expiration-status.expired {
-    background: #fee2e2;
-    color: #991b1b;
-}
-.expiration-status.expiring-soon {
-    background: #fef3c7;
-    color: #92400e;
-}
-.expiration-status.valid {
-    background: #dcfce7;
-    color: #166534;
-}
-.expiration-status.no-expiration {
-    background: #e5e7eb;
-    color: #374151;
-}
-
-.expiration-status.invalid-date {
-    background: #fee2e2;
-    color: #991b1b;
-}
 .inventory-filters {
     display: flex;
     align-items: center;
@@ -268,27 +160,12 @@ th {
     gap: 12px;
     margin-bottom: 20px;
 }
-.inventory-filters input:not([type="checkbox"]),
-.inventory-filters select {
-    padding: 10px 14px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    background: white;
-    font: inherit;
-    font-size: 14px;
-}
 .inventory-filters input:not([type="checkbox"]) {
     flex: 1;
     min-width: 200px;
 }
 .inventory-filters select {
     min-width: 160px;
-}
-.inventory-filters button {
-    background: #777;
-}
-.inventory-filters button:hover {
-    background: #555;
 }
 .stock-row[hidden],
 #batch-history-body tr[hidden] {
@@ -306,14 +183,10 @@ th {
     }
 }
 
-.stock-details[hidden] {
-    display: none;
-}
-
 .no-results {
     padding: 30px;
     text-align: center;
-    color: #777;
+    color: var(--ui-muted);
     font-size: 14px;
 }
 #stock-no-results[hidden],
@@ -333,22 +206,8 @@ th {
     align-items: center;
     gap: 8px;
 }
-#adjust-stock-btn {
-    background: #555;
-}
-#adjust-stock-btn:hover {
-    background: #444;
-}
 #adjust-stock-dialog {
-    width: min(460px, 95%);
-    max-height: 90vh;
-    border: none;
-    border-radius: 12px;
-    padding: 25px;
     overflow-y: auto;
-}
-#adjust-stock-dialog::backdrop {
-    background: rgba(0, 0, 0, 0.5);
 }
 #adjust-stock-form {
     display: flex;
@@ -359,13 +218,6 @@ th {
 #adjust-stock-form select,
 #adjust-stock-form textarea {
     width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font: inherit;
-}
-#cancel-adjust-btn {
-    background: #777;
 }
 #adjust-message {
     color: #b42318;
@@ -382,13 +234,10 @@ th {
     flex-direction: column;
     gap: 15px;
     padding: 22px;
-    background: white;
-    border: 1px solid #e5e5e5;
-    border-radius: 10px;
 }
 .summary-card span {
     font-size: 14px;
-    color: #666;
+    color: var(--ui-muted);
     font-weight: 500;
 }
 .summary-card strong {
@@ -422,46 +271,12 @@ th {
         grid-template-columns: 1fr;
     }
 }
-#cancel-stock-btn,
-#cancel-adjust-btn {
-    background: #dc2626;
-    color: white;
-    border: none;
-}
-#cancel-stock-btn:hover,
-#cancel-adjust-btn:hover {
-    background: #b91c1c;
-}
-#save-stock-btn,
-#save-adjust-btn {
-    background: #16a34a;
-    color: white;
-    border: none;
-}
-#save-stock-btn:hover,
-#save-adjust-btn:hover {
-    background: #15803d;
-}
-
-.export-csv-btn {
-    background: #16a34a;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 9px 16px;
-    font-size: 14px;
-    cursor: pointer;
-}
-.export-csv-btn:hover {
-    background: #15803d;
-}
-
 
 .stock-row {
     cursor: pointer;
 }
 .stock-row:hover {
-    background: #f5f5f5;
+    background: var(--ui-subtle);
 }
 .stock-status-wrapper {
     display: flex;
@@ -473,8 +288,8 @@ th {
     display: inline-block;
     width: 8px;
     height: 8px;
-    border-right: 2px solid #777;
-    border-bottom: 2px solid #777;
+    border-right: 2px solid var(--ui-muted);
+    border-bottom: 2px solid var(--ui-muted);
     transform: rotate(45deg);
     transition: transform 0.2s ease;
     margin-right: 8px;
@@ -507,32 +322,31 @@ th {
 
 .inventory-tabs {
     display: flex;
-    gap: 8px;
-    border-bottom: 1px solid #ddd;
+    flex-wrap: wrap;
+    gap: 4px;
+    border-bottom: 1px solid var(--ui-border);
     margin-bottom: 25px;
 }
 .inventory-tab {
     background: transparent;
-    color: #666;
+    color: var(--ui-muted);
     border: none;
     border-bottom: 3px solid transparent;
     border-radius: 0;
-    padding: 14px 20px;
+    padding: 9px 12px;
+    font: inherit;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
 }
 .inventory-tab:hover {
-    background: #f3f4f6;
-    color: #2563eb;
+    background: var(--ui-subtle);
+    color: var(--ui-info);
 }
 .inventory-tab.active {
     background: transparent;
-    color: #2563eb;
-    border-bottom-color: #2563eb;
-}
-.inventory-section[hidden] {
-    display: none;
+    color: var(--ui-info);
+    border-bottom-color: var(--ui-info);
 }
 
 .inventory-section {
@@ -545,10 +359,10 @@ th {
 
 .summary-card[data-filter] {
     cursor: pointer;
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    transition: box-shadow 120ms ease;
 }
 .summary-card[data-filter]:hover {
-    transform: translateY(-3px);
+    box-shadow: 0 2px 6px #0f172a1a;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 .summary-card.selected,
@@ -558,15 +372,7 @@ th {
 }
 
 #ingredient-dialog {
-    width: min(460px, 95%);
-    max-height: 90vh;
-    border: none;
-    border-radius: 12px;
-    padding: 25px;
     overflow-y: auto;
-}
-#ingredient-dialog::backdrop {
-    background: rgba(0, 0, 0, 0.5);
 }
 #ingredient-form {
     display: flex;
@@ -577,118 +383,19 @@ th {
 #ingredient-form select {
     width: 100%;
     box-sizing: border-box;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font: inherit;
-}
-#cancel-ingredient-btn {
-    background: #dc2626;
-    color: white;
-}
-#cancel-ingredient-btn:hover {
-    background: #b91c1c;
-}
-#save-ingredient-btn {
-    background: #16a34a;
-    color: white;
-}
-#save-ingredient-btn:hover {
-    background: #15803d;
 }
 #ingredient-message {
     color: #b42318;
 }
 
 .edit-ingredient-btn {
-    background: #2563eb;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 6px 12px;
-    font-size: 12px;
-    cursor: pointer;
     margin-left: auto;
-}
-.edit-ingredient-btn:hover {
-    background: #1d4ed8;
-}
-#ingredient-unit:disabled {
-    background: #f3f4f6;
-    color: #666;
-    cursor: not-allowed;
-}
-
-.delete-ingredient-btn {
-    background: #dc2626;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 6px 12px;
-    font-size: 12px;
-    cursor: pointer;
-}
-.delete-ingredient-btn:hover {
-    background: #b91c1c;
-}
-.delete-ingredient-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.archive-ingredient-btn {
-    background: #d97706;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 6px 12px;
-    font-size: 12px;
-    cursor: pointer;
-}
-.archive-ingredient-btn:hover {
-    background: #b45309;
-}
-.archive-ingredient-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.restore-ingredient-btn {
-    background: #16a34a;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 6px 12px;
-    font-size: 12px;
-    cursor: pointer;
-}
-.restore-ingredient-btn:hover {
-    background: #15803d;
-}
-.restore-ingredient-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
 }
 
 .reconciliation-description {
     color: #6b7280;
     font-size: 14px;
     margin-bottom: 20px;
-}
-.reconciliation-status {
-    display: inline-block;
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-size: 12px;
-    font-weight: 600;
-}
-.reconciliation-status.matched {
-    background: #dcfce7;
-    color: #166534;
-}
-.reconciliation-status.mismatch {
-    background: #fee2e2;
-    color: #991b1b;
 }
 
 .reconciliation-filters {
@@ -697,53 +404,12 @@ th {
     gap: 10px;
     margin-bottom: 20px;
 }
-.reconciliation-filters input,
-.reconciliation-filters select {
-    padding: 10px 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    background: white;
-    font-size: 14px;
-}
 .reconciliation-filters input {
     flex: 1;
     min-width: 200px;
 }
-#clear-reconciliation-filters {
-    background: #f3f4f6;
-    color: #374151;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    padding: 10px 15px;
-    cursor: pointer;
-}
-#clear-reconciliation-filters:hover {
-    background: #e5e7eb;
-}
 #reconciliation-no-results[hidden] {
     display: none !important;
-}
-
-.reconcile-btn {
-    background: #2563eb;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 6px 12px;
-    font-size: 12px;
-    cursor: pointer;
-}
-.reconcile-btn:hover {
-    background: #1d4ed8;
-}
-#reconcile-dialog {
-    width: min(450px, 95%);
-    border: none;
-    border-radius: 12px;
-    padding: 25px;
-}
-#reconcile-dialog::backdrop {
-    background: rgba(0, 0, 0, 0.5);
 }
 #reconcile-form {
     display: flex;
@@ -751,19 +417,7 @@ th {
     gap: 12px;
 }
 #reconcile-reason {
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font: inherit;
     resize: vertical;
-}
-#cancel-reconcile-btn {
-    background: #dc2626;
-    color: white;
-}
-#save-reconcile-btn {
-    background: #16a34a;
-    color: white;
 }
 #reconcile-message {
     color: #dc2626;
@@ -776,9 +430,6 @@ th {
 }
 
 .inventory-valuation {
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 10px;
     margin-bottom: 20px;
     padding: 16px;
 }
@@ -793,7 +444,7 @@ th {
 }
 .inventory-valuation dt,
 .inventory-valuation p {
-    color: #555;
+    color: var(--ui-muted);
 }
 .inventory-valuation dd {
     margin: 4px 0 0;
@@ -819,16 +470,7 @@ th {
 #batch-history-section .inventory-table > table > thead th:nth-child(10) {
     width: 11%;
 }
-.batch-disposal-btn,
-#save-adjust-btn[data-disposal="true"]:not(:disabled) {
-    background: #dc2626;
-}
-.batch-disposal-btn:hover,
-#save-adjust-btn[data-disposal="true"]:hover:not(:disabled) {
-    background: #b91c1c;
-}
 .batch-disposal-btn {
-    padding: 6px 9px;
     white-space: nowrap;
 }
 
@@ -838,15 +480,6 @@ th {
 #stock-movement-section .inventory-table > table > thead th:nth-child(2),
 #stock-movement-section .inventory-table > table > thead th:nth-child(7) {
     width: 17%;
-}
-#batch-date-dialog {
-    width: min(420px, 92vw);
-    padding: 22px;
-    border: none;
-    border-radius: 10px;
-}
-#batch-date-dialog::backdrop {
-    background: rgba(0, 0, 0, 0.5);
 }
 #batch-date-form {
     display: grid;
@@ -859,23 +492,11 @@ th {
 #batch-date-form input,
 #batch-date-form textarea {
     width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font: inherit;
 }
 #batch-date-message {
     color: #b42318;
 }
-#cancel-batch-date {
-    color: white;
-    background: #dc2626;
-}
-#save-batch-date:not(:disabled) {
-    background: #16a34a;
-}
 .batch-date-btn {
-    padding: 6px 9px;
     white-space: nowrap;
 }
 
@@ -897,10 +518,4 @@ th {
 }
 .inventory-notice p {
     margin: 0;
-}
-.inventory-notice button {
-    padding: 6px 10px;
-    border: 1px solid #bbf7d0;
-    background: white;
-    color: #166534;
 }

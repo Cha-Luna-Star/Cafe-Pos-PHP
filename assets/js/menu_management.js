@@ -133,9 +133,7 @@ document.querySelectorAll(".archive-btn").forEach(button => {
             ? "Archive Item"
             : "Restore Item";
 
-        confirmSubmit.className = isArchive
-            ? "confirm-danger"
-            : "confirm-success";
+        confirmSubmit.dataset.tone = isArchive ? "warning" : "positive";
 
         confirmDialog.showModal();
     });

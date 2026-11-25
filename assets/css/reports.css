@@ -1,15 +1,3 @@
-* {
-    box-sizing: border-box;
-}
-body {
-    margin: 0;
-    background: #f5f5f5;
-    color: #333;
-    font-family: Arial, sans-serif;
-}
-.report-content {
-    padding: clamp(14px, 3vw, 30px);
-}
 .report-filters {
     display: flex;
     flex-wrap: wrap;
@@ -18,29 +6,13 @@ body {
 }
 .report-filters label {
     display: block;
+    color: var(--ui-muted);
+    font-size: 0.875rem;
+    font-weight: 600;
     margin-bottom: 6px;
 }
-.report-filters input,
-.report-filters select,
-.report-filters button {
-    max-width: 100%;
-    padding: 9px 12px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font: inherit;
-}
-.report-filters button {
-    background: #76543b;
-    border-color: #76543b;
-    color: white;
-    cursor: pointer;
-}
-.report-filters a {
-    padding: 9px 4px;
-    color: #76543b;
-}
 .report-note {
-    color: #555;
+    color: var(--ui-muted);
 }
 .report-summary,
 .report-breakdowns {
@@ -53,9 +25,6 @@ body {
 .report-section,
 .report-empty {
     padding: 16px;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    background: white;
 }
 .report-summary dd {
     margin: 8px 0 0;
@@ -76,7 +45,7 @@ body {
 .report-table th,
 .report-table td {
     padding: 9px 8px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--ui-border);
     text-align: left;
 }
 .report-table th:not(:first-child),
@@ -88,7 +57,7 @@ body {
     font-weight: normal;
 }
 .report-table thead {
-    background: #faf8f6;
+    background: var(--ui-subtle);
 }
 .report-error {
     color: #b42318;
@@ -113,13 +82,11 @@ body {
 }
 .audit-pages {
     display: flex;
+    justify-content: center;
     flex-wrap: wrap;
     align-items: center;
     gap: 12px;
     margin-top: 16px;
-}
-.audit-pages a {
-    color: #76543b;
 }
 
 .staff-accounts {
@@ -145,10 +112,6 @@ body {
 
 .staff-accounts .report-filters select {
     min-width: 110px;
-}
-
-.staff-accounts .report-filters button {
-    font-size: 14px;
 }
 
 .staff-results {
@@ -180,26 +143,11 @@ body {
     position: sticky;
     top: 0;
     z-index: 1;
-    background: #faf8f6;
+    background: var(--ui-subtle);
 }
 
 .staff-results tbody tr:hover {
-    background: #faf8f6;
-}
-
-.staff-status {
-    display: inline-block;
-    padding: 4px 9px;
-    border-radius: 6px;
-    background: #efedeb;
-    color: #554e48;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.staff-status-active {
-    background: #dcfce7;
-    color: #166534;
+    background: var(--ui-subtle);
 }
 
 .staff-row-actions {
@@ -216,45 +164,6 @@ body {
 .staff-row-actions details form {
     margin-top: 8px;
 }
-
-.staff-row-action {
-    display: inline-block;
-    padding: 6px 9px;
-    border: 1px solid #d6c9c0;
-    border-radius: 6px;
-    background: white;
-    color: #62452f;
-    font: inherit;
-    font-size: 13px;
-    line-height: 1.25;
-    cursor: pointer;
-}
-
-.staff-row-action:hover {
-    background: #faf8f6;
-}
-
-.staff-accounts .staff-row-action.staff-action-danger {
-    background: #fff;
-    color: #b42318;
-    border-color: #e4b4ae;
-}
-
-.staff-accounts .staff-row-action.staff-action-danger:hover {
-    background: #fff0ef;
-}
-
-.staff-action-dialog {
-    width: min(420px, 92vw);
-    max-height: 90vh;
-    padding: 22px;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    color: #333;
-}
-.staff-action-dialog::backdrop {
-    background: rgba(0, 0, 0, 0.45);
-}
 .staff-action-dialog h2 {
     margin: 0;
     font-size: 20px;
@@ -267,51 +176,12 @@ body {
 .staff-action-dialog p {
     margin: 0;
 }
-.staff-action-dialog input[type="password"] {
-    padding: 9px 12px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font: inherit;
-}
 .staff-action-dialog small {
-    color: #555;
+    color: var(--ui-muted);
 }
 .staff-dialog-buttons {
     display: flex;
     justify-content: flex-end;
     flex-wrap: wrap;
     gap: 8px;
-}
-.staff-dialog-buttons button {
-    padding: 8px 12px;
-    border: 1px solid #d6c9c0;
-    border-radius: 6px;
-    background: white;
-    color: #62452f;
-    font: inherit;
-    cursor: pointer;
-}
-.staff-dialog-buttons button[type="button"]:hover {
-    background: #faf8f6;
-}
-
-.staff-accounts .staff-action-danger,
-.staff-action-dialog .staff-action-danger {
-    border-color: #b42318;
-    background: #b42318;
-    color: white;
-}
-.staff-accounts .staff-action-positive {
-    border-color: #287a48;
-    background: #287a48;
-    color: white;
-}
-.staff-accounts .staff-action-danger:hover,
-.staff-action-dialog .staff-action-danger:hover {
-    border-color: #921c15;
-    background: #921c15;
-}
-.staff-accounts .staff-action-positive:hover {
-    border-color: #20633a;
-    background: #20633a;
 }

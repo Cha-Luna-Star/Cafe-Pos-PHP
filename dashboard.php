@@ -24,6 +24,7 @@ $dashboardMoney = static fn($value): string => '&#8369;' . number_format((float)
     <link rel="stylesheet" href="assets/css/dashboard.css">
     <link rel="stylesheet" href="assets/css/sidebar.css">
     <script src="assets/js/dashboard.js" defer></script>
+    <link rel="stylesheet" href="assets/css/ui.css">
 </head>
 <body>
 
@@ -32,25 +33,25 @@ $appPageTitle = 'Dashboard';
 require __DIR__ . '/includes/sidebar.php';
 ?>
 
-<main class="main-content">
+<main class="ui-page main-content">
     <div class="dashboard-actions">
-        <a class="dashboard-primary" href="pos.php">New Order</a>
-        <a href="orders.php">Order History</a>
-        <a href="inventory.php">Inventory</a>
+        <a data-tone="positive" class="ui-button" href="pos.php">New Order</a>
+        <a data-tone="outline" class="ui-button" href="orders.php">Order History</a>
+        <a data-tone="outline" class="ui-button" href="inventory.php">Inventory</a>
     </div>
 
     <?php if ($dashboardError !== null): ?>
         <p class="dashboard-error" role="alert"><?= $escapeDashboard($dashboardError) ?></p>
     <?php else: ?>
         <section class="stats" aria-label="Summary">
-            <div class="stat-card"><p>Today's Sales</p><h2><?= $dashboardMoney($todaySales) ?></h2></div>
-            <div class="stat-card"><p>Today's Orders</p><h2><?= number_format($todayOrders) ?></h2></div>
-            <div class="stat-card"><p>Active Menu Items</p><h2><?= number_format((int)$stock['menu_count']) ?></h2></div>
-            <div class="stat-card"><p>Low Stock Ingredients</p><h2><?= number_format((int)$stock['low_ingredients']) ?></h2></div>
+            <div class="ui-panel stat-card"><p>Today's Sales</p><h2><?= $dashboardMoney($todaySales) ?></h2></div>
+            <div class="ui-panel stat-card"><p>Today's Orders</p><h2><?= number_format($todayOrders) ?></h2></div>
+            <div class="ui-panel stat-card"><p>Active Menu Items</p><h2><?= number_format((int)$stock['menu_count']) ?></h2></div>
+            <div class="ui-panel stat-card"><p>Low Stock Ingredients</p><h2><?= number_format((int)$stock['low_ingredients']) ?></h2></div>
         </section>
 
         <div class="dashboard-panels">
-            <section class="dashboard-panel" aria-labelledby="attention-heading">
+            <section class="ui-panel dashboard-panel" aria-labelledby="attention-heading">
                 <h2 id="attention-heading">Needs Attention</h2>
                 <ul class="dashboard-alerts">
                     <li><a href="orders.php?status=Pending">Pending orders <strong><?= number_format($pendingCount) ?></strong></a></li>
@@ -68,7 +69,7 @@ require __DIR__ . '/includes/sidebar.php';
                 <?php endif; ?>
             </section>
 
-            <section class="dashboard-panel" aria-labelledby="recent-heading">
+            <section class="ui-panel dashboard-panel" aria-labelledby="recent-heading">
                 <h2 id="recent-heading">Recent Orders</h2>
                 <?php if (!$recentOrders): ?>
                     <p>No orders yet.</p>
@@ -92,7 +93,7 @@ require __DIR__ . '/includes/sidebar.php';
             </section>
 
             <?php if ($canViewSales): ?>
-                <section class="dashboard-panel dashboard-sales" aria-labelledby="trend-heading">
+                <section class="ui-panel dashboard-panel dashboard-sales" aria-labelledby="trend-heading">
                     <div class="dashboard-panel-heading">
                         <h2 id="trend-heading">Sales and Order Trends</h2>
                         <?php if ($chartStart !== null): ?>
@@ -102,7 +103,7 @@ require __DIR__ . '/includes/sidebar.php';
 
                     <nav class="dashboard-ranges" aria-label="Trend date range">
                         <?php foreach ($rangeLabels as $value => $label): ?>
-                            <a href="dashboard.php?range=<?= $value ?>"
+                            <a class="ui-choice" href="dashboard.php?range=<?= $value ?>"
                                 <?= $range === $value ? 'aria-current="page"' : '' ?>><?= $label ?></a>
                         <?php endforeach; ?>
                     </nav>
@@ -110,9 +111,9 @@ require __DIR__ . '/includes/sidebar.php';
                     <form method="get" action="dashboard.php" class="dashboard-date-filter">
                         <input type="hidden" name="range" value="date">
                         <label for="trend-date">Specific Date</label>
-                        <input type="date" id="trend-date" name="date"
+                        <input class="ui-field" type="date" id="trend-date" name="date"
                             value="<?= $isHourly ? $chartEndDate : $todayDate ?>" max="<?= $todayDate ?>" required>
-                        <button type="submit">Show Date</button>
+                        <button data-tone="positive" class="ui-button" type="submit">Show Date</button>
                     </form>
                     <?php if ($rangeError !== null): ?>
                         <p class="dashboard-error" role="alert"><?= $escapeDashboard($rangeError) ?></p>

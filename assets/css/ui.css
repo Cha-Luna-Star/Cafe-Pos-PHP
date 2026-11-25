@@ -1,0 +1,292 @@
+:root {
+    --ui-positive: #16a34a;
+    --ui-danger: #dc2626;
+    --ui-info: #2563eb;
+    --ui-warning: #d97706;
+    --ui-neutral: #6b7280;
+    --ui-disabled: #e5e7eb;
+
+    --ui-canvas: #f6f7f9;
+    --ui-surface: #fff;
+    --ui-subtle: #f8fafc;
+    --ui-border: #e2e8f0;
+    --ui-field-border: #94a3b8;
+    --ui-text: #1e293b;
+    --ui-muted: #475569;
+    --ui-accent: #674b38;
+    --ui-focus: #2563eb;
+    --ui-radius: 8px;
+    --ui-panel-radius: 12px;
+    --ui-gap: 16px;
+    --ui-page-padding: clamp(14px, 2.5vw, 28px);
+    --ui-shadow: 0 1px 3px #0f172a0d;
+    --ui-dialog-shadow: 0 12px 32px #0f172a26;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--ui-canvas);
+    color: var(--ui-text);
+    font: 0.9375rem/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+h1, h2, h3 {
+    line-height: 1.25;
+}
+
+.ui-page {
+    padding: var(--ui-page-padding);
+    min-width: 0;
+}
+
+.ui-panel {
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-panel-radius);
+    background: var(--ui-surface);
+    box-shadow: var(--ui-shadow);
+}
+
+body.table-page > .ui-page {
+    padding-bottom: 16px;
+}
+
+.ui-panel > table {
+    font-size: 0.875rem;
+}
+
+.ui-panel > table :is(th, td),
+.ui-panel .report-table :is(th, td) {
+    border-bottom-color: var(--ui-border);
+}
+
+.ui-panel > table thead th,
+.ui-panel .report-table thead {
+    background: var(--ui-subtle);
+}
+
+:focus-visible {
+    outline: 2px solid var(--ui-focus);
+    outline-offset: 2px;
+}
+
+.ui-button {
+    --button-color: var(--ui-neutral);
+    --button-text: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 38px;
+    padding: 7px 12px;
+    border: 1px solid transparent;
+    border-radius: var(--ui-radius);
+    background: var(--button-color);
+    color: var(--button-text);
+    font: 600 0.875rem/1.25 system-ui, -apple-system, "Segoe UI", sans-serif;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: box-shadow 120ms ease, filter 120ms ease;
+}
+
+.ui-button[data-tone="positive"] {
+    --button-color: var(--ui-positive);
+    --button-text: #07190e;
+}
+
+.ui-button[data-tone="danger"] {
+    --button-color: var(--ui-danger);
+}
+
+.ui-button[data-tone="info"] {
+    --button-color: var(--ui-info);
+}
+
+.ui-button[data-tone="warning"] {
+    --button-color: var(--ui-warning);
+    --button-text: #201005;
+}
+
+.ui-button[data-tone="outline"] {
+    --button-color: var(--ui-surface);
+    --button-text: var(--ui-muted);
+    border-color: var(--ui-field-border);
+}
+
+.ui-button-sm {
+    min-height: 32px;
+    padding: 5px 9px;
+    font-size: 0.8125rem;
+}
+
+.ui-button:enabled:hover,
+a.ui-button:hover,
+summary.ui-button:hover {
+    filter: brightness(0.94);
+}
+
+.ui-button:disabled,
+.ui-button[aria-disabled="true"] {
+    border-color: var(--ui-disabled);
+    background: var(--ui-disabled);
+    color: var(--ui-muted);
+    opacity: 1;
+    cursor: not-allowed;
+    filter: none;
+}
+
+.ui-field {
+    min-width: 0;
+    max-width: 100%;
+    min-height: 38px;
+    padding: 7px 10px;
+    border: 1px solid var(--ui-field-border);
+    border-radius: var(--ui-radius);
+    background: var(--ui-surface);
+    color: var(--ui-text);
+    font: inherit;
+    font-size: 0.875rem;
+    transition: border-color 120ms ease;
+}
+
+.ui-field:focus {
+    border-color: var(--ui-focus);
+}
+
+.ui-field:disabled {
+    border-color: var(--ui-border);
+    background: var(--ui-disabled);
+    color: var(--ui-muted);
+    opacity: 1;
+}
+
+textarea.ui-field {
+    min-height: 80px;
+    resize: vertical;
+}
+
+input:is([type="checkbox"], [type="radio"]) {
+    accent-color: var(--ui-info);
+}
+
+.ui-dialog {
+    width: min(460px, calc(100% - 28px));
+    max-height: calc(100dvh - 28px);
+    overflow: auto;
+    margin: auto;
+    padding: clamp(16px, 4vw, 24px);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-panel-radius);
+    background: var(--ui-surface);
+    color: var(--ui-text);
+    box-shadow: var(--ui-dialog-shadow);
+}
+
+.ui-dialog::backdrop {
+    background: #0f172a80;
+}
+
+.ui-dialog :is(h2, h3) {
+    font-size: 1.2rem;
+}
+
+.ui-dialog :is(.dialog-actions, .status-dialog-actions, .staff-dialog-buttons, .confirm-actions, .receipt-actions) {
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ui-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: var(--ui-disabled);
+    color: var(--ui-muted);
+    font-size: 0.75rem;
+    font-weight: 650;
+    line-height: 1.35;
+    white-space: nowrap;
+}
+
+.ui-badge[data-tone="positive"] {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.ui-badge[data-tone="danger"] {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.ui-badge[data-tone="warning"] {
+    background: #ffedd5;
+    color: #9a3412;
+}
+
+.ui-badge[data-tone="info"] {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.ui-filter-bar {
+    padding: 12px;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-panel-radius);
+    background: var(--ui-surface);
+}
+
+.ui-choice {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 5px 10px;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius);
+    background: var(--ui-surface);
+    color: var(--ui-muted);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.ui-choice:hover {
+    background: var(--ui-subtle);
+}
+
+.ui-choice:is([aria-current="page"], [aria-pressed="true"]) {
+    border-color: #bfdbfe;
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+@media (max-width: 600px) {
+    .ui-field {
+        font-size: 1rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ui-button, .ui-field {
+        transition: none;
+    }
+}
+
+@media print {
+    body {
+        background: #fff;
+    }
+
+    .ui-page {
+        padding: 0;
+    }
+
+    .ui-dialog, .ui-panel {
+        border-color: transparent;
+        box-shadow: none;
+    }
+}

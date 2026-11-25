@@ -1,13 +1,9 @@
-
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
 }
 
 body {
-    font-family: Arial, sans-serif;
-    background: #f5f1eb;
     min-height: 100vh;
     display: flex;
     justify-content: center;
@@ -21,10 +17,7 @@ body {
 }
 
 .login-box {
-    background: white;
     padding: 40px 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .login-box h1 {
@@ -35,7 +28,7 @@ body {
 
 .subtitle {
     text-align: center;
-    color: #777;
+    color: var(--ui-muted);
     margin: 10px 0 30px;
 }
 
@@ -48,25 +41,11 @@ body {
 
 .login-box input {
     width: 100%;
-    padding: 12px;
     margin-bottom: 20px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
 }
 
 .login-box button {
     width: 100%;
-    padding: 13px;
-    background: #6f4e37;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-.login-box button:hover {
-    background: #543a29;
 }
 
 .error-message {

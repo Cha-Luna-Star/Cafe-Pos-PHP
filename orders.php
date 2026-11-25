@@ -51,6 +51,7 @@ function escape($value): string {
     <script src="assets/js/table_sort.js" defer></script>
 
     <script src="assets/js/orders.js" defer></script>
+    <link rel="stylesheet" href="assets/css/ui.css">
 </head>
 <body class="table-page">
 
@@ -60,38 +61,38 @@ $appHeaderBack = ['dashboard.php', 'Back to Dashboard'];
 require __DIR__ . '/includes/sidebar.php';
 ?>
 
-<main>
+<main class="ui-page">
     <p id="order-update-notice" role="status" hidden></p>
 
     <div class="order-filters">
-        <input
+        <input class="ui-field"
             type="search"
-            id="order-search"
+            id="order-search" aria-label="Search orders"
             placeholder="Search order # or cashier"
         >
 
-        <select id="status-filter">
+        <select class="ui-field" id="status-filter" aria-label="Order status">
             <option value="">All Statuses</option>
             <option value="Pending">Pending</option>
             <option value="Completed">Completed</option>
             <option value="Cancelled">Cancelled</option>
         </select>
 
-        <select id="payment-filter">
+        <select class="ui-field" id="payment-filter" aria-label="Payment method">
             <option value="">All Payments</option>
             <option value="Cash">Cash</option>
             <option value="Card">Card</option>
             <option value="E-Wallet">E-Wallet</option>
         </select>
 
-        <input type="date" id="date-filter" aria-label="Order date">
+        <input class="ui-field" type="date" id="date-filter" aria-label="Order date">
 
-        <button type="button" id="clear-filters">
+        <button class="ui-button" type="button" id="clear-filters">
             Clear
         </button>
     </div>
 
-    <div class="orders-table-wrapper table-scroll-panel">
+    <div class="ui-panel orders-table-wrapper table-scroll-panel">
 
         <table class="orders-table" id="orders-table">
 
@@ -162,7 +163,9 @@ require __DIR__ . '/includes/sidebar.php';
                         </td>
 
                         <td>
-                            <span class="status-badge <?= escape(strtolower($status)) ?>">
+                            <span class="ui-badge status-badge" data-tone="<?= match ($status) {
+                                'Completed' => 'positive', 'Cancelled' => 'danger', 'Pending' => 'warning', default => '',
+                            } ?>">
                                 <?= escape($status) ?>
                             </span>
                         </td>
@@ -171,24 +174,24 @@ require __DIR__ . '/includes/sidebar.php';
 
                             <div class="order-action-group">
 
-                                <a href="order_details.php?id=<?= (int)$order['id'] ?>">
+                                <a data-tone="outline" class="ui-button ui-button-sm" href="order_details.php?id=<?= (int)$order['id'] ?>">
                                     View
                                 </a>
 
                                 <?php if ($status === 'Pending'): ?>
 
-                                    <button
+                                    <button data-tone="positive"
                                         type="button"
-                                        class="complete-btn"
+                                        class="ui-button ui-button-sm complete-btn"
                                         data-order="<?= (int)$order['id'] ?>"
                                         data-action="Completed"
                                     >
                                         Complete
                                     </button>
 
-                                    <button
+                                    <button data-tone="danger"
                                         type="button"
-                                        class="cancel-btn"
+                                        class="ui-button ui-button-sm cancel-btn"
                                         data-order="<?= (int)$order['id'] ?>"
                                         data-action="Cancelled"
                                     >
@@ -217,9 +220,9 @@ require __DIR__ . '/includes/sidebar.php';
 
 </main>
 
-<dialog id="status-dialog">
+<dialog class="ui-dialog" id="status-dialog" aria-labelledby="status-dialog-title">
 
-    <h2>Confirm Order Action</h2>
+    <h2 id="status-dialog-title">Confirm Order Action</h2>
 
     <p id="status-confirm-message"></p>
 
@@ -227,14 +230,14 @@ require __DIR__ . '/includes/sidebar.php';
 
     <div class="status-dialog-actions">
 
-        <button
+        <button class="ui-button"
             type="button"
             id="close-status-dialog"
         >
             Back
         </button>
 
-        <button
+        <button data-tone="positive" class="ui-button"
             type="button"
             id="confirm-status-action"
         >

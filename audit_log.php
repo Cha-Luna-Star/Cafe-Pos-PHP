@@ -25,6 +25,7 @@ $auditPageUrl = static function (int $number) use ($search, $action, $from, $to)
     <title>Cafe POS | Audit Log</title>
     <link rel="stylesheet" href="assets/css/reports.css">
     <link rel="stylesheet" href="assets/css/sidebar.css">
+    <link rel="stylesheet" href="assets/css/ui.css">
 </head>
 <body>
 
@@ -33,15 +34,15 @@ $appPageTitle = 'Audit Log';
 require __DIR__ . '/includes/sidebar.php';
 ?>
 
-<main class="report-content audit-log">
-    <form method="get" class="report-filters">
+<main class="ui-page report-content audit-log">
+    <form method="get" class="ui-filter-bar report-filters">
         <div>
             <label for="audit-search">Search by user or details</label>
-            <input type="search" id="audit-search" name="q" maxlength="100" value="<?= $auditEscape($search) ?>">
+            <input class="ui-field" type="search" id="audit-search" name="q" maxlength="100" value="<?= $auditEscape($search) ?>">
         </div>
         <div>
             <label for="audit-action">Action</label>
-            <select id="audit-action" name="action">
+            <select class="ui-field" id="audit-action" name="action">
                 <option value="">All actions</option>
                 <?php if (is_string($action) && $action !== '' && !in_array($action, $actions, true)): ?>
                     <option value="<?= $auditEscape($action) ?>" selected><?= $auditEscape($action) ?></option>
@@ -55,22 +56,22 @@ require __DIR__ . '/includes/sidebar.php';
         </div>
         <div>
             <label for="audit-from">From</label>
-            <input type="date" id="audit-from" name="from" value="<?= $auditEscape($from) ?>">
+            <input class="ui-field" type="date" id="audit-from" name="from" value="<?= $auditEscape($from) ?>">
         </div>
         <div>
             <label for="audit-to">To</label>
-            <input type="date" id="audit-to" name="to" value="<?= $auditEscape($to) ?>">
+            <input class="ui-field" type="date" id="audit-to" name="to" value="<?= $auditEscape($to) ?>">
         </div>
-        <button type="submit">Apply</button>
-        <a href="audit_log.php">Reset</a>
+        <button data-tone="positive" class="ui-button" type="submit">Apply</button>
+        <a class="ui-button" href="audit_log.php">Reset Filters</a>
     </form>
 
     <?php if ($auditError !== null): ?>
         <p class="report-error" role="alert"><?= $auditEscape($auditError) ?></p>
     <?php elseif (!$auditEntries): ?>
-        <p class="report-empty">No audit entries match these filters.</p>
+        <p class="ui-panel report-empty">No audit entries match these filters.</p>
     <?php else: ?>
-        <section class="report-section audit-entries" aria-label="Audit entries">
+        <section class="ui-panel report-section audit-entries" aria-label="Audit entries">
             <div class="report-table">
                 <table aria-label="Audit events">
                     <thead>
@@ -101,11 +102,11 @@ require __DIR__ . '/includes/sidebar.php';
             </div>
             <nav class="audit-pages" aria-label="Audit log pages">
                 <?php if ($page > 1): ?>
-                    <a rel="prev" href="<?= $auditEscape($auditPageUrl($page - 1)) ?>">Previous</a>
+                    <a data-tone="outline" class="ui-button" rel="prev" href="<?= $auditEscape($auditPageUrl($page - 1)) ?>">Previous</a>
                 <?php endif; ?>
                 <span>Page <?= number_format($page) ?> of <?= number_format($pageCount) ?> · <?= number_format($totalEntries) ?> entries</span>
                 <?php if ($page < $pageCount): ?>
-                    <a rel="next" href="<?= $auditEscape($auditPageUrl($page + 1)) ?>">Next</a>
+                    <a data-tone="outline" class="ui-button" rel="next" href="<?= $auditEscape($auditPageUrl($page + 1)) ?>">Next</a>
                 <?php endif; ?>
             </nav>
         </section>

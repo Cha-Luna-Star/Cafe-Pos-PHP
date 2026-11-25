@@ -40,10 +40,10 @@ $navActivePage = $currentPage === 'order_details.php' ? 'orders.php' : $currentP
         <?php if (isset($appHeaderBack) || !empty($appHeaderActions)): ?>
             <div class="app-header-actions">
                 <?php if (isset($appHeaderBack)): ?>
-                    <a href="<?= $navEscape($appHeaderBack[0]) ?>"><?= $navEscape($appHeaderBack[1]) ?></a>
+                    <a class="ui-button" href="<?= $navEscape($appHeaderBack[0]) ?>"><?= $navEscape($appHeaderBack[1]) ?></a>
                 <?php endif; ?>
                 <?php foreach ($appHeaderActions ?? [] as $actionId => $label): ?>
-                    <button type="button" id="<?= $navEscape($actionId) ?>"><?= $navEscape($label) ?></button>
+                    <button class="ui-button" data-tone="positive" type="button" id="<?= $navEscape($actionId) ?>"><?= $navEscape($label) ?></button>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>

@@ -25,6 +25,7 @@ require_once __DIR__ . '/controllers/menu_management.php';
     <meta name="csrf-token" content="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
     <script src="assets/js/table_sort.js" defer></script>
     <script src="assets/js/menu_management.js" defer></script>
+    <link rel="stylesheet" href="assets/css/ui.css">
 </head>
 <body class="table-page">
 
@@ -34,11 +35,11 @@ $appHeaderActions = ['add-item-btn' => '+ Add Item'];
 require __DIR__ . '/includes/sidebar.php';
 ?>
 
-<main class="menu-management">
+<main class="ui-page menu-management">
     <div class="toolbar">
-        <input type="search" id="menu-search" placeholder="Search menu items...">
+        <input class="ui-field" type="search" id="menu-search" aria-label="Search menu items" placeholder="Search menu items...">
 
-        <select id="category-filter">
+        <select class="ui-field" id="category-filter" aria-label="Menu category">
             <option value="all">All Categories</option>
             <?php foreach ($categories as $category): ?>
                 <option value="<?= (int)$category['id'] ?>">
@@ -47,7 +48,7 @@ require __DIR__ . '/includes/sidebar.php';
             <?php endforeach; ?>
         </select>
 
-        <select id="status-filter">
+        <select class="ui-field" id="status-filter" aria-label="Menu item status">
             <option value="all">All Items</option>
             <option value="available">Available</option>
             <option value="unavailable">Unavailable</option>
@@ -55,7 +56,7 @@ require __DIR__ . '/includes/sidebar.php';
         </select>
     </div>
 
-    <div class="table-wrapper table-scroll-panel">
+    <div class="ui-panel table-wrapper table-scroll-panel">
         <table>
             <thead>
                 <tr>
@@ -86,14 +87,16 @@ require __DIR__ . '/includes/sidebar.php';
                         <td><?= (int)$item['stock_qty'] ?></td>
                         <td><?= (int)$item['low_stock_threshold'] ?></td>
                         <td>
-                            <span class="status <?= strtolower($status) ?>">
+                            <span class="ui-badge" data-tone="<?= match ($status) {
+                                    'Available' => 'positive', 'Unavailable' => 'warning', default => '',
+                                } ?>">
                                 <?= $status ?>
                             </span>
                         </td>
                         <td>
-                            <button
+                            <button data-tone="info"
                                 type="button"
-                                class="edit-btn"
+                                class="ui-button ui-button-sm edit-btn"
                                 data-item="<?= htmlspecialchars(json_encode([
                                     'id' => (int)$item['id'],
                                     'name' => $item['name'],
@@ -107,9 +110,9 @@ require __DIR__ . '/includes/sidebar.php';
                                 Edit
                             </button>
 
-                            <button
+                            <button data-tone="<?= (int)$item['is_archived'] === 1 ? 'positive' : 'warning' ?>"
                                 type="button"
-                                class="archive-btn"
+                                class="ui-button ui-button-sm archive-btn"
                                 data-id="<?= (int)$item['id'] ?>"
                                 data-action="<?= (int)$item['is_archived'] === 1 ? 'restore' : 'archive' ?>"
                             >
@@ -126,40 +129,40 @@ require __DIR__ . '/includes/sidebar.php';
     </div>
 </main>
 
-<dialog id="confirm-dialog">
+<dialog class="ui-dialog" id="confirm-dialog" aria-labelledby="confirm-title">
     <div class="confirm-content">
         <div class="confirm-icon">!</div>
         <h2 id="confirm-title">Archive Item</h2>
         <p id="confirm-description"></p>
 
         <div class="confirm-actions">
-            <button type="button" id="confirm-cancel">Cancel</button>
-            <button type="button" id="confirm-submit">Confirm</button>
+            <button data-tone="danger" class="ui-button" type="button" id="confirm-cancel">Cancel</button>
+            <button data-tone="positive" class="ui-button" type="button" id="confirm-submit">Confirm</button>
         </div>
     </div>
 </dialog>
 
-<dialog id="item-dialog">
+<dialog class="ui-dialog" id="item-dialog" aria-labelledby="dialog-title">
     <form id="item-form">
         <h2 id="dialog-title">Add Item</h2>
 
         <input type="hidden" id="item-id">
 
         <label for="item-name">Item Name</label>
-        <input type="text" id="item-name" maxlength="150" required>
+        <input class="ui-field" type="text" id="item-name" maxlength="150" required>
 
         <label for="item-price">Price (₱)</label>
-        <input type="number" id="item-price" min="0" step="0.01" required>
+        <input class="ui-field" type="number" id="item-price" min="0" step="0.01" required>
 
         <label for="item-low-stock-threshold">Low Stock Threshold</label>
-        <input type="number" id="item-low-stock-threshold" min="0" max="2147483647" step="1"
+        <input class="ui-field" type="number" id="item-low-stock-threshold" min="0" max="2147483647" step="1"
             value="<?= DEFAULT_PRODUCT_LOW_STOCK_THRESHOLD ?>" <?= $canSetProductThreshold ? 'required' : 'disabled' ?>>
         <?php if (!$canSetProductThreshold): ?>
             <small>Apply the product threshold database migration to edit this value.</small>
         <?php endif; ?>
 
         <label for="item-category">Category</label>
-        <select id="item-category" required>
+        <select class="ui-field" id="item-category" required>
             <?php foreach ($categories as $category): ?>
                 <option value="<?= (int)$category['id'] ?>">
                     <?= htmlspecialchars($category['name']) ?>
@@ -180,8 +183,8 @@ require __DIR__ . '/includes/sidebar.php';
         <p id="item-message" role="status"></p>
 
         <div class="dialog-actions">
-            <button type="button" id="cancel-item-btn">Cancel</button>
-            <button type="submit" id="save-item-btn">Save Item</button>
+            <button data-tone="danger" class="ui-button" type="button" id="cancel-item-btn">Cancel</button>
+            <button data-tone="positive" class="ui-button" type="submit" id="save-item-btn">Save Item</button>
         </div>
     </form>
 </dialog>

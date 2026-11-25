@@ -27,6 +27,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
 <meta name="csrf-token" content="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
 <script src="assets/js/table_sort.js" defer></script>
 <script src="assets/js/inventory.js" defer></script>
+    <link rel="stylesheet" href="assets/css/ui.css">
 </head>
 <body class="table-page">
 
@@ -35,10 +36,10 @@ $appPageTitle = 'Inventory Management';
 require __DIR__ . '/includes/sidebar.php';
 ?>
 
-<main class="inventory-page">
+<main class="ui-page inventory-page">
     <div id="inventory-notice" class="inventory-notice" hidden>
         <p id="inventory-notice-message" role="status"></p>
-        <button type="button" id="dismiss-inventory-notice">Dismiss</button>
+        <button class="ui-button" type="button" id="dismiss-inventory-notice">Dismiss</button>
     </div>
     <?php
     $totalItems = count($ingredients) + count($products);
@@ -93,46 +94,46 @@ require __DIR__ . '/includes/sidebar.php';
     ?>
 
     <section class="inventory-summary">
-        <div class="summary-card" data-filter="all" role="button" tabindex="0">
+        <div class="ui-panel summary-card" data-filter="all" role="button" tabindex="0">
             <span>Total Items</span>
             <strong><?= $totalItems ?></strong>
         </div>
 
-        <div class="summary-card low-stock-card" data-filter="low-stock" role="button" tabindex="0">
+        <div class="ui-panel summary-card low-stock-card" data-filter="low-stock" role="button" tabindex="0">
             <span>Low Stock</span>
             <strong><?= $lowStockCount ?></strong>
         </div>
 
-        <div class="summary-card out-of-stock-card" data-filter="out-of-stock" role="button" tabindex="0">
+        <div class="ui-panel summary-card out-of-stock-card" data-filter="out-of-stock" role="button" tabindex="0">
             <span>Out of Stock</span>
             <strong><?= $outOfStockCount ?></strong>
         </div>
 
-        <div class="summary-card expiring-card" data-filter="expiring-soon" role="button" tabindex="0">
+        <div class="ui-panel summary-card expiring-card" data-filter="expiring-soon" role="button" tabindex="0">
             <span>Expiring Soon</span>
             <strong><?= $expiringSoonCount ?></strong>
         </div>
 
-        <div class="summary-card expired-card" data-filter="expired" role="button" tabindex="0">
+        <div class="ui-panel summary-card expired-card" data-filter="expired" role="button" tabindex="0">
             <span>Expired</span>
             <strong><?= $expiredCount ?></strong>
         </div>
     </section>
     <div class="inventory-tabs">
-        <button type="button" class="inventory-tab active" data-target="current-stock-section">Current Stock</button>
-        <button type="button" class="inventory-tab" data-target="batch-history-section">Batch History</button>
-        <button type="button" class="inventory-tab" data-target="stock-movement-section">Stock Movements</button>
+        <button type="button" class="inventory-tab active" aria-pressed="true" data-target="current-stock-section">Current Stock</button>
+        <button type="button" class="inventory-tab" aria-pressed="false" data-target="batch-history-section">Batch History</button>
+        <button type="button" class="inventory-tab" aria-pressed="false" data-target="stock-movement-section">Stock Movements</button>
         <?php if ($canManageInventory): ?>
-            <button type="button" class="inventory-tab"
+            <button type="button" class="inventory-tab" aria-pressed="false"
                 data-target="reconciliation-section">
                 Reconciliation (<?= count($discrepancies) ?>)
             </button>
-            <button type="button" class="inventory-tab" data-target="reconciliation-history-section">
+            <button type="button" class="inventory-tab" aria-pressed="false" data-target="reconciliation-history-section">
                 Reconciliation History
             </button>
         <?php endif; ?>
         <?php if ($canManageInventory): ?>
-            <button type="button" class="inventory-tab"
+            <button type="button" class="inventory-tab" aria-pressed="false"
                 data-target="archived-ingredients-section">
                 Archived Ingredients
             </button>
@@ -143,30 +144,30 @@ require __DIR__ . '/includes/sidebar.php';
             <h2>Current Stock</h2>
             <div class="inventory-stock-actions">
                 <?php if ($canManageInventory): ?>
-                    <button type="button" id="stock-in-btn">+ Stock In</button>
-                    <button type="button" id="adjust-stock-btn">Adjust Stock</button>
-                    <button type="button" id="add-ingredient-btn">+ Add Ingredient</button>
+                    <button data-tone="positive" class="ui-button" type="button" id="stock-in-btn">+ Stock In</button>
+                    <button data-tone="info" class="ui-button" type="button" id="adjust-stock-btn">Adjust Stock</button>
+                    <button data-tone="positive" class="ui-button" type="button" id="add-ingredient-btn">+ Add Ingredient</button>
                 <?php endif; ?>
-                <button type="button" class="export-csv-btn" data-table="current-stock-body" data-filename="current_stock.csv">Export CSV</button>
+                <button data-tone="outline" type="button" class="ui-button export-csv-btn" data-table="current-stock-body" data-filename="current_stock.csv">Export CSV</button>
             </div>
         </div>
         <div class="inventory-filters">
-            <input type="search" id="stock-search" placeholder="Search items...">
-            <select id="stock-type-filter">
+            <input class="ui-field" type="search" id="stock-search" aria-label="Search current stock" placeholder="Search items...">
+            <select class="ui-field" id="stock-type-filter" aria-label="Stock item type">
                 <option value="">All Types</option>
                 <option value="Product">Product</option>
                 <option value="Ingredient">Ingredient</option>
             </select>
-            <select id="stock-status-filter">
+            <select class="ui-field" id="stock-status-filter" aria-label="Stock status">
                 <option value="">All Stock Statuses</option>
                 <option value="in-stock">In Stock</option>
                 <option value="low-stock">Low Stock</option>
                 <option value="out-of-stock">Out of Stock</option>
             </select>
-            <button type="button" id="clear-stock-filters">Clear</button>
+            <button class="ui-button" type="button" id="clear-stock-filters">Clear</button>
         </div>
 
-        <div class="inventory-table table-scroll-panel" role="region" aria-label="Current stock table" tabindex="0">
+        <div class="ui-panel inventory-table table-scroll-panel" role="region" aria-label="Current stock table" tabindex="0">
             <table>
                 <thead>
                     <tr>
@@ -227,14 +228,16 @@ require __DIR__ . '/includes/sidebar.php';
 
                             <td data-value="<?= $stockStatus ?>">
                                 <div class="stock-status-wrapper">
-                                    <span class="stock-status <?= $statusClass ?>">
+                                    <span class="ui-badge stock-status <?= $statusClass ?>" data-tone="<?= match ($statusClass) {
+                                        'in-stock' => 'positive', 'low-stock' => 'warning', 'out-of-stock' => 'danger', default => '',
+                                    } ?>">
                                         <?= $stockStatus ?>
                                     </span>
                                     <?php if (
                                         $item['type'] === 'Ingredient' &&
                                         in_array($_SESSION['role'] ?? '', ['Admin', 'Manager'], true)
                                     ): ?>
-                                        <button type="button" class="edit-ingredient-btn"
+                                        <button data-tone="info" type="button" class="ui-button ui-button-sm edit-ingredient-btn"
                                             data-id="<?= $item['id'] ?>"
                                             data-name="<?= htmlspecialchars($item['name'], ENT_QUOTES) ?>"
                                             data-unit="<?= htmlspecialchars($item['unit'], ENT_QUOTES) ?>"
@@ -242,12 +245,12 @@ require __DIR__ . '/includes/sidebar.php';
                                             data-cost="<?= $item['cost'] ?>">
                                             Edit
                                         </button>
-                                        <button type="button" class="delete-ingredient-btn"
+                                        <button data-tone="danger" type="button" class="ui-button ui-button-sm delete-ingredient-btn"
                                             data-id="<?= $item['id'] ?>"
                                             data-name="<?= htmlspecialchars($item['name'], ENT_QUOTES) ?>">
                                             Delete
                                         </button>
-                                        <button type="button" class="archive-ingredient-btn"
+                                        <button data-tone="warning" type="button" class="ui-button ui-button-sm archive-ingredient-btn"
                                             data-id="<?= $item['id'] ?>"
                                             data-name="<?= htmlspecialchars($item['name'], ENT_QUOTES) ?>">
                                             Archive
@@ -315,10 +318,10 @@ require __DIR__ . '/includes/sidebar.php';
     <section id="batch-history-section" class="inventory-section" hidden>
         <div class="inventory-heading">
             <h2>Batch History</h2>
-            <button type="button" class="export-csv-btn" data-table="batch-history-body" data-filename="batch_history.csv">Export CSV</button>
+            <button data-tone="outline" type="button" class="ui-button export-csv-btn" data-table="batch-history-body" data-filename="batch_history.csv">Export CSV</button>
         </div>
 
-        <section class="inventory-valuation" aria-labelledby="inventory-valuation-heading">
+        <section class="ui-panel inventory-valuation" aria-labelledby="inventory-valuation-heading">
             <h3 id="inventory-valuation-heading">Inventory Valuation</h3>
             <dl>
                 <div><dt>Ingredients</dt><dd><?= $formatBatchValue($inventoryValue['Ingredient']) ?></dd></div>
@@ -332,13 +335,13 @@ require __DIR__ . '/includes/sidebar.php';
         </section>
 
         <div class="inventory-filters">
-            <input type="search" id="batch-search" placeholder="Search batches...">
-            <select id="batch-type-filter">
+            <input class="ui-field" type="search" id="batch-search" aria-label="Search batches" placeholder="Search batches...">
+            <select class="ui-field" id="batch-type-filter" aria-label="Batch item type">
                 <option value="">All Types</option>
                 <option value="Product">Product</option>
                 <option value="Ingredient">Ingredient</option>
             </select>
-            <select id="batch-expiration-filter">
+            <select class="ui-field" id="batch-expiration-filter" aria-label="Batch expiration status">
                 <option value="">All Expiration Statuses</option>
                 <option value="valid">Valid</option>
                 <option value="expiring-soon">Expiring Soon</option>
@@ -350,10 +353,10 @@ require __DIR__ . '/includes/sidebar.php';
                 <input type="checkbox" id="batch-remaining-only">
                 Remaining stock only
             </label>
-            <button type="button" id="clear-batch-filters">Clear</button>
+            <button class="ui-button" type="button" id="clear-batch-filters">Clear</button>
         </div>
 
-        <div class="inventory-table table-scroll-panel" role="region" aria-label="Batch history table" tabindex="0">
+        <div class="ui-panel inventory-table table-scroll-panel" role="region" aria-label="Batch history table" tabindex="0">
             <table>
             <thead>
                 <tr>
@@ -381,7 +384,9 @@ require __DIR__ . '/includes/sidebar.php';
                             <td><?= htmlspecialchars((string)$batch['received_date']) ?></td>
                             <td><?= htmlspecialchars((string)($batch['expiration_date'] ?? 'N/A')) ?></td>
                             <td>
-                                <span class="expiration-status <?= $batch['expiration_status'] ?>">
+                                <span class="ui-badge expiration-status <?= $batch['expiration_status'] ?>" data-tone="<?= match ($batch['expiration_status']) {
+                                    'valid' => 'positive', 'expiring-soon' => 'warning', 'expired', 'invalid-date' => 'danger', default => '',
+                                } ?>">
                                     <?= $expirationLabels[$batch['expiration_status']] ?>
                                 </span>
                             </td>
@@ -391,7 +396,7 @@ require __DIR__ . '/includes/sidebar.php';
                                 <td data-csv-exclude>
                                     <?php if ($batch['expiration_status'] === 'expired' && (float)$batch['quantity'] > 0 &&
                                               isset($batch['is_archived']) && (int)$batch['is_archived'] === 0): ?>
-                                        <button type="button" class="batch-disposal-btn"
+                                        <button data-tone="danger" type="button" class="ui-button ui-button-sm batch-disposal-btn"
                                             data-type="<?= htmlspecialchars($batch['item_type'], ENT_QUOTES) ?>"
                                             data-item-id="<?= (int)$batch['item_id'] ?>"
                                             data-batch-id="<?= (int)$batch['id'] ?>">
@@ -399,7 +404,7 @@ require __DIR__ . '/includes/sidebar.php';
                                         </button>
                                     <?php elseif ($batch['item_type'] === 'Ingredient' && $batch['expiration_status'] === 'invalid-date' &&
                                                   (float)$batch['quantity'] > 0 && (int)$batch['is_archived'] === 0): ?>
-                                        <button type="button" class="batch-date-btn"
+                                        <button data-tone="info" type="button" class="ui-button ui-button-sm batch-date-btn"
                                             data-item-id="<?= (int)$batch['item_id'] ?>" data-batch-id="<?= (int)$batch['id'] ?>"
                                             data-name="<?= htmlspecialchars($batch['item_name'], ENT_QUOTES) ?>"
                                             data-previous="<?= htmlspecialchars($batch['expiration_date'], ENT_QUOTES) ?>">
@@ -423,19 +428,19 @@ require __DIR__ . '/includes/sidebar.php';
     <section id="stock-movement-section" class="inventory-section" hidden>
         <div class="inventory-heading">
             <h2>Stock Movement History</h2>
-            <button type="button" class="export-csv-btn" data-table="movement-history-body" data-filename="stock_movements.csv">Export CSV</button>
+            <button data-tone="outline" type="button" class="ui-button export-csv-btn" data-table="movement-history-body" data-filename="stock_movements.csv">Export CSV</button>
         </div>
 
         <div class="inventory-filters">
-            <input type="search" id="movement-search" placeholder="Search movements...">
+            <input class="ui-field" type="search" id="movement-search" aria-label="Search stock movements" placeholder="Search movements...">
 
-            <select id="movement-type-filter">
+            <select class="ui-field" id="movement-type-filter" aria-label="Movement item type">
                 <option value="">All Item Types</option>
                 <option value="Product">Product</option>
                 <option value="Ingredient">Ingredient</option>
             </select>
 
-            <select id="movement-action-filter">
+            <select class="ui-field" id="movement-action-filter" aria-label="Movement action">
                 <option value="">All Movements</option>
                 <option value="Stock In">Stock In</option>
                 <option value="Sale">Sale</option>
@@ -445,13 +450,13 @@ require __DIR__ . '/includes/sidebar.php';
                 <option value="Damaged">Damaged</option>
             </select>
 
-            <input type="date" id="movement-date-from" aria-label="Start date">
-            <input type="date" id="movement-date-to" aria-label="End date">
+            <input class="ui-field" type="date" id="movement-date-from" aria-label="Start date">
+            <input class="ui-field" type="date" id="movement-date-to" aria-label="End date">
 
-            <button type="button" id="clear-movement-filters">Clear</button>
+            <button class="ui-button" type="button" id="clear-movement-filters">Clear</button>
         </div>
 
-        <div class="inventory-table table-scroll-panel" role="region" aria-label="Stock movements table" tabindex="0">
+        <div class="ui-panel inventory-table table-scroll-panel" role="region" aria-label="Stock movements table" tabindex="0">
             <table>
                 <thead>
                     <tr>
@@ -499,7 +504,7 @@ require __DIR__ . '/includes/sidebar.php';
     <section id="archived-ingredients-section" class="inventory-section" hidden>
         <h2>Archived Ingredients</h2>
 
-        <div class="inventory-table table-scroll-panel" role="region" aria-label="Archived ingredients table" tabindex="0">
+        <div class="ui-panel inventory-table table-scroll-panel" role="region" aria-label="Archived ingredients table" tabindex="0">
             <table>
                 <thead>
                     <tr>
@@ -518,7 +523,7 @@ require __DIR__ . '/includes/sidebar.php';
                             <td><?= $ingredient['low_stock_threshold'] ?></td>
                             <td>₱<?= number_format($ingredient['cost_per_unit'], 2) ?></td>
                             <td>
-                                <button type="button" class="restore-ingredient-btn"
+                                <button data-tone="positive" type="button" class="ui-button ui-button-sm restore-ingredient-btn"
                                     data-id="<?= $ingredient['id'] ?>"
                                     data-name="<?= htmlspecialchars($ingredient['name'], ENT_QUOTES) ?>">
                                     Restore
@@ -548,32 +553,32 @@ require __DIR__ . '/includes/sidebar.php';
         </p>
 
         <div class="reconciliation-filters">
-            <input type="search" id="reconciliation-search"
+            <input class="ui-field" type="search" id="reconciliation-search"
                 placeholder="Search item...">
 
-            <select id="reconciliation-type-filter">
+            <select class="ui-field" id="reconciliation-type-filter" aria-label="Reconciliation item type">
                 <option value="">All Types</option>
                 <option value="Ingredient">Ingredient</option>
                 <option value="Product">Product</option>
             </select>
 
-            <select id="reconciliation-status-filter">
+            <select class="ui-field" id="reconciliation-status-filter" aria-label="Reconciliation status">
                 <option value="">All Statuses</option>
                 <option value="Matched">Matched</option>
                 <option value="Mismatch">Mismatch</option>
             </select>
 
-            <select id="reconciliation-sort" aria-label="Sort reconciliation items">
+            <select class="ui-field" id="reconciliation-sort" aria-label="Sort reconciliation items">
                 <option value="difference">Largest Difference First</option>
                 <option value="name">Item A–Z</option>
             </select>
 
-            <button type="button" id="clear-reconciliation-filters">
+            <button class="ui-button" type="button" id="clear-reconciliation-filters">
                 Clear Filters
             </button>
         </div>
 
-        <div class="inventory-table table-scroll-panel" role="region" aria-label="Reconciliation table" tabindex="0">
+        <div class="ui-panel inventory-table table-scroll-panel" role="region" aria-label="Reconciliation table" tabindex="0">
             <table>
                 <thead>
                     <tr>
@@ -601,13 +606,13 @@ require __DIR__ . '/includes/sidebar.php';
                             <td><?= round((float)$item['batch_stock'], 3) ?></td>
                             <td data-difference="<?= $difference ?>"><?= round($difference, 3) ?></td>
                             <td>
-                                <span class="reconciliation-status <?= $matched ? 'matched' : 'mismatch' ?>">
+                                <span class="ui-badge" data-tone="<?= $matched ? 'positive' : 'danger' ?>">
                                     <?= $matched ? 'Matched' : 'Mismatch' ?>
                                 </span>
                             </td>
                             <td>
                                 <?php if (!$matched && $canManageInventory): ?>
-                                    <button type="button" class="reconcile-btn"
+                                    <button data-tone="info" type="button" class="ui-button ui-button-sm reconcile-btn"
                                         data-id="<?= $item['id'] ?>"
                                         data-type="<?= htmlspecialchars($item['item_type']) ?>"
                                         data-name="<?= htmlspecialchars($item['name'], ENT_QUOTES) ?>"
@@ -635,21 +640,21 @@ require __DIR__ . '/includes/sidebar.php';
         <h2>Reconciliation History</h2>
 
         <div class="inventory-filters">
-            <input type="search" id="correction-search" aria-label="Search corrections by item, user, or reason"
+            <input class="ui-field" type="search" id="correction-search" aria-label="Search corrections by item, user, or reason"
                 placeholder="Search item, user, or reason">
 
-            <select id="correction-type-filter" aria-label="Item type">
+            <select class="ui-field" id="correction-type-filter" aria-label="Item type">
                 <option value="">All Item Types</option>
                 <option value="Ingredient">Ingredient</option>
                 <option value="Product">Product</option>
             </select>
 
-            <input type="date" id="correction-date-from" aria-label="Correction start date">
-            <input type="date" id="correction-date-to" aria-label="Correction end date">
-            <button type="button" id="clear-correction-filters">Clear</button>
+            <input class="ui-field" type="date" id="correction-date-from" aria-label="Correction start date">
+            <input class="ui-field" type="date" id="correction-date-to" aria-label="Correction end date">
+            <button class="ui-button" type="button" id="clear-correction-filters">Clear</button>
         </div>
 
-        <div class="inventory-table table-scroll-panel" role="region" aria-label="Reconciliation history table" tabindex="0">
+        <div class="ui-panel inventory-table table-scroll-panel" role="region" aria-label="Reconciliation history table" tabindex="0">
             <table>
                 <thead>
                     <tr>
@@ -692,36 +697,36 @@ require __DIR__ . '/includes/sidebar.php';
 </main>
 
 <?php if ($canManageInventory): ?>
-<dialog id="batch-date-dialog" aria-labelledby="batch-date-heading">
+<dialog class="ui-dialog" id="batch-date-dialog" aria-labelledby="batch-date-heading">
     <form id="batch-date-form">
         <h2 id="batch-date-heading">Correct Expiration Date</h2>
         <p id="batch-date-item"></p>
         <p>Use the verified date from the package label or delivery record.</p>
         <label for="batch-date-value">Correct Expiration Date</label>
-        <input type="date" id="batch-date-value" required>
+        <input class="ui-field" type="date" id="batch-date-value" required>
         <label for="batch-date-reason">Reason</label>
-        <textarea id="batch-date-reason" maxlength="500" required></textarea>
+        <textarea class="ui-field" id="batch-date-reason" maxlength="500" required></textarea>
         <p id="batch-date-message" role="alert"></p>
         <div class="dialog-actions">
-            <button type="button" id="cancel-batch-date">Cancel</button>
-            <button type="submit" id="save-batch-date">Save Date</button>
+            <button data-tone="danger" class="ui-button" type="button" id="cancel-batch-date">Cancel</button>
+            <button data-tone="positive" class="ui-button" type="submit" id="save-batch-date">Save Date</button>
         </div>
     </form>
 </dialog>
 <?php endif; ?>
 
-<dialog id="stock-dialog">
+<dialog class="ui-dialog" id="stock-dialog" aria-labelledby="stock-dialog-title">
     <form id="stock-form">
-        <h2>Stock In</h2>
+        <h2 id="stock-dialog-title">Stock In</h2>
 
         <label for="item-type">Item Type</label>
-        <select id="item-type" required>
+        <select class="ui-field" id="item-type" required>
             <option value="Ingredient">Ingredient</option>
             <option value="Product">Product</option>
         </select>
 
         <label for="stock-item">Item</label>
-        <select id="stock-item" required>
+        <select class="ui-field" id="stock-item" required>
             <?php foreach ($ingredients as $item): ?>
                 <option value="<?= (int)$item['id'] ?>" data-type="Ingredient">
                     <?= htmlspecialchars($item['name']) ?>
@@ -735,45 +740,45 @@ require __DIR__ . '/includes/sidebar.php';
         </select>
 
         <label for="stock-quantity">Quantity</label>
-        <input type="number" id="stock-quantity" min="0.001" step="0.001" required>
+        <input class="ui-field" type="number" id="stock-quantity" min="0.001" step="0.001" required>
 
         <label for="stock-cost">Cost Per Unit (₱)</label>
-        <input type="number" id="stock-cost" min="0" step="0.01" required>
+        <input class="ui-field" type="number" id="stock-cost" min="0" step="0.01" required>
 
         <label for="received-date">Date Received</label>
-        <input type="date" id="received-date" required>
+        <input class="ui-field" type="date" id="received-date" required>
 
         <label for="expiration-date">Expiration Date (Optional)</label>
-        <input type="date" id="expiration-date">
+        <input class="ui-field" type="date" id="expiration-date">
 
         <label for="stock-supplier">Supplier</label>
-        <input type="text" id="stock-supplier" maxlength="150">
+        <input class="ui-field" type="text" id="stock-supplier" maxlength="150">
 
         <label for="stock-notes">Notes</label>
-        <textarea id="stock-notes" maxlength="500"></textarea>
+        <textarea class="ui-field" id="stock-notes" maxlength="500"></textarea>
 
         <p id="stock-message" role="status"></p>
 
         <div class="dialog-actions">
-            <button type="button" id="cancel-stock-btn">Cancel</button>
-            <button type="submit" id="save-stock-btn">Save Stock</button>
+            <button data-tone="danger" class="ui-button" type="button" id="cancel-stock-btn">Cancel</button>
+            <button data-tone="positive" class="ui-button" type="submit" id="save-stock-btn">Save Stock</button>
         </div>
     </form>
 </dialog>
 
 <?php if ($canManageInventory): ?>
-<dialog id="adjust-stock-dialog">
+<dialog class="ui-dialog" id="adjust-stock-dialog" aria-labelledby="adjust-dialog-title">
     <form id="adjust-stock-form">
         <h2 id="adjust-dialog-title">Stock Adjustment</h2>
 
         <label for="adjust-item-type">Item Type</label>
-        <select id="adjust-item-type" required>
+        <select class="ui-field" id="adjust-item-type" required>
             <option value="Ingredient">Ingredient</option>
             <option value="Product">Product</option>
         </select>
 
         <label for="adjust-item">Item</label>
-        <select id="adjust-item" required>
+        <select class="ui-field" id="adjust-item" required>
             <?php foreach ($ingredients as $item): ?>
                 <option value="<?= (int)$item['id'] ?>" data-type="Ingredient">
                     <?= htmlspecialchars($item['name']) ?>
@@ -787,13 +792,13 @@ require __DIR__ . '/includes/sidebar.php';
         </select>
 
         <label for="adjust-action">Adjustment Type</label>
-        <select id="adjust-action" required>
+        <select class="ui-field" id="adjust-action" required>
             <option value="Add">Add Stock</option>
             <option value="Remove">Remove Stock</option>
         </select>
         <div id="adjust-movement-container" hidden>
             <label for="adjust-movement">Removal Reason</label>
-            <select id="adjust-movement">
+            <select class="ui-field" id="adjust-movement">
                 <option value="Adjustment">Stock Correction</option>
                 <option value="Expired">Expired Stock</option>
                 <option value="Damaged">Damaged Stock</option>
@@ -801,7 +806,7 @@ require __DIR__ . '/includes/sidebar.php';
         </div>
         <div id="adjust-batch-container" hidden>
             <label for="adjust-batch">Select Batch</label>
-            <select id="adjust-batch">
+            <select class="ui-field" id="adjust-batch">
                 <option value="">Select a batch</option>
                 <?php foreach ($batches as $batch): ?>
                     <?php if ((float)$batch['quantity'] > 0): ?>
@@ -820,34 +825,34 @@ require __DIR__ . '/includes/sidebar.php';
             </select>
         </div>
         <label for="adjust-quantity">Quantity</label>
-        <input type="number" id="adjust-quantity" min="0.001" step="0.001" required>
+        <input class="ui-field" type="number" id="adjust-quantity" min="0.001" step="0.001" required>
 
         <label for="adjust-reason">Reason</label>
-        <textarea id="adjust-reason" maxlength="500" required
+        <textarea class="ui-field" id="adjust-reason" maxlength="500" required
             placeholder="Enter the reason for this adjustment"></textarea>
 
         <p id="adjust-message" role="status"></p>
 
         <div class="dialog-actions">
-            <button type="button" id="cancel-adjust-btn">Cancel</button>
-            <button type="submit" id="save-adjust-btn">Save Adjustment</button>
+            <button data-tone="danger" class="ui-button" type="button" id="cancel-adjust-btn">Cancel</button>
+            <button data-tone="positive" class="ui-button" type="submit" id="save-adjust-btn">Save Adjustment</button>
         </div>
     </form>
 </dialog>
 <?php endif; ?>
 
 <?php if ($canManageInventory): ?>
-<dialog id="ingredient-dialog">
+<dialog class="ui-dialog" id="ingredient-dialog" aria-labelledby="ingredient-dialog-title">
     <form id="ingredient-form">
         <h2 id="ingredient-dialog-title">Add Ingredient</h2>
 
         <input type="hidden" id="ingredient-id">
 
         <label for="ingredient-name">Ingredient Name</label>
-        <input type="text" id="ingredient-name" maxlength="100" required>
+        <input class="ui-field" type="text" id="ingredient-name" maxlength="100" required>
 
         <label for="ingredient-unit">Unit</label>
-        <select id="ingredient-unit" required>
+        <select class="ui-field" id="ingredient-unit" required>
             <option value="g">Grams (g)</option>
             <option value="kg">Kilograms (kg)</option>
             <option value="ml">Milliliters (ml)</option>
@@ -856,25 +861,25 @@ require __DIR__ . '/includes/sidebar.php';
         </select>
 
         <label for="ingredient-threshold">Low Stock Threshold</label>
-        <input type="number" id="ingredient-threshold" min="0" step="0.001" required>
+        <input class="ui-field" type="number" id="ingredient-threshold" min="0" step="0.001" required>
 
         <label for="ingredient-cost">Cost Per Unit (₱)</label>
-        <input type="number" id="ingredient-cost" min="0" step="0.01" required>
+        <input class="ui-field" type="number" id="ingredient-cost" min="0" step="0.01" required>
 
         <p id="ingredient-message" role="status"></p>
 
         <div class="dialog-actions">
-            <button type="button" id="cancel-ingredient-btn">Cancel</button>
-            <button type="submit" id="save-ingredient-btn">Save Ingredient</button>
+            <button data-tone="danger" class="ui-button" type="button" id="cancel-ingredient-btn">Cancel</button>
+            <button data-tone="positive" class="ui-button" type="submit" id="save-ingredient-btn">Save Ingredient</button>
         </div>
     </form>
 </dialog>
 <?php endif; ?>
 
 <?php if ($canManageInventory): ?>
-<dialog id="reconcile-dialog">
+<dialog class="ui-dialog" id="reconcile-dialog" aria-labelledby="reconcile-dialog-title">
     <form id="reconcile-form">
-        <h2>Resolve Stock Mismatch</h2>
+        <h2 id="reconcile-dialog-title">Resolve Stock Mismatch</h2>
 
         <input type="hidden" id="reconcile-id">
         <input type="hidden" id="reconcile-type">
@@ -885,7 +890,7 @@ require __DIR__ . '/includes/sidebar.php';
         <p id="reconcile-stock-info"></p>
 
         <label for="reconcile-reason">Reason for Correction</label>
-        <textarea id="reconcile-reason"
+        <textarea class="ui-field" id="reconcile-reason"
             maxlength="500" rows="4" required></textarea>
 
         <label>
@@ -896,8 +901,8 @@ require __DIR__ . '/includes/sidebar.php';
         <p id="reconcile-message" role="status"></p>
 
         <div class="dialog-actions">
-            <button type="button" id="cancel-reconcile-btn">Cancel</button>
-            <button type="submit" id="save-reconcile-btn">Confirm Correction</button>
+            <button data-tone="danger" class="ui-button" type="button" id="cancel-reconcile-btn">Cancel</button>
+            <button data-tone="positive" class="ui-button" type="submit" id="save-reconcile-btn">Confirm Correction</button>
         </div>
     </form>
 </dialog>

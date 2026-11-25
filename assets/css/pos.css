@@ -1,29 +1,18 @@
-
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
-    color: #333;
 }
 
 main {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
     align-items: start;
-    gap: 25px;
-    padding: 30px;
+    gap: var(--ui-gap);
 }
 
 .menu-section,
 .cart-section {
-    background: white;
-    padding: 25px;
-    border-radius: 10px;
+    padding: clamp(14px, 2vw, 22px);
 }
 
 .categories {
@@ -33,20 +22,6 @@ main {
     margin: 20px 0;
 }
 
-button {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 6px;
-    background: #76543b;
-    color: white;
-    cursor: pointer;
-}
-
-button:disabled {
-    background: #aaa;
-    cursor: not-allowed;
-}
-
 .menu-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -54,9 +29,7 @@ button:disabled {
 }
 
 .menu-card {
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
+    padding: 14px;
 }
 
 .menu-card h3 {
@@ -69,7 +42,7 @@ button:disabled {
 
 .cart-item {
     padding: 15px 0;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid var(--ui-border);
 }
 
 .cart-item p {
@@ -80,10 +53,6 @@ button:disabled {
     display: flex;
     align-items: center;
     gap: 12px;
-}
-
-.quantity-controls button {
-    padding: 5px 12px;
 }
 
 .cart-total {
@@ -115,9 +84,6 @@ button:disabled {
 #checkout-form select,
 #checkout-form input {
     width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
 }
 #cash-fields,
 #reference-fields {
@@ -131,32 +97,6 @@ button:disabled {
 }
 #checkout-message {
     font-size: 14px;
-}
-
-.temperature-select {
-    width: 100%;
-    padding: 8px;
-    margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    background: white;
-    font-size: 14px;
-}
-
-#receipt-modal {
-    width: 400px;
-    max-width: 95%;
-    max-height: 90vh;
-    margin: auto;
-    padding: 25px;
-    border: none;
-    border-radius: 10px;
-}
-#receipt-modal::backdrop {
-    background: rgba(0, 0, 0, 0.6);
-}
-.receipt {
-    font-family: Arial, sans-serif;
 }
 .receipt h2,
 .receipt > p:first-of-type {
@@ -201,12 +141,7 @@ button:disabled {
 .size-select,
 .temperature-select {
     width: 100%;
-    padding: 8px;
     margin: 8px 0;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    background: white;
-    font-size: 14px;
 }
 
 .cart-options {
@@ -220,8 +155,6 @@ button:disabled {
     width: 0;
     min-width: 0;
     margin: 0;
-    padding: 8px;
-    font-size: 13px;
 }
 
 .pos-section-heading {
@@ -233,14 +166,14 @@ button:disabled {
 }
 #cart-shortcut {
     display: none;
-    color: #62452f;
+    color: var(--ui-accent);
 }
 .cart-section {
     position: sticky;
-    top: 16px;
+    top: 82px;
     display: flex;
     flex-direction: column;
-    max-height: calc(100dvh - 32px);
+    max-height: calc(100dvh - 98px);
     min-width: 0;
     overflow-y: auto;
 }
@@ -252,7 +185,7 @@ button:disabled {
 .cart-total {
     margin: 10px 0 16px;
     padding: 8px 0;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--ui-border);
 }
 #checkout-form {
     flex-shrink: 0;
@@ -271,13 +204,6 @@ button:disabled {
 #checkout-message:empty {
     display: none;
 }
-#checkout-btn:not(:disabled) {
-    background: #15803d;
-}
-.quantity-controls button:first-child:not(:disabled),
-#close-receipt-btn {
-    background: #dc2626;
-}
 @media (max-width: 1000px) {
     .cart-section {
         position: static;
@@ -292,9 +218,6 @@ button:disabled {
     }
 }
 @media (max-width: 620px) {
-    main {
-        padding: 12px;
-    }
     .menu-section,
     .cart-section {
         padding: 12px;
@@ -321,34 +244,17 @@ button:disabled {
 .pos-menu-search input {
     flex: 1 1 180px;
     min-width: 0;
-    padding: 9px 12px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font: inherit;
-}
-#clear-pos-menu-search:not(:disabled) {
-    background: #dc2626;
-}
-.categories button {
-    border: 1px solid #d6c9c0;
-    background: white;
-    color: #62452f;
-}
-.categories button[aria-pressed="true"] {
-    border-color: #76543b;
-    background: #76543b;
-    color: white;
 }
 .pos-menu-result-count {
     margin-bottom: 8px;
-    color: #555;
+    color: var(--ui-muted);
     font-size: 14px;
 }
 .pos-menu-empty {
     padding: 14px;
-    border: 1px solid #eee;
+    border: 1px solid var(--ui-border);
     border-radius: 6px;
-    background: #faf8f6;
+    background: var(--ui-subtle);
 }
 .menu-card[hidden] {
     display: none;

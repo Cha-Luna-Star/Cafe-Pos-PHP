@@ -14,10 +14,6 @@
     min-width: 0;
 }
 
-.table-page > main {
-    padding-bottom: 16px;
-}
-
 .table-page > :not(main),
 .table-page > main > :not(.table-scroll-panel, .inventory-section),
 .table-page .inventory-section > :not(.table-scroll-panel) {
@@ -39,20 +35,20 @@
     padding: 0;
     border: none;
     background: transparent;
-    color: var(--sort-label-color, #333);
+    color: var(--sort-label-color, var(--ui-text));
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
 }
 .sort-header:hover {
-    color: var(--sort-active-color, #76543b);
+    color: var(--sort-active-color, var(--ui-info));
     background: transparent;
 }
 .sort-header .sort-indicator {
     inline-size: 3ch;
     flex: none;
-    color: var(--sort-indicator-color, #888);
+    color: var(--sort-indicator-color, var(--ui-muted));
     font-size: 13px;
     text-align: center;
 }
@@ -65,5 +61,5 @@
 }
 .sort-header[data-direction="asc"] .sort-indicator,
 .sort-header[data-direction="desc"] .sort-indicator {
-    color: var(--sort-active-color, #76543b);
+    color: var(--sort-active-color, var(--ui-info));
 }

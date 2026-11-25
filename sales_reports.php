@@ -18,6 +18,7 @@ if ($reportError === null && ($_GET['export'] ?? null) === 'csv') {
     <title>Cafe POS | Sales Reports</title>
     <link rel="stylesheet" href="assets/css/reports.css">
     <link rel="stylesheet" href="assets/css/sidebar.css">
+    <link rel="stylesheet" href="assets/css/ui.css">
 </head>
 <body>
 
@@ -26,19 +27,19 @@ $appPageTitle = 'Sales Reports';
 require __DIR__ . '/includes/sidebar.php';
 ?>
 
-<main class="report-content">
-    <form method="get" class="report-filters">
+<main class="ui-page report-content">
+    <form method="get" class="ui-filter-bar report-filters">
         <div>
             <label for="report-from">From</label>
-            <input type="date" id="report-from" name="from" value="<?= $salesEscape($start?->format('Y-m-d') ?? '') ?>" required>
+            <input class="ui-field" type="date" id="report-from" name="from" value="<?= $salesEscape($start?->format('Y-m-d') ?? '') ?>" required>
         </div>
         <div>
             <label for="report-to">To</label>
-            <input type="date" id="report-to" name="to" value="<?= $salesEscape($end?->format('Y-m-d') ?? '') ?>" required>
+            <input class="ui-field" type="date" id="report-to" name="to" value="<?= $salesEscape($end?->format('Y-m-d') ?? '') ?>" required>
         </div>
-        <button type="submit">Apply</button>
-        <button type="submit" name="export" value="csv">Export CSV</button>
-        <a href="sales_reports.php">Reset</a>
+        <button data-tone="positive" class="ui-button" type="submit">Apply</button>
+        <button data-tone="outline" class="ui-button" type="submit" name="export" value="csv">Export CSV</button>
+        <a class="ui-button" href="sales_reports.php">Reset Filters</a>
     </form>
 
     <?php if ($reportError !== null): ?>
@@ -47,16 +48,16 @@ require __DIR__ . '/includes/sidebar.php';
         <p class="report-note">Sales include completed orders by the date the order was placed.</p>
 
         <dl class="report-summary">
-            <div><dt>Total Sales</dt><dd><?= $salesMoney($totalSales) ?></dd></div>
-            <div><dt>Completed Orders</dt><dd><?= number_format($completedOrders) ?></dd></div>
-            <div><dt>Average Order</dt><dd><?= $salesMoney($averageSale) ?></dd></div>
+            <div class="ui-panel"><dt>Total Sales</dt><dd><?= $salesMoney($totalSales) ?></dd></div>
+            <div class="ui-panel"><dt>Completed Orders</dt><dd><?= number_format($completedOrders) ?></dd></div>
+            <div class="ui-panel"><dt>Average Order</dt><dd><?= $salesMoney($averageSale) ?></dd></div>
         </dl>
 
         <?php if ($completedOrders === 0): ?>
-            <p class="report-empty">No completed orders in this date range.</p>
+            <p class="ui-panel report-empty">No completed orders in this date range.</p>
         <?php else: ?>
             <div class="report-breakdowns">
-                <section class="report-section">
+                <section class="ui-panel report-section">
                     <h2>Daily Sales</h2>
                     <div class="report-table">
                         <table aria-label="Daily Sales">
@@ -73,7 +74,7 @@ require __DIR__ . '/includes/sidebar.php';
                         </table>
                     </div>
                 </section>
-                <section class="report-section">
+                <section class="ui-panel report-section">
                     <h2>Sales by Payment Method</h2>
                     <div class="report-table">
                         <table aria-label="Sales by Payment Method">
@@ -90,7 +91,7 @@ require __DIR__ . '/includes/sidebar.php';
                         </table>
                     </div>
                 </section>
-                <section class="report-section">
+                <section class="ui-panel report-section">
                     <h2>Best-Selling Items</h2>
                     <?php if (!$bestSellingItems): ?>
                         <p>No item sales in this date range.</p>

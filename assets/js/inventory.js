@@ -429,7 +429,7 @@ if (adjustDialog && adjustForm) {
         const disposal = openedFromBatchHistory && isRemove && adjustMovement.value === "Expired";
         adjustTitle.textContent = disposal ? "Record Disposal" : "Adjust Stock";
         adjustSave.textContent = disposal ? "Record Disposal" : "Save Adjustment";
-        adjustSave.dataset.disposal = String(disposal);
+        adjustSave.dataset.tone = disposal ? "danger" : "positive";
 
         batchContainer.hidden = !isRemove;
         document.getElementById("adjust-movement-container").hidden = !isRemove;
@@ -646,6 +646,7 @@ document.querySelectorAll(".inventory-tab").forEach(tab => {
 
         document.querySelectorAll(".inventory-tab").forEach(button => {
             button.classList.toggle("active", button === tab);
+            button.setAttribute("aria-pressed", String(button === tab));
         });
 
         document.querySelectorAll(".inventory-section").forEach(section => {

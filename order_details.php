@@ -90,6 +90,7 @@ function escape($value): string {
     <title>Order #<?= (int)$order['id'] ?> | Cafe POS</title>
     <link rel="stylesheet" href="assets/css/order_details.css">
     <link rel="stylesheet" href="assets/css/sidebar.css">
+    <link rel="stylesheet" href="assets/css/ui.css">
 </head>
 <body>
 <?php
@@ -98,8 +99,8 @@ $appHeaderBack = ['orders.php', 'Back to Orders'];
 require __DIR__ . '/includes/sidebar.php';
 ?>
 
-<main>
-    <section class="receipt">
+<main class="ui-page">
+    <section class="ui-panel receipt">
         <h2>Cafe POS</h2>
         <p class="receipt-subtitle">Order Receipt</p>
 
@@ -138,8 +139,8 @@ require __DIR__ . '/includes/sidebar.php';
         <p>Change: <?= $money($change) ?></p>
 
         <div class="receipt-actions">
-            <button type="button" onclick="window.print()">Print</button>
-            <a href="orders.php">Back</a>
+            <button data-tone="outline" class="ui-button" type="button" onclick="window.print()">Print</button>
+            <a class="ui-button" href="orders.php">Back</a>
         </div>
     </section>
 </main>

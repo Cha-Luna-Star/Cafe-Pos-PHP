@@ -150,16 +150,10 @@ function renderCart() {
 
         const optionsRow = document.createElement("div");
         optionsRow.className = "cart-options";
-        optionsRow.style.display = "flex";
-        optionsRow.style.gap = "10px";
-        optionsRow.style.margin = "10px 0";
 
         if (item.sizes && item.sizes.length > 0) {
             const sizeSelect = document.createElement("select");
-            sizeSelect.className = "size-select";
-            sizeSelect.style.flex = "1";
-            sizeSelect.style.width = "0";
-            sizeSelect.style.minWidth = "0";
+            sizeSelect.className = "ui-field size-select";
 
             item.sizes.forEach(size => {
                 const option = document.createElement("option");
@@ -203,10 +197,7 @@ function renderCart() {
 
         if (item.temperature !== null && item.temperature !== undefined) {
             const temperatureSelect = document.createElement("select");
-            temperatureSelect.className = "temperature-select";
-            temperatureSelect.style.flex = "1";
-            temperatureSelect.style.width = "0";
-            temperatureSelect.style.minWidth = "0";
+            temperatureSelect.className = "ui-field temperature-select";
 
             ["Hot", "Iced"].forEach(temp => {
                 const option = document.createElement("option");
@@ -244,6 +235,8 @@ function renderCart() {
         controls.className = "quantity-controls";
 
         const minus = document.createElement("button");
+        minus.className = "ui-button ui-button-sm";
+        minus.dataset.tone = "danger";
         minus.textContent = "-";
         minus.setAttribute("aria-label", "Remove one " + item.name);
         minus.onclick = () => changeQuantity(index, -1);
@@ -252,6 +245,8 @@ function renderCart() {
         quantity.textContent = item.quantity;
 
         const plus = document.createElement("button");
+        plus.className = "ui-button ui-button-sm";
+        plus.dataset.tone = "positive";
         plus.textContent = "+";
         plus.setAttribute("aria-label", "Add one " + item.name);
         plus.disabled = item.quantity >= 100 || remainingStock(item.id) === 0;

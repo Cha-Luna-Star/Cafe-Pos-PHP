@@ -1,22 +1,12 @@
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
-}
-body {
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
-    color: #333;
 }
 main {
-    padding: 30px;
     width: 100%;
 }
 .orders-table-wrapper {
     width: 100%;
-    background: white;
-    border-radius: 10px;
-    border: 1px solid #e5e5e5;
 }
 .orders-table {
     width: 100%;
@@ -30,14 +20,14 @@ main {
     text-align: left;
     vertical-align: middle;
     white-space: nowrap;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--ui-border);
 }
 .orders-table th {
     position: sticky;
     top: 0;
     z-index: 1;
     height: 52px;
-    background: #fafafa;
+    background: var(--ui-subtle);
     font-size: 14px;
 }
 .orders-table td {
@@ -47,12 +37,7 @@ main {
     font-size: 14px;
 }
 .orders-table tbody tr:hover {
-    background: #faf8f6;
-}
-.orders-table td a {
-    color: #76543b;
-    text-decoration: none;
-    font-weight: 600;
+    background: var(--ui-subtle);
 }
 .order-action-group {
     display: flex;
@@ -60,37 +45,8 @@ main {
     align-items: center;
     gap: 8px;
 }
-.order-action-group button {
-    padding: 6px 10px;
-    border: none;
-    border-radius: 6px;
-    color: white;
-    font-size: 13px;
-    cursor: pointer;
-}
-.complete-btn {
-    background: #287a48;
-}
-.cancel-btn {
-    background: #b42318;
-}
-.order-action-group button:hover {
-    opacity: 0.85;
-}
 #status-dialog {
     position: fixed;
-    width: min(420px, 95%);
-    max-height: 90vh;
-    margin: auto;
-    padding: 28px;
-    border: none;
-    border-radius: 12px;
-    background: white;
-    color: #333;
-    z-index: 99999;
-}
-#status-dialog::backdrop {
-    background: rgba(0, 0, 0, 0.6);
 }
 #status-dialog h2 {
     margin-bottom: 15px;
@@ -106,45 +62,10 @@ main {
 }
 .status-dialog-actions button {
     flex: 1;
-    padding: 12px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-}
-#close-status-dialog {
-    background: #eee;
-    color: #333;
-}
-#confirm-status-action {
-    background: #76543b;
-    color: white;
 }
 #status-error {
     color: #b42318;
     margin-top: 12px;
-}
-
-/* Order status badges */
-.status-badge {
-    display: inline-block;
-    padding: 8px 14px;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    text-align: center;
-    min-width: 95px;
-}
-.status-badge.completed {
-    background: #287a48;
-    color: white;
-}
-.status-badge.cancelled {
-    background: #b42318;
-    color: white;
-}
-.status-badge.pending {
-    background: #ffde7b;
-    color: #29221e;
 }
 
 .order-filters {
@@ -153,23 +74,9 @@ main {
     gap: 12px;
     margin-bottom: 20px;
 }
-.order-filters input,
-.order-filters select,
-.order-filters button {
-    padding: 12px 14px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    background: white;
-    font-size: 14px;
-}
 #order-search {
     flex: 1;
-    min-width: 220px;
-}
-#clear-filters {
-    background: #29221e;
-    color: white;
-    cursor: pointer;
+    min-width: min(100%, 220px);
 }
 .orders-table thead th:nth-child(1),
 .orders-table thead th:nth-child(6) {
@@ -199,7 +106,7 @@ main {
 
 #orders-empty td {
     text-align: center;
-    color: #555;
+    color: var(--ui-muted);
 }
 #order-update-notice {
     margin-bottom: 15px;

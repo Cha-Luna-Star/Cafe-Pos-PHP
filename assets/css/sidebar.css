@@ -30,10 +30,10 @@ body {
     align-items: center;
     gap: 12px 20px;
     padding: 14px clamp(16px, 3vw, 30px);
-    background: #fff;
-    border-bottom: 1px solid #e8dfd8;
-    box-shadow: 0 2px 8px #29221e0a;
-    color: #29221e;
+    background: var(--ui-surface);
+    border-bottom: 1px solid var(--ui-border);
+    box-shadow: 0 2px 8px #2027330a;
+    color: #202733;
 }
 
 .app-header-heading {
@@ -73,7 +73,7 @@ body {
 }
 
 .app-header h1 .nav-icon {
-    color: #76543b;
+    color: var(--ui-accent);
 }
 
 .sidebar-menu-icon {
@@ -95,7 +95,7 @@ body {
     min-width: 0;
     max-width: 22ch;
     padding-left: 14px;
-    border-left: 1px solid #e8dfd8;
+    border-left: 1px solid var(--ui-border);
     overflow-wrap: anywhere;
     font-size: 14px;
     line-height: 1.2;
@@ -112,41 +112,8 @@ body {
     gap: 8px;
 }
 
-.app-header-actions a,
-.app-header-actions button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 38px;
-    padding: 8px 12px;
-    border: 1px solid #76543b;
-    border-radius: 8px;
-    background: #76543b;
-    color: white;
-    font: inherit;
-    font-size: 14px;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.app-header-actions a {
-    border-color: #ded3ca;
-    background: #fbf8f5;
-    color: #543c2d;
-}
-
-.app-header-actions button:hover {
-    background: #5e412d;
-}
-
-.app-header-actions a:hover,
 .sidebar-toggle:hover {
     background: #efe6de;
-}
-
-.app-navigation :focus-visible {
-    outline: 2px solid #ad6838;
-    outline-offset: 2px;
 }
 
 .sidebar {
@@ -159,7 +126,7 @@ body {
     gap: 24px;
     padding: 24px 16px;
     overflow-y: auto;
-    background: #29221e;
+    background: #202733;
     color: #fff;
 }
 
@@ -172,13 +139,13 @@ body {
 
 .sidebar-toggle-desktop:not([hidden]) {
     display: grid;
-    border-color: #6b5343;
-    background: #49352a;
-    color: #eee7e1;
+    border-color: #59677a;
+    background: #354153;
+    color: #eef2f7;
 }
 
 .sidebar-toggle-desktop:not([hidden]):hover {
-    background: #604635;
+    background: #3d4a5e;
 }
 
 .sidebar h2 {
@@ -188,6 +155,14 @@ body {
     margin: 0;
     padding-inline: 12px;
     font-size: 20px;
+}
+
+.sidebar :focus-visible {
+    outline-color: #93c5fd;
+}
+
+.sidebar a.active {
+    font-weight: 650;
 }
 
 .sidebar nav {
@@ -202,19 +177,19 @@ body {
     gap: 10px;
     padding: 12px;
     border-radius: 8px;
-    color: #eee7e1;
+    color: #eef2f7;
     font-size: 14px;
     text-decoration: none;
 }
 
 .sidebar a.active {
-    background: #76543b;
+    background: #39495e;
     color: white;
 }
 
 .sidebar a:hover,
 .sidebar .logout button:hover {
-    background: #604635;
+    background: #3d4a5e;
     color: white;
 }
 
@@ -225,8 +200,8 @@ body {
 .sidebar .logout button {
     box-sizing: border-box;
     width: 100%;
-    border: 1px solid #6b5343;
-    background: #49352a;
+    border: 1px solid #59677a;
+    background: #354153;
     text-align: left;
     cursor: pointer;
 }

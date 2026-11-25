@@ -99,11 +99,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coffee-Up POS | Login</title>
     <link rel="stylesheet" href="assets/css/login.css">
+    <link rel="stylesheet" href="assets/css/ui.css">
 </head>
 <body>
 
 <div class="login-container">
-    <div class="login-box">
+    <div class="ui-panel login-box">
         <h1>Coffee-Up</h1>
         <p class="subtitle">Point of Sale System</p>
 
@@ -116,12 +117,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <form method="POST" action="login.php">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(sessionCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
             <label for="login-username">Username</label>
-            <input type="text" id="login-username" name="username" autocomplete="username" required>
+            <input class="ui-field" type="text" id="login-username" name="username" autocomplete="username" required>
 
             <label for="login-password">Password</label>
-            <input type="password" id="login-password" name="password" autocomplete="current-password" required>
+            <input class="ui-field" type="password" id="login-password" name="password" autocomplete="current-password" required>
 
-            <button type="submit">Login</button>
+            <button data-tone="positive" class="ui-button" type="submit">Login</button>
         </form>
     </div>
 </div>

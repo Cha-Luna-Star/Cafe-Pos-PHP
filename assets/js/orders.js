@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             selectedOrder = Number(button.dataset.order);
             selectedAction = button.dataset.action;
+            confirmButton.dataset.tone = selectedAction === "Completed" ? "positive" : "danger";
 
             confirmMessage.textContent =
                 `Are you sure you want to ${selectedAction === "Completed" ? "complete" : "cancel"} order #${selectedOrder}?`;
