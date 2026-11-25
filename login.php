@@ -108,8 +108,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body class="login-page">
     <main class="login-layout" aria-labelledby="login-heading">
         <div class="login-brand">
-            <img src="assets/images/coffee-up.png" alt="Coffee-Up" width="536" height="114">
-            <p>Point of Sale</p>
+            <div class="login-brand-label">
+                <img src="assets/images/coffee-up.png" alt="Coffee-Up" width="536" height="114">
+                <p>Point of Sale</p>
+            </div>
         </div>
 
         <section class="login-content">
