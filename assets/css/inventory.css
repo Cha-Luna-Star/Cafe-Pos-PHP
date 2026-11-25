@@ -45,14 +45,16 @@ button:disabled {
 }
 #current-stock-section .inventory-table,
 #batch-history-section .inventory-table,
-#reconciliation-section .inventory-table {
+#reconciliation-section .inventory-table,
+#stock-movement-section .inventory-table {
     height: min(612px, 72dvh);
     overflow: auto;
     scrollbar-gutter: stable;
 }
 #current-stock-section .inventory-table > table,
 #batch-history-section .inventory-table > table,
-#reconciliation-section .inventory-table > table {
+#reconciliation-section .inventory-table > table,
+#stock-movement-section .inventory-table > table {
     table-layout: fixed;
 }
 #current-stock-section .inventory-table > table {
@@ -93,7 +95,8 @@ button:disabled {
 }
 #current-stock-section .inventory-table > table > thead th,
 #batch-history-section .inventory-table > table > thead th,
-#reconciliation-section .inventory-table > table > thead th {
+#reconciliation-section .inventory-table > table > thead th,
+#stock-movement-section .inventory-table > table > thead th {
     position: sticky;
     top: 0;
     z-index: 1;
@@ -101,7 +104,8 @@ button:disabled {
 }
 #current-stock-body > .stock-row > td,
 #batch-history-body > tr > td,
-#reconciliation-body > tr > td {
+#reconciliation-body > tr > td,
+#movement-history-body > tr > td {
     height: 56px;
     padding-block: 10px;
     overflow: hidden;
@@ -911,6 +915,53 @@ th {
     background: #b91c1c;
 }
 .batch-disposal-btn {
+    padding: 6px 9px;
+    white-space: nowrap;
+}
+
+#stock-movement-section .inventory-table > table {
+    min-width: 1200px;
+}
+#stock-movement-section .inventory-table > table > thead th:nth-child(2),
+#stock-movement-section .inventory-table > table > thead th:nth-child(7) {
+    width: 17%;
+}
+#batch-date-dialog {
+    width: min(420px, 92vw);
+    padding: 22px;
+    border: none;
+    border-radius: 10px;
+}
+#batch-date-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+}
+#batch-date-form {
+    display: grid;
+    gap: 10px;
+}
+#batch-date-form h2,
+#batch-date-form p {
+    margin: 0;
+}
+#batch-date-form input,
+#batch-date-form textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font: inherit;
+}
+#batch-date-message {
+    color: #b42318;
+}
+#cancel-batch-date {
+    color: white;
+    background: #dc2626;
+}
+#save-batch-date:not(:disabled) {
+    background: #16a34a;
+}
+.batch-date-btn {
     padding: 6px 9px;
     white-space: nowrap;
 }

@@ -97,6 +97,7 @@ $movements = $connection->query("
         sm.batch_id,
         sm.remarks,
         sm.created_at,
+        CONVERT(varchar(27), sm.created_at, 126) AS sort_timestamp,
         u.username
     FROM dbo.stock_movements sm
     LEFT JOIN dbo.ingredients i

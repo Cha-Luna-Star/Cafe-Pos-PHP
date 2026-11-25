@@ -105,7 +105,7 @@ function updateSortIndicator(button, direction = "idle") {
 }
 
 document.querySelectorAll(".sort-header").forEach(button => {
-    updateSortIndicator(button);
+    updateSortIndicator(button, button.dataset.direction);
     button.addEventListener("click", () => {
         const tbody = document.getElementById(button.dataset.table);
         const column = Number(button.dataset.column);
@@ -137,6 +137,8 @@ document.querySelectorAll(".sort-header").forEach(button => {
             }
 
             if (type === "date") {
+                const timestamp = row.cells[column].dataset.sortDate;
+                if (timestamp !== undefined) return timestamp || null;
                 if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
                 const date = new Date(text);
                 return Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== text
@@ -158,7 +160,7 @@ document.querySelectorAll(".sort-header").forEach(button => {
 
             let result;
 
-            if (type === "text") {
+            if (typeof valueA === "string") {
                 result = valueA.localeCompare(valueB);
             } else {
                 result = valueA - valueB;
@@ -368,6 +370,73 @@ document.getElementById("clear-movement-filters").addEventListener("click", () =
 
 filterStockMovements();
 
+function saveBatchHistoryFilters() {
+    const batchHistoryFilters = {
+        search: document.getElementById("batch-search").value,
+        type: document.getElementById("batch-type-filter").value,
+        expiration: document.getElementById("batch-expiration-filter").value,
+        remaining: document.getElementById("batch-remaining-only").checked
+    };
+    history.replaceState({ ...history.state, batchHistoryFilters }, "");
+}
+
+const batchDateDialog = document.getElementById("batch-date-dialog");
+if (batchDateDialog) {
+    const form = document.getElementById("batch-date-form");
+    const dateInput = document.getElementById("batch-date-value");
+    const reason = document.getElementById("batch-date-reason");
+    const save = document.getElementById("save-batch-date");
+    const cancel = document.getElementById("cancel-batch-date");
+    const message = document.getElementById("batch-date-message");
+    let selectedBatch;
+
+    document.querySelectorAll(".batch-date-btn").forEach(button => {
+        button.addEventListener("click", () => {
+            selectedBatch = button.dataset;
+            form.reset();
+            message.textContent = "";
+            document.getElementById("batch-date-item").textContent =
+                selectedBatch.name + ", batch #" + selectedBatch.batchId + ". Recorded date: " + selectedBatch.previous;
+            batchDateDialog.showModal();
+            dateInput.focus();
+        });
+    });
+    cancel.addEventListener("click", () => batchDateDialog.close());
+    batchDateDialog.addEventListener("cancel", event => {
+        if (save.disabled) event.preventDefault();
+    });
+
+    form.addEventListener("submit", async event => {
+        event.preventDefault();
+        if (save.disabled || !selectedBatch) return;
+
+        save.disabled = true;
+        cancel.disabled = true;
+        message.textContent = "";
+        try {
+            const response = await fetch("controllers/correct_batch_expiration.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    csrf_token: csrfToken,
+                    item_id: Number(selectedBatch.itemId),
+                    batch_id: Number(selectedBatch.batchId),
+                    expiration_date: dateInput.value,
+                    reason: reason.value.trim()
+                })
+            });
+            const result = await response.json();
+            if (!response.ok || !result.success) throw new Error(result.message || "Unable to save the date.");
+            saveBatchHistoryFilters();
+            window.location.reload();
+        } catch (error) {
+            message.textContent = error.message;
+            save.disabled = false;
+            cancel.disabled = false;
+        }
+    });
+}
+
 const adjustDialog = document.getElementById("adjust-stock-dialog");
 const adjustForm = document.getElementById("adjust-stock-form");
 
@@ -531,13 +600,7 @@ if (adjustDialog && adjustForm) {
             }
 
             if (openedFromBatchHistory) {
-                const batchHistoryFilters = {
-                    search: document.getElementById("batch-search").value,
-                    type: document.getElementById("batch-type-filter").value,
-                    expiration: document.getElementById("batch-expiration-filter").value,
-                    remaining: document.getElementById("batch-remaining-only").checked
-                };
-                history.replaceState({ ...history.state, batchHistoryFilters }, "");
+                saveBatchHistoryFilters();
             }
             window.location.reload();
         } catch (error) {
@@ -603,7 +666,7 @@ function paginateInventory(tableId) {
 
     if (!tbody || !container) return;
 
-    if (["current-stock-body", "batch-history-body", "reconciliation-body"].includes(tableId)) {
+    if (["current-stock-body", "batch-history-body", "reconciliation-body", "movement-history-body"].includes(tableId)) {
         tbody.closest(".inventory-table")?.scrollTo({ top: 0 });
     }
 

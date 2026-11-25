@@ -393,6 +393,14 @@ require_once __DIR__ . '/includes/inventory_dates.php';
                                             data-batch-id="<?= (int)$batch['id'] ?>">
                                             Record Disposal
                                         </button>
+                                    <?php elseif ($batch['item_type'] === 'Ingredient' && $batch['expiration_status'] === 'invalid-date' &&
+                                                  (float)$batch['quantity'] > 0 && (int)$batch['is_archived'] === 0): ?>
+                                        <button type="button" class="batch-date-btn"
+                                            data-item-id="<?= (int)$batch['item_id'] ?>" data-batch-id="<?= (int)$batch['id'] ?>"
+                                            data-name="<?= htmlspecialchars($batch['item_name'], ENT_QUOTES) ?>"
+                                            data-previous="<?= htmlspecialchars($batch['expiration_date'], ENT_QUOTES) ?>">
+                                            Correct Date
+                                        </button>
                                     <?php endif; ?>
                                 </td>
                             <?php endif; ?>
@@ -445,12 +453,12 @@ require_once __DIR__ . '/includes/inventory_dates.php';
                 <thead>
                     <tr>
                         <th>Type</th>
-                        <th>Item</th>
+                        <th><button type="button" class="sort-header" data-table="movement-history-body" data-column="1" data-type="text"><span class="sort-label">Item</span> <span class="sort-indicator" aria-hidden="true">A–Z</span></button></th>
                         <th>Movement</th>
-                        <th>Quantity</th>
+                        <th><button type="button" class="sort-header" data-table="movement-history-body" data-column="3" data-type="number"><span class="sort-label">Quantity</span> <span class="sort-indicator" aria-hidden="true">⇅</span></button></th>
                         <th>Batch</th>
                         <th>User</th>
-                        <th>Date</th>
+                        <th aria-sort="descending"><button type="button" class="sort-header" data-table="movement-history-body" data-column="6" data-type="date" data-direction="desc"><span class="sort-label">Date</span> <span class="sort-indicator" aria-hidden="true">Newest</span></button></th>
                         <th>Remarks</th>
                     </tr>
                 </thead>
@@ -467,10 +475,10 @@ require_once __DIR__ . '/includes/inventory_dates.php';
                             <td data-number="<?= number_format((float)$movement['quantity'], 3, '.', '') ?>"><?= number_format((float)$movement['quantity'], 3) ?></td>
                             <td><?= $movement['batch_id'] !== null ? '#' . (int)$movement['batch_id'] : 'N/A' ?></td>
                             <td><?= htmlspecialchars($movement['username'] ?? 'System') ?></td>
-                            <td data-date="<?= htmlspecialchars(substr((string)$movement['created_at'], 0, 10)) ?>">
+                            <td data-date="<?= htmlspecialchars(substr((string)$movement['created_at'], 0, 10)) ?>" data-sort-date="<?= htmlspecialchars($movement['sort_timestamp'] ?? '', ENT_QUOTES) ?>">
                                 <?= htmlspecialchars((string)$movement['created_at']) ?>
                             </td>
-                            <td><?= htmlspecialchars($movement['remarks'] ?? '') ?></td>
+                            <td title="<?= htmlspecialchars($movement['remarks'] ?? '', ENT_QUOTES) ?>"><?= htmlspecialchars($movement['remarks'] ?? '') ?></td>
                         </tr>
                     <?php endforeach; ?>
 
@@ -683,6 +691,25 @@ require_once __DIR__ . '/includes/inventory_dates.php';
 
     <?php endif; ?>
 </main>
+
+<?php if ($canManageInventory): ?>
+<dialog id="batch-date-dialog" aria-labelledby="batch-date-heading">
+    <form id="batch-date-form">
+        <h2 id="batch-date-heading">Correct Expiration Date</h2>
+        <p id="batch-date-item"></p>
+        <p>Use the verified date from the package label or delivery record.</p>
+        <label for="batch-date-value">Correct Expiration Date</label>
+        <input type="date" id="batch-date-value" required>
+        <label for="batch-date-reason">Reason</label>
+        <textarea id="batch-date-reason" maxlength="500" required></textarea>
+        <p id="batch-date-message" role="alert"></p>
+        <div class="dialog-actions">
+            <button type="button" id="cancel-batch-date">Cancel</button>
+            <button type="submit" id="save-batch-date">Save Date</button>
+        </div>
+    </form>
+</dialog>
+<?php endif; ?>
 
 <dialog id="stock-dialog">
     <form id="stock-form">
