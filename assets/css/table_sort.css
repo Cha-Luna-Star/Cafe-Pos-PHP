@@ -1,3 +1,37 @@
+.table-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+}
+
+.table-page > main,
+.table-page .inventory-section:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+}
+
+.table-page > main {
+    padding-bottom: 16px;
+}
+
+.table-page > :not(main),
+.table-page > main > :not(.table-scroll-panel, .inventory-section),
+.table-page .inventory-section > :not(.table-scroll-panel) {
+    flex-shrink: 0;
+}
+
+.table-page .table-scroll-panel {
+    flex: 1 1 0;
+    min-height: 180px;
+    margin-bottom: 0;
+    overflow: auto;
+    scrollbar-gutter: stable;
+}
+
 .sort-header {
     display: inline-flex;
     align-items: center;

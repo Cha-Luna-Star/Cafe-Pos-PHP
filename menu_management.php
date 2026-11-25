@@ -26,7 +26,7 @@ require_once __DIR__ . '/controllers/menu_management.php';
     <script src="assets/js/table_sort.js" defer></script>
     <script src="assets/js/menu_management.js" defer></script>
 </head>
-<body>
+<body class="table-page">
 
 <?php require __DIR__ . '/includes/sidebar.php'; ?>
 
@@ -56,7 +56,7 @@ require_once __DIR__ . '/controllers/menu_management.php';
         </select>
     </div>
 
-    <div class="table-wrapper">
+    <div class="table-wrapper table-scroll-panel">
         <table>
             <thead>
                 <tr>

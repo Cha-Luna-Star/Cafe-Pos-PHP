@@ -52,7 +52,7 @@ function escape($value): string {
 
     <script src="assets/js/orders.js" defer></script>
 </head>
-<body>
+<body class="table-page">
 
 <?php require __DIR__ . '/includes/sidebar.php'; ?>
 
@@ -92,7 +92,7 @@ function escape($value): string {
         </button>
     </div>
 
-    <div class="orders-table-wrapper">
+    <div class="orders-table-wrapper table-scroll-panel">
 
         <table class="orders-table" id="orders-table">
 

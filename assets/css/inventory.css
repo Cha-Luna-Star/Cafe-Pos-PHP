@@ -43,11 +43,6 @@ button:disabled {
     overflow-x: auto;
     margin-bottom: 35px;
 }
-.inventory-section > .inventory-table {
-    height: min(612px, 72dvh);
-    overflow: auto;
-    scrollbar-gutter: stable;
-}
 .inventory-section > .inventory-table > table {
     table-layout: fixed;
 }

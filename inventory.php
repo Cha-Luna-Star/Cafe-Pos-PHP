@@ -28,7 +28,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
 <script src="assets/js/table_sort.js" defer></script>
 <script src="assets/js/inventory.js" defer></script>
 </head>
-<body>
+<body class="table-page">
 
 <?php require __DIR__ . '/includes/sidebar.php'; ?>
 
@@ -167,7 +167,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
             <button type="button" id="clear-stock-filters">Clear</button>
         </div>
 
-        <div class="inventory-table" role="region" aria-label="Current stock table" tabindex="0">
+        <div class="inventory-table table-scroll-panel" role="region" aria-label="Current stock table" tabindex="0">
             <table>
                 <thead>
                     <tr>
@@ -354,7 +354,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
             <button type="button" id="clear-batch-filters">Clear</button>
         </div>
 
-        <div class="inventory-table" role="region" aria-label="Batch history table" tabindex="0">
+        <div class="inventory-table table-scroll-panel" role="region" aria-label="Batch history table" tabindex="0">
             <table>
             <thead>
                 <tr>
@@ -452,7 +452,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
             <button type="button" id="clear-movement-filters">Clear</button>
         </div>
 
-        <div class="inventory-table" role="region" aria-label="Stock movements table" tabindex="0">
+        <div class="inventory-table table-scroll-panel" role="region" aria-label="Stock movements table" tabindex="0">
             <table>
                 <thead>
                     <tr>
@@ -500,7 +500,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
     <section id="archived-ingredients-section" class="inventory-section" hidden>
         <h2>Archived Ingredients</h2>
 
-        <div class="inventory-table" role="region" aria-label="Archived ingredients table" tabindex="0">
+        <div class="inventory-table table-scroll-panel" role="region" aria-label="Archived ingredients table" tabindex="0">
             <table>
                 <thead>
                     <tr>
@@ -574,7 +574,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
             </button>
         </div>
 
-        <div class="inventory-table" role="region" aria-label="Reconciliation table" tabindex="0">
+        <div class="inventory-table table-scroll-panel" role="region" aria-label="Reconciliation table" tabindex="0">
             <table>
                 <thead>
                     <tr>
@@ -650,7 +650,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
             <button type="button" id="clear-correction-filters">Clear</button>
         </div>
 
-        <div class="inventory-table" role="region" aria-label="Reconciliation history table" tabindex="0">
+        <div class="inventory-table table-scroll-panel" role="region" aria-label="Reconciliation history table" tabindex="0">
             <table>
                 <thead>
                     <tr>

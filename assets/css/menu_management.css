@@ -48,9 +48,6 @@ button {
 .table-wrapper {
     background: white;
     border-radius: 10px;
-    height: min(612px, 72dvh);
-    overflow: auto;
-    scrollbar-gutter: stable;
 }
 table {
     width: 100%;
