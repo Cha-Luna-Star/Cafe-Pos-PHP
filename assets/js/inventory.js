@@ -76,7 +76,7 @@ stockForm.addEventListener("submit", async event => {
             throw new Error(result.message || "Unable to add stock.");
         }
 
-        reloadInventoryView();
+        reloadInventoryView(result.message);
     } catch (error) {
         stockMessage.textContent = error.message;
     } finally {
@@ -417,7 +417,7 @@ if (batchDateDialog) {
             });
             const result = await response.json();
             if (!response.ok || !result.success) throw new Error(result.message || "Unable to save the date.");
-            reloadInventoryView();
+            reloadInventoryView(result.message);
         } catch (error) {
             message.textContent = error.message;
             save.disabled = false;
@@ -589,7 +589,7 @@ if (adjustDialog && adjustForm) {
             }
 
 
-            reloadInventoryView();
+            reloadInventoryView(result.message);
         } catch (error) {
             adjustMessage.textContent = error.message;
         } finally {
@@ -845,7 +845,7 @@ if (ingredientDialog && ingredientForm) {
                 throw new Error(result.message || "Unable to save ingredient.");
             }
 
-            reloadInventoryView();
+            reloadInventoryView(result.message);
 
         } catch (error) {
             message.textContent = error.message;
@@ -912,7 +912,7 @@ document.querySelectorAll(".delete-ingredient-btn").forEach(button => {
                 throw new Error(result.message || "Unable to delete ingredient.");
             }
 
-            reloadInventoryView();
+            reloadInventoryView(result.message);
 
         } catch (error) {
             alert(error.message);
@@ -948,7 +948,7 @@ document.querySelectorAll(".archive-ingredient-btn").forEach(button => {
                 throw new Error(result.message || "Unable to archive ingredient.");
             }
 
-            reloadInventoryView();
+            reloadInventoryView(result.message);
 
         } catch (error) {
             alert(error.message);
@@ -982,7 +982,7 @@ document.querySelectorAll(".restore-ingredient-btn").forEach(button => {
                 throw new Error(result.message || "Unable to restore ingredient.");
             }
 
-            reloadInventoryView();
+            reloadInventoryView(result.message);
 
         } catch (error) {
             alert(error.message);
@@ -1129,7 +1129,7 @@ if (reconcileDialog && reconcileForm) {
 
             if (response.ok && result.success) {
 
-                reloadInventoryView();
+                reloadInventoryView(result.message);
                 return;
             }
         } catch {
@@ -1184,7 +1184,7 @@ if (correctionHistory) {
 
 const inventoryFilterSelector = ".inventory-filters input, .inventory-filters select, .reconciliation-filters input, .reconciliation-filters select";
 
-function reloadInventoryView() {
+function reloadInventoryView(message) {
     const activeTab = document.querySelector(".inventory-tab.active");
     const section = activeTab && document.getElementById(activeTab.dataset.target);
     if (section) {
@@ -1200,15 +1200,21 @@ function reloadInventoryView() {
             page: paginationState[tableId]?.page ?? 1,
             selectedCard: document.querySelector(".summary-card.selected")?.dataset.filter ?? null
         };
-        history.replaceState({ ...history.state, inventoryView }, "");
+        history.replaceState({ ...history.state, inventoryView, inventorySaveMessage: message || "Changes saved." }, "");
     }
     window.location.reload();
 }
 
 function restoreInventoryView() {
     if (!history.state?.inventoryView) return;
-    const { inventoryView, ...remainingState } = history.state;
+    const { inventoryView, inventorySaveMessage, ...remainingState } = history.state;
     history.replaceState(remainingState, "");
+
+    if (typeof inventorySaveMessage === "string" && inventorySaveMessage) {
+        const notice = document.getElementById("inventory-notice");
+        notice.hidden = false;
+        document.getElementById("inventory-notice-message").textContent = inventorySaveMessage;
+    }
 
     const section = document.getElementById(inventoryView.sectionId);
     const tab = Array.from(document.querySelectorAll(".inventory-tab"))
@@ -1246,5 +1252,9 @@ function restoreInventoryView() {
         card.classList.toggle("selected", card.dataset.filter === inventoryView.selectedCard);
     });
 }
+
+document.getElementById("dismiss-inventory-notice").addEventListener("click", () => {
+    document.getElementById("inventory-notice").hidden = true;
+});
 
 restoreInventoryView();

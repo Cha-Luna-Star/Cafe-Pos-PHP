@@ -965,3 +965,29 @@ th {
     padding: 6px 9px;
     white-space: nowrap;
 }
+
+.inventory-notice {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-bottom: 16px;
+    padding: 10px 14px;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    background: #f0fdf4;
+    color: #166534;
+}
+.inventory-notice[hidden] {
+    display: none;
+}
+.inventory-notice p {
+    margin: 0;
+}
+.inventory-notice button {
+    padding: 6px 10px;
+    border: 1px solid #bbf7d0;
+    background: white;
+    color: #166534;
+}

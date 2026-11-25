@@ -42,6 +42,10 @@ require_once __DIR__ . '/includes/inventory_dates.php';
 </header>
 
 <main class="inventory-page">
+    <div id="inventory-notice" class="inventory-notice" hidden>
+        <p id="inventory-notice-message" role="status"></p>
+        <button type="button" id="dismiss-inventory-notice">Dismiss</button>
+    </div>
     <?php
     $totalItems = count($ingredients) + count($products);
     $lowStockCount = 0;
