@@ -36,12 +36,12 @@ require __DIR__ . '/includes/sidebar.php';
 
 <main class="ui-page dashboard">
     <nav class="dashboard-actions" aria-label="Quick actions">
-        <a data-tone="positive" class="ui-button" href="pos.php"><?php $navIcon($navLinks['pos.php'][1]); ?> New Order <span class="dashboard-action-arrow" aria-hidden="true">?</span></a>
+        <a data-tone="positive" class="ui-button" href="pos.php"><?php $navIcon($navLinks['pos.php'][1]); ?> New Order <svg class="dashboard-action-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
         <?php if ($canViewSales): ?>
-            <a data-tone="positive" class="ui-button" href="inventory.php?action=stock-in"><?php $navIcon($navLinks['inventory.php'][1]); ?> Stock In <span class="dashboard-action-arrow" aria-hidden="true">?</span></a>
+            <a data-tone="positive" class="ui-button" href="inventory.php?action=stock-in"><?php $navIcon($navLinks['inventory.php'][1]); ?> Stock In <svg class="dashboard-action-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
         <?php endif; ?>
-        <a data-tone="info" class="ui-button" href="menu_management.php"><?php $navIcon($navLinks['menu_management.php'][1]); ?> Menu Management <span class="dashboard-action-arrow" aria-hidden="true">?</span></a>
-        <a data-tone="outline" class="ui-button" href="orders.php"><?php $navIcon($navLinks['orders.php'][1]); ?> Order History <span class="dashboard-action-arrow" aria-hidden="true">?</span></a>
+        <a data-tone="info" class="ui-button" href="menu_management.php"><?php $navIcon($navLinks['menu_management.php'][1]); ?> Menu Management <svg class="dashboard-action-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+        <a data-tone="outline" class="ui-button" href="orders.php"><?php $navIcon($navLinks['orders.php'][1]); ?> Order History <svg class="dashboard-action-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
     </nav>
 
     <?php if ($dashboardError !== null): ?>
