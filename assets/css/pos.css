@@ -11,20 +11,6 @@ body {
     color: #333;
 }
 
-header {
-    background: white;
-    padding: 20px 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #ddd;
-}
-
-header a {
-    color: #76543b;
-    text-decoration: none;
-}
-
 main {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
@@ -196,7 +182,6 @@ button:disabled {
     flex: 1;
 }
 @media print {
-    body > header,
     main,
     .receipt-actions {
         display: none !important;

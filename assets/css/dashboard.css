@@ -16,27 +16,6 @@ body {
     padding: 35px;
 }
 
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 35px;
-}
-
-header h1 {
-    margin-bottom: 8px;
-}
-
-header p {
-    color: #777;
-}
-
-.user-info {
-    background: white;
-    padding: 12px 20px;
-    border-radius: 8px;
-}
-
 .stats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);

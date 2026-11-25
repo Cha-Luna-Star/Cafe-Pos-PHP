@@ -7,15 +7,6 @@ body {
     color: #333;
     font-family: Arial, sans-serif;
 }
-.report-header {
-    padding: 20px 30px;
-    background: white;
-    border-bottom: 1px solid #ddd;
-}
-.report-header h1 {
-    margin: 0;
-    font-size: 24px;
-}
 .report-content {
     padding: clamp(14px, 3vw, 30px);
 }

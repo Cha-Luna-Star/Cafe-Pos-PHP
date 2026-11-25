@@ -28,11 +28,10 @@ $auditPageUrl = static function (int $number) use ($search, $action, $from, $to)
 </head>
 <body>
 
-<?php require __DIR__ . '/includes/sidebar.php'; ?>
-
-<header class="report-header">
-    <h1>Audit Log</h1>
-</header>
+<?php
+$appPageTitle = 'Audit Log';
+require __DIR__ . '/includes/sidebar.php';
+?>
 
 <main class="report-content audit-log">
     <form method="get" class="report-filters">

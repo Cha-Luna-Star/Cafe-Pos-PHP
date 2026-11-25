@@ -7,7 +7,6 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-$username = $_SESSION['username'] ?? 'User';
 $role = $_SESSION['role'] ?? 'Cashier';
 $canViewSales = in_array($role, ['Admin', 'Manager'], true);
 require __DIR__ . '/includes/dashboard_data.php';
@@ -28,22 +27,12 @@ $dashboardMoney = static fn($value): string => '&#8369;' . number_format((float)
 </head>
 <body>
 
-<?php require __DIR__ . '/includes/sidebar.php'; ?>
+<?php
+$appPageTitle = 'Dashboard';
+require __DIR__ . '/includes/sidebar.php';
+?>
 
 <main class="main-content">
-    <header>
-        <div>
-            <h1>Dashboard</h1>
-            <p>Welcome, <?= htmlspecialchars($username) ?>.</p>
-        </div>
-
-        <div class="user-info">
-            <?= htmlspecialchars($role) ?>
-        </div>
-    </header>
-
-
-
     <div class="dashboard-actions">
         <a class="dashboard-primary" href="pos.php">New Order</a>
         <a href="orders.php">Order History</a>

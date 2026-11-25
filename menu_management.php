@@ -28,12 +28,11 @@ require_once __DIR__ . '/controllers/menu_management.php';
 </head>
 <body class="table-page">
 
-<?php require __DIR__ . '/includes/sidebar.php'; ?>
-
-<header class="page-header">
-    <h1>Menu Management</h1>
-    <button type="button" id="add-item-btn">+ Add Item</button>
-</header>
+<?php
+$appPageTitle = 'Menu Management';
+$appHeaderActions = ['add-item-btn' => '+ Add Item'];
+require __DIR__ . '/includes/sidebar.php';
+?>
 
 <main class="menu-management">
     <div class="toolbar">

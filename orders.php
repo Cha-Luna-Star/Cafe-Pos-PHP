@@ -54,12 +54,11 @@ function escape($value): string {
 </head>
 <body class="table-page">
 
-<?php require __DIR__ . '/includes/sidebar.php'; ?>
-
-<header>
-    <h1>Order History</h1>
-    <a href="dashboard.php">Back to Dashboard</a>
-</header>
+<?php
+$appPageTitle = 'Order History';
+$appHeaderBack = ['dashboard.php', 'Back to Dashboard'];
+require __DIR__ . '/includes/sidebar.php';
+?>
 
 <main>
     <p id="order-update-notice" role="status" hidden></p>

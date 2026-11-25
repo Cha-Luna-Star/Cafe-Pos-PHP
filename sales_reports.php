@@ -21,11 +21,10 @@ if ($reportError === null && ($_GET['export'] ?? null) === 'csv') {
 </head>
 <body>
 
-<?php require __DIR__ . '/includes/sidebar.php'; ?>
-
-<header class="report-header">
-    <h1>Sales Reports</h1>
-</header>
+<?php
+$appPageTitle = 'Sales Reports';
+require __DIR__ . '/includes/sidebar.php';
+?>
 
 <main class="report-content">
     <form method="get" class="report-filters">

@@ -26,12 +26,11 @@ require_once __DIR__ . '/controllers/pos.php';
     <meta name="csrf-token" content="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body>
-<?php require __DIR__ . '/includes/sidebar.php'; ?>
-
-<header>
-    <h1>New Order</h1>
-    <a href="dashboard.php">Back to Dashboard</a>
-</header>
+<?php
+$appPageTitle = 'New Order';
+$appHeaderBack = ['dashboard.php', 'Back to Dashboard'];
+require __DIR__ . '/includes/sidebar.php';
+?>
 
 <main>
     <section class="menu-section">

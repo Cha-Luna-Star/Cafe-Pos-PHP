@@ -30,18 +30,15 @@ require_once __DIR__ . '/includes/inventory_dates.php';
 </head>
 <body class="table-page">
 
-<?php require __DIR__ . '/includes/sidebar.php'; ?>
-
-<header class="page-header">
-    <h1>Inventory Management</h1>
-    <?php if ($canManageInventory): ?>
-        <div class="inventory-actions">
-            <button type="button" id="stock-in-btn">+ Stock In</button>
-            <button type="button" id="adjust-stock-btn">Adjust Stock</button>
-            <button type="button" id="add-ingredient-btn">+ Ingredient</button>
-        </div>
-    <?php endif; ?>
-</header>
+<?php
+$appPageTitle = 'Inventory Management';
+$appHeaderActions = $canManageInventory ? [
+    'stock-in-btn' => '+ Stock In',
+    'adjust-stock-btn' => 'Adjust Stock',
+    'add-ingredient-btn' => '+ Ingredient',
+] : [];
+require __DIR__ . '/includes/sidebar.php';
+?>
 
 <main class="inventory-page">
     <div id="inventory-notice" class="inventory-notice" hidden>

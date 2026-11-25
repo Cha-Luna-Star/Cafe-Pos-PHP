@@ -92,12 +92,11 @@ function escape($value): string {
     <link rel="stylesheet" href="assets/css/sidebar.css">
 </head>
 <body>
-<?php require __DIR__ . '/includes/sidebar.php'; ?>
-
-<header class="page-header">
-    <h1>Order Details</h1>
-    <a href="orders.php">Back to Orders</a>
-</header>
+<?php
+$appPageTitle = 'Order Details';
+$appHeaderBack = ['orders.php', 'Back to Orders'];
+require __DIR__ . '/includes/sidebar.php';
+?>
 
 <main>
     <section class="receipt">

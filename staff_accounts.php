@@ -23,11 +23,10 @@ $retryAccountVisible = $retryResetId !== false && array_any($staffAccounts, stat
 </head>
 <body>
 
-<?php require __DIR__ . '/includes/sidebar.php'; ?>
-
-<header class="report-header">
-    <h1>Staff Accounts</h1>
-</header>
+<?php
+$appPageTitle = 'Staff Accounts';
+require __DIR__ . '/includes/sidebar.php';
+?>
 
 <main class="report-content staff-accounts">
     <?php if ($staffNotice !== null): ?>
