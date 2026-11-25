@@ -2,6 +2,10 @@
     --app-sidebar-width: 240px;
 }
 
+[data-sidebar-collapsed] {
+    --app-sidebar-width: 68px;
+}
+
 body {
     padding-left: var(--app-sidebar-width);
 }
@@ -40,6 +44,9 @@ body {
 }
 
 .app-header h1 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     margin: 0;
     font-size: clamp(1.05rem, 2vw, 1.45rem);
     line-height: 1.2;
@@ -59,12 +66,27 @@ body {
     cursor: pointer;
 }
 
-.sidebar-toggle span {
+.nav-icon {
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+}
+
+.app-header h1 .nav-icon {
+    color: #76543b;
+}
+
+.sidebar-menu-icon {
+    display: none;
     width: 16px;
     height: 2px;
     border-radius: 2px;
     background: currentColor;
     box-shadow: 0 -5px currentColor, 0 5px currentColor;
+}
+
+[data-sidebar-collapsed] .sidebar-toggle .nav-icon {
+    transform: rotate(180deg);
 }
 
 .app-header-account {
@@ -143,6 +165,9 @@ body {
 }
 
 .sidebar h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     margin: 0;
     padding-inline: 12px;
     font-size: 20px;
@@ -155,7 +180,9 @@ body {
 
 .sidebar a,
 .sidebar .logout button {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     padding: 12px;
     border-radius: 8px;
     color: #eee7e1;
@@ -187,6 +214,19 @@ body {
     cursor: pointer;
 }
 
+[data-sidebar-collapsed] .sidebar {
+    padding-inline: 10px;
+}
+
+[data-sidebar-collapsed] .sidebar :is(h2, a, button) {
+    justify-content: center;
+    padding-inline: 0;
+}
+
+[data-sidebar-collapsed] .sidebar-label {
+    display: none;
+}
+
 @media (max-width: 1000px) {
     .app-header {
         grid-template-columns: minmax(0, 1fr) minmax(0, auto);
@@ -206,6 +246,14 @@ body {
 @media (max-width: 850px) {
     body {
         padding-left: 0;
+    }
+
+    .sidebar-menu-icon {
+        display: block;
+    }
+
+    .sidebar-toggle .nav-icon {
+        display: none;
     }
 
     .sidebar {

@@ -32,11 +32,6 @@ require_once __DIR__ . '/includes/inventory_dates.php';
 
 <?php
 $appPageTitle = 'Inventory Management';
-$appHeaderActions = $canManageInventory ? [
-    'stock-in-btn' => '+ Stock In',
-    'adjust-stock-btn' => 'Adjust Stock',
-    'add-ingredient-btn' => '+ Ingredient',
-] : [];
 require __DIR__ . '/includes/sidebar.php';
 ?>
 
@@ -146,7 +141,14 @@ require __DIR__ . '/includes/sidebar.php';
     <section id="current-stock-section" class="inventory-section">
         <div class="inventory-heading">
             <h2>Current Stock</h2>
-            <button type="button" class="export-csv-btn" data-table="current-stock-body" data-filename="current_stock.csv">Export CSV</button>
+            <div class="inventory-stock-actions">
+                <?php if ($canManageInventory): ?>
+                    <button type="button" id="stock-in-btn">+ Stock In</button>
+                    <button type="button" id="adjust-stock-btn">Adjust Stock</button>
+                    <button type="button" id="add-ingredient-btn">+ Add Ingredient</button>
+                <?php endif; ?>
+                <button type="button" class="export-csv-btn" data-table="current-stock-body" data-filename="current_stock.csv">Export CSV</button>
+            </div>
         </div>
         <div class="inventory-filters">
             <input type="search" id="stock-search" placeholder="Search items...">
