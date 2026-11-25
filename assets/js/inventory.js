@@ -76,7 +76,7 @@ stockForm.addEventListener("submit", async event => {
             throw new Error(result.message || "Unable to add stock.");
         }
 
-        window.location.reload();
+        reloadInventoryView();
     } catch (error) {
         stockMessage.textContent = error.message;
     } finally {
@@ -370,16 +370,6 @@ document.getElementById("clear-movement-filters").addEventListener("click", () =
 
 filterStockMovements();
 
-function saveBatchHistoryFilters() {
-    const batchHistoryFilters = {
-        search: document.getElementById("batch-search").value,
-        type: document.getElementById("batch-type-filter").value,
-        expiration: document.getElementById("batch-expiration-filter").value,
-        remaining: document.getElementById("batch-remaining-only").checked
-    };
-    history.replaceState({ ...history.state, batchHistoryFilters }, "");
-}
-
 const batchDateDialog = document.getElementById("batch-date-dialog");
 if (batchDateDialog) {
     const form = document.getElementById("batch-date-form");
@@ -427,8 +417,7 @@ if (batchDateDialog) {
             });
             const result = await response.json();
             if (!response.ok || !result.success) throw new Error(result.message || "Unable to save the date.");
-            saveBatchHistoryFilters();
-            window.location.reload();
+            reloadInventoryView();
         } catch (error) {
             message.textContent = error.message;
             save.disabled = false;
@@ -599,10 +588,8 @@ if (adjustDialog && adjustForm) {
                 throw new Error(result.message || "Unable to adjust stock.");
             }
 
-            if (openedFromBatchHistory) {
-                saveBatchHistoryFilters();
-            }
-            window.location.reload();
+
+            reloadInventoryView();
         } catch (error) {
             adjustMessage.textContent = error.message;
         } finally {
@@ -858,7 +845,7 @@ if (ingredientDialog && ingredientForm) {
                 throw new Error(result.message || "Unable to save ingredient.");
             }
 
-            window.location.reload();
+            reloadInventoryView();
 
         } catch (error) {
             message.textContent = error.message;
@@ -925,7 +912,7 @@ document.querySelectorAll(".delete-ingredient-btn").forEach(button => {
                 throw new Error(result.message || "Unable to delete ingredient.");
             }
 
-            window.location.reload();
+            reloadInventoryView();
 
         } catch (error) {
             alert(error.message);
@@ -961,7 +948,7 @@ document.querySelectorAll(".archive-ingredient-btn").forEach(button => {
                 throw new Error(result.message || "Unable to archive ingredient.");
             }
 
-            window.location.reload();
+            reloadInventoryView();
 
         } catch (error) {
             alert(error.message);
@@ -995,7 +982,7 @@ document.querySelectorAll(".restore-ingredient-btn").forEach(button => {
                 throw new Error(result.message || "Unable to restore ingredient.");
             }
 
-            window.location.reload();
+            reloadInventoryView();
 
         } catch (error) {
             alert(error.message);
@@ -1007,9 +994,6 @@ document.querySelectorAll(".restore-ingredient-btn").forEach(button => {
 
 paginateInventory("archived-ingredients-body");
 
-const reconciliationFilterIds = [
-    "reconciliation-search", "reconciliation-type-filter", "reconciliation-status-filter", "reconciliation-sort"
-];
 
 function filterReconciliation() {
     const search = document.getElementById("reconciliation-search").value.toLowerCase().trim();
@@ -1144,9 +1128,8 @@ if (reconcileDialog && reconcileForm) {
             message.textContent = result.message;
 
             if (response.ok && result.success) {
-                const filters = reconciliationFilterIds.map(id => document.getElementById(id).value);
-                history.replaceState({ ...history.state, reconciliationFilters: filters }, "");
-                window.location.reload();
+
+                reloadInventoryView();
                 return;
             }
         } catch {
@@ -1157,29 +1140,6 @@ if (reconcileDialog && reconcileForm) {
         cancelButton.disabled = false;
     });
 }
-if (history.state?.batchHistoryFilters) {
-    const { batchHistoryFilters, ...state } = history.state;
-    history.replaceState(state, "");
-    document.getElementById("batch-search").value = batchHistoryFilters.search;
-    document.getElementById("batch-type-filter").value = batchHistoryFilters.type;
-    document.getElementById("batch-expiration-filter").value = batchHistoryFilters.expiration;
-    document.getElementById("batch-remaining-only").checked = batchHistoryFilters.remaining;
-    document.querySelector('.inventory-tab[data-target="batch-history-section"]').click();
-    filterBatchHistory();
-}
-if (history.state?.reconciliationFilters) {
-    const { reconciliationFilters, ...state } = history.state;
-    history.replaceState(state, "");
-    reconciliationFilterIds
-        .forEach((id, index) => {
-            if (reconciliationFilters[index] !== undefined) {
-                document.getElementById(id).value = reconciliationFilters[index];
-            }
-        });
-    document.querySelector('.inventory-tab[data-target="reconciliation-section"]').click();
-    filterReconciliation();
-}
-
 const correctionHistory = document.getElementById("reconciliation-history-body");
 
 if (correctionHistory) {
@@ -1221,3 +1181,70 @@ if (correctionHistory) {
         filterCorrectionHistory();
     });
 }
+
+const inventoryFilterSelector = ".inventory-filters input, .inventory-filters select, .reconciliation-filters input, .reconciliation-filters select";
+
+function reloadInventoryView() {
+    const activeTab = document.querySelector(".inventory-tab.active");
+    const section = activeTab && document.getElementById(activeTab.dataset.target);
+    if (section) {
+        const filters = Object.fromEntries(Array.from(section.querySelectorAll(inventoryFilterSelector), control =>
+            [control.id, control.type === "checkbox" ? control.checked : control.value]
+        ));
+        const sort = section.querySelector('th[aria-sort] .sort-header');
+        const tableId = section.querySelector(".inventory-pagination")?.dataset.table;
+        const inventoryView = {
+            sectionId: section.id,
+            filters,
+            sort: sort ? { column: sort.dataset.column, direction: sort.dataset.direction } : null,
+            page: paginationState[tableId]?.page ?? 1,
+            selectedCard: document.querySelector(".summary-card.selected")?.dataset.filter ?? null
+        };
+        history.replaceState({ ...history.state, inventoryView }, "");
+    }
+    window.location.reload();
+}
+
+function restoreInventoryView() {
+    if (!history.state?.inventoryView) return;
+    const { inventoryView, ...remainingState } = history.state;
+    history.replaceState(remainingState, "");
+
+    const section = document.getElementById(inventoryView.sectionId);
+    const tab = Array.from(document.querySelectorAll(".inventory-tab"))
+        .find(button => button.dataset.target === inventoryView.sectionId);
+    if (!section || !tab) return;
+
+    for (const control of section.querySelectorAll(inventoryFilterSelector)) {
+        const saved = inventoryView.filters[control.id];
+        if (control.type === "checkbox" && typeof saved === "boolean") {
+            control.checked = saved;
+        } else if (typeof saved === "string") {
+            control.value = saved;
+        }
+    }
+
+    tab.click();
+    section.querySelector('input[type="search"]')?.dispatchEvent(new Event("input"));
+
+    if (inventoryView.sort) {
+        const heading = Array.from(section.querySelectorAll(".sort-header"))
+            .find(button => button.dataset.column === inventoryView.sort.column);
+        if (heading && ["asc", "desc"].includes(inventoryView.sort.direction)) {
+            if (heading.dataset.direction !== inventoryView.sort.direction) heading.click();
+            if (heading.dataset.direction !== inventoryView.sort.direction) heading.click();
+        }
+    }
+
+    const tableId = section.querySelector(".inventory-pagination")?.dataset.table;
+    if (tableId && Number.isInteger(inventoryView.page) && inventoryView.page > 0) {
+        paginationState[tableId] = { page: inventoryView.page };
+        paginateInventory(tableId);
+    }
+
+    document.querySelectorAll(".summary-card[data-filter]").forEach(card => {
+        card.classList.toggle("selected", card.dataset.filter === inventoryView.selectedCard);
+    });
+}
+
+restoreInventoryView();
