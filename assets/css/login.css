@@ -4,7 +4,7 @@
     min-height: 100dvh;
     place-items: center;
     padding: clamp(16px, 4vw, 56px);
-    background: #f7f3ef;
+    background: #4a362b url("../images/coffee_bg.png") left center / cover no-repeat;
 }
 
 .login-layout {
@@ -20,21 +20,13 @@
 
 .login-brand {
     display: grid;
-    align-content: start;
+    place-content: center;
     justify-items: center;
+    gap: 12px;
     padding: clamp(24px, 5vw, 64px);
-    background: #ede1d5 url("../images/coffee_bg.png") left 75% / cover no-repeat;
-    color: #674b38;
+    background: #493429;
+    color: #f9eee6;
     text-align: center;
-}
-
-.login-brand-label {
-    display: grid;
-    justify-items: center;
-    gap: 8px;
-    padding: 14px 18px;
-    border-radius: var(--ui-panel-radius);
-    background: #faf6f2;
 }
 
 .login-brand img {
@@ -168,11 +160,6 @@
     .login-layout {
         grid-template-columns: minmax(0, 1fr);
         max-width: 30rem;
-    }
-
-    .login-brand {
-        min-height: 190px;
-        background-position: left 85%;
     }
 
     .login-brand img {
