@@ -1,6 +1,7 @@
 {
     const sidebar = document.getElementById("app-sidebar");
-    const toggle = document.getElementById("sidebar-toggle");
+    const collapseToggle = document.getElementById("sidebar-collapse");
+    const mobileToggle = document.getElementById("sidebar-menu-toggle");
     const mobile = window.matchMedia("(max-width: 850px)");
     const layout = document.documentElement;
     const preferenceKey = "cafe-pos-sidebar-collapsed";
@@ -14,34 +15,39 @@
         // The sidebar still works when browser storage is unavailable.
     }
 
+    function updateToggle(button, expanded, label) {
+        button.setAttribute("aria-expanded", String(expanded));
+        button.setAttribute("aria-label", label);
+        button.title = label;
+    }
+
     function renderSidebar() {
         const hidden = mobile.matches && !mobileOpen;
         const collapsed = !mobile.matches && desktopCollapsed;
         if (hidden && sidebar.contains(document.activeElement)) {
-            toggle.focus();
+            mobileToggle.focus();
         }
         layout.toggleAttribute("data-sidebar-hidden", hidden);
         layout.toggleAttribute("data-sidebar-collapsed", collapsed);
-        toggle.setAttribute("aria-expanded", String(!hidden && !collapsed));
-        const label = mobile.matches
-            ? (hidden ? "Show sidebar" : "Hide sidebar")
-            : (collapsed ? "Expand sidebar" : "Collapse sidebar");
-        toggle.setAttribute("aria-label", label);
-        toggle.title = label;
+        updateToggle(collapseToggle, !desktopCollapsed, desktopCollapsed ? "Expand sidebar" : "Collapse sidebar");
+        updateToggle(mobileToggle, mobileOpen, mobileOpen ? "Hide sidebar" : "Show sidebar");
     }
 
-    toggle.hidden = false;
-    toggle.addEventListener("click", () => {
-        if (mobile.matches) {
-            mobileOpen = !mobileOpen;
-        } else {
-            desktopCollapsed = !desktopCollapsed;
-            try {
-                window.localStorage.setItem(preferenceKey, String(desktopCollapsed));
-            } catch {
-                // Keep the preference for this page when storage is unavailable.
-            }
+    collapseToggle.hidden = false;
+    mobileToggle.hidden = false;
+
+    collapseToggle.addEventListener("click", () => {
+        desktopCollapsed = !desktopCollapsed;
+        try {
+            window.localStorage.setItem(preferenceKey, String(desktopCollapsed));
+        } catch {
+            // Keep the preference for this page when storage is unavailable.
         }
+        renderSidebar();
+    });
+
+    mobileToggle.addEventListener("click", () => {
+        mobileOpen = !mobileOpen;
         renderSidebar();
     });
 

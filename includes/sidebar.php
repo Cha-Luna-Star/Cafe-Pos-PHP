@@ -29,9 +29,8 @@ $navActivePage = $currentPage === 'order_details.php' ? 'orders.php' : $currentP
 <div class="app-navigation">
     <header class="app-header">
         <div class="app-header-heading">
-            <button type="button" id="sidebar-toggle" class="sidebar-toggle" aria-controls="app-sidebar" aria-expanded="true" aria-label="Collapse sidebar" hidden>
+            <button type="button" id="sidebar-menu-toggle" class="sidebar-toggle sidebar-toggle-mobile" aria-controls="app-sidebar" aria-expanded="false" aria-label="Show sidebar" hidden>
                 <span class="sidebar-menu-icon" aria-hidden="true"></span>
-                <?php $navIcon('<path d="m14 6-6 6 6 6"/>'); ?>
             </button>
             <h1>
                 <?php $navIcon($navLinks[$navActivePage][1]); ?>
@@ -55,10 +54,16 @@ $navActivePage = $currentPage === 'order_details.php' ? 'orders.php' : $currentP
     </header>
 
     <aside class="sidebar" id="app-sidebar">
-        <h2 aria-label="Cafe POS">
-            <?php $navIcon('<path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4zm13 1h1a2 2 0 0 1 0 4h-1M3 21h17M8 3v2m4-2v2"/>'); ?>
-            <span class="sidebar-label">Cafe POS</span>
-        </h2>
+        <div class="sidebar-heading">
+            <h2 aria-label="Cafe POS">
+                <?php $navIcon('<path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4zm13 1h1a2 2 0 0 1 0 4h-1M3 21h17M8 3v2m4-2v2"/>'); ?>
+                <span class="sidebar-label">Cafe POS</span>
+            </h2>
+            <button type="button" id="sidebar-collapse" class="sidebar-toggle sidebar-toggle-desktop" aria-controls="app-sidebar" aria-expanded="true" aria-label="Collapse sidebar" hidden>
+                <?php $navIcon('<path d="m14 6-6 6 6 6"/>'); ?>
+            </button>
+        </div>
+
         <nav aria-label="Main navigation">
             <?php foreach ($navLinks as $href => [$label, $icon]): ?>
                 <?php $isActive = $href === $navActivePage; ?>
