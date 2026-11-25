@@ -91,6 +91,10 @@
     grid-template-columns: minmax(0, 1fr);
 }
 
+.login-password:has(.login-password-toggle:not([hidden])) input::-ms-reveal {
+    display: none;
+}
+
 .login-password-toggle {
     width: 52px;
     min-height: 52px;
