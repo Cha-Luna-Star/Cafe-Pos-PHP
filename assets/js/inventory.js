@@ -5,7 +5,6 @@ const stockItem = document.getElementById("stock-item");
 const stockQuantity = document.getElementById("stock-quantity");
 const stockMessage = document.getElementById("stock-message");
 const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-const paginationState = {};
 
 const allOptions = Array.from(stockItem.options).map(option => ({
     id: option.value,
@@ -179,8 +178,7 @@ document.querySelectorAll(".sort-header").forEach(button => {
             tbody.replaceChildren(...rows);
         }
 
-        paginationState[button.dataset.table] = { page: 1 };
-        paginateInventory(button.dataset.table);
+        showMatchingInventoryRows(button.dataset.table);
     });
 });
 
@@ -229,8 +227,7 @@ function filterCurrentStock() {
     ).some(row => !row.hidden);
 
     document.getElementById("stock-no-results").hidden = hasResults;
-    paginationState["current-stock-body"] = { page: 1 };
-    paginateInventory("current-stock-body");
+    showMatchingInventoryRows("current-stock-body");
 }
 
 function filterBatchHistory() {
@@ -258,8 +255,7 @@ function filterBatchHistory() {
     ).some(row => !row.hidden);
 
     document.getElementById("batch-no-results").hidden = hasResults;
-    paginationState["batch-history-body"] = { page: 1 };
-    paginateInventory("batch-history-body");
+    showMatchingInventoryRows("batch-history-body");
 }
 
 ["stock-search", "stock-type-filter", "stock-status-filter"].forEach(id => {
@@ -327,8 +323,7 @@ function filterStockMovements() {
     });
 
     document.getElementById("movement-no-results").hidden = visibleCount > 0;
-    paginationState["movement-history-body"] = { page: 1 };
-    paginateInventory("movement-history-body");
+    showMatchingInventoryRows("movement-history-body");
 }
 
 [
@@ -631,80 +626,15 @@ document.querySelectorAll(".export-csv-btn").forEach(button => {
 
 
 
-function paginateInventory(tableId) {
-    const tbody = document.getElementById(tableId);
-    const container = document.querySelector(
-        `.inventory-pagination[data-table="${tableId}"]`
-    );
+function showMatchingInventoryRows(tableId) {
+    const body = document.getElementById(tableId);
+    if (!body) return;
 
-    if (!tbody || !container) return;
-
-    if (["current-stock-body", "batch-history-body", "reconciliation-body", "movement-history-body"].includes(tableId)) {
-        tbody.closest(".inventory-table")?.scrollTo({ top: 0 });
+    body.closest(".inventory-table")?.scrollTo({ top: 0 });
+    for (const row of body.rows) {
+        row.hidden = row.classList.contains("stock-details") || row.dataset.filterHidden === "true";
+        row.classList.remove("expanded");
     }
-
-    const rows = Array.from(tbody.children).filter(
-        row => !row.classList.contains("stock-details")
-    );
-
-    if (tableId === "current-stock-body") {
-        tbody.querySelectorAll(".stock-details").forEach(row => {
-            row.hidden = true;
-        });
-
-        tbody.querySelectorAll(".stock-row").forEach(row => {
-            row.classList.remove("expanded");
-        });
-    }
-
-    const pageSize = 10;
-
-    if (!paginationState[tableId]) {
-        paginationState[tableId] = { page: 1 };
-    }
-
-    const matchingRows = rows.filter(row => row.dataset.filterHidden !== "true");
-    const totalPages = Math.max(1, Math.ceil(matchingRows.length / pageSize));
-
-    paginationState[tableId].page = Math.min(
-        paginationState[tableId].page,
-        totalPages
-    );
-
-    const currentPage = paginationState[tableId].page;
-
-    rows.forEach(row => {
-        row.hidden = true;
-    });
-
-    matchingRows.forEach((row, index) => {
-        row.hidden = index < (currentPage - 1) * pageSize ||
-                     index >= currentPage * pageSize;
-    });
-
-    container.replaceChildren();
-
-    const previous = document.createElement("button");
-    previous.textContent = "Previous";
-    previous.disabled = currentPage === 1;
-    previous.onclick = () => {
-        paginationState[tableId].page--;
-        paginateInventory(tableId);
-    };
-    container.appendChild(previous);
-
-    const label = document.createElement("span");
-    label.textContent = `Page ${currentPage} of ${totalPages} · ${matchingRows.length} ${matchingRows.length === 1 ? "result" : "results"}`;
-    container.appendChild(label);
-
-    const next = document.createElement("button");
-    next.textContent = "Next";
-    next.disabled = currentPage === totalPages;
-    next.onclick = () => {
-        paginationState[tableId].page++;
-        paginateInventory(tableId);
-    };
-    container.appendChild(next);
 }
 
 filterCurrentStock();
@@ -722,16 +652,6 @@ document.querySelectorAll(".inventory-tab").forEach(tab => {
             section.hidden = section.id !== target;
         });
 
-        const tableMap = {
-            "current-stock-section": "current-stock-body",
-            "batch-history-section": "batch-history-body",
-            "stock-movement-section": "movement-history-body",
-            "archived-ingredients-section": "archived-ingredients-body",
-            "reconciliation-section": "reconciliation-body",
-            "reconciliation-history-section": "reconciliation-history-body"
-        };
-
-        paginateInventory(tableMap[target]);
     });
 });
 
@@ -978,7 +898,6 @@ document.querySelectorAll(".restore-ingredient-btn").forEach(button => {
     });
 });
 
-paginateInventory("archived-ingredients-body");
 
 
 function filterReconciliation() {
@@ -1015,8 +934,7 @@ function filterReconciliation() {
 
     document.getElementById("reconciliation-no-results").hidden = matches !== 0;
 
-    paginationState["reconciliation-body"] = { page: 1 };
-    paginateInventory("reconciliation-body");
+    showMatchingInventoryRows("reconciliation-body");
 }
 
 if (document.getElementById("reconciliation-search")) {
@@ -1154,8 +1072,7 @@ if (correctionHistory) {
         }
 
         noResults.hidden = matches > 0;
-        paginationState[correctionHistory.id] = { page: 1 };
-        paginateInventory(correctionHistory.id);
+        showMatchingInventoryRows(correctionHistory.id);
     }
 
     searchInput.addEventListener("input", filterCorrectionHistory);
@@ -1178,12 +1095,13 @@ function reloadInventoryView(message) {
             [control.id, control.type === "checkbox" ? control.checked : control.value]
         ));
         const sort = section.querySelector('th[aria-sort] .sort-header');
-        const tableId = section.querySelector(".inventory-pagination")?.dataset.table;
+        const tableViewport = section.querySelector(".inventory-table");
         const inventoryView = {
             sectionId: section.id,
             filters,
             sort: sort ? { column: sort.dataset.column, direction: sort.dataset.direction } : null,
-            page: paginationState[tableId]?.page ?? 1,
+            scrollTop: tableViewport?.scrollTop ?? 0,
+            scrollLeft: tableViewport?.scrollLeft ?? 0,
             selectedCard: document.querySelector(".summary-card.selected")?.dataset.filter ?? null
         };
         history.replaceState({ ...history.state, inventoryView, inventorySaveMessage: message || "Changes saved." }, "");
@@ -1228,11 +1146,10 @@ function restoreInventoryView() {
         }
     }
 
-    const tableId = section.querySelector(".inventory-pagination")?.dataset.table;
-    if (tableId && Number.isInteger(inventoryView.page) && inventoryView.page > 0) {
-        paginationState[tableId] = { page: inventoryView.page };
-        paginateInventory(tableId);
-    }
+    section.querySelector(".inventory-table")?.scrollTo({
+        top: inventoryView.scrollTop ?? 0,
+        left: inventoryView.scrollLeft ?? 0
+    });
 
     document.querySelectorAll(".summary-card[data-filter]").forEach(card => {
         card.classList.toggle("selected", card.dataset.filter === inventoryView.selectedCard);

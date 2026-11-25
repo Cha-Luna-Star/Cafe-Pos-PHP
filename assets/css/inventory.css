@@ -43,18 +43,12 @@ button:disabled {
     overflow-x: auto;
     margin-bottom: 35px;
 }
-#current-stock-section .inventory-table,
-#batch-history-section .inventory-table,
-#reconciliation-section .inventory-table,
-#stock-movement-section .inventory-table {
+.inventory-section > .inventory-table {
     height: min(612px, 72dvh);
     overflow: auto;
     scrollbar-gutter: stable;
 }
-#current-stock-section .inventory-table > table,
-#batch-history-section .inventory-table > table,
-#reconciliation-section .inventory-table > table,
-#stock-movement-section .inventory-table > table {
+.inventory-section > .inventory-table > table {
     table-layout: fixed;
 }
 #current-stock-section .inventory-table > table {
@@ -93,10 +87,7 @@ button:disabled {
 #batch-history-section .inventory-table > table > thead th:nth-child(9) {
     width: 13%;
 }
-#current-stock-section .inventory-table > table > thead th,
-#batch-history-section .inventory-table > table > thead th,
-#reconciliation-section .inventory-table > table > thead th,
-#stock-movement-section .inventory-table > table > thead th {
+.inventory-section > .inventory-table > table > thead th {
     position: sticky;
     top: 0;
     z-index: 1;
@@ -105,14 +96,16 @@ button:disabled {
 #current-stock-body > .stock-row > td,
 #batch-history-body > tr > td,
 #reconciliation-body > tr > td,
-#movement-history-body > tr > td {
+#movement-history-body > tr > td,
+#archived-ingredients-body > tr > td {
     height: 56px;
     padding-block: 10px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-#reconciliation-section .inventory-table > table {
+#reconciliation-section .inventory-table > table,
+#reconciliation-history-section .inventory-table > table {
     min-width: 860px;
 }
 #reconciliation-section .inventory-table > table > thead th:nth-child(2) {
@@ -120,6 +113,9 @@ button:disabled {
 }
 #reconciliation-section .inventory-table > table > thead th:not(:nth-child(2)) {
     width: 12.666%;
+}
+#archived-ingredients-section .inventory-table > table {
+    min-width: 720px;
 }
 #current-stock-body .stock-status-wrapper {
     gap: 10px;
@@ -475,32 +471,6 @@ th {
     background: #15803d;
 }
 
-.inventory-pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    margin: 20px 0 35px;
-}
-.inventory-pagination button {
-    background: #2563eb;
-    color: #ffffff;
-    border: 1px solid #2563eb;
-    border-radius: 6px;
-    padding: 8px 16px;
-    font-weight: 500;
-    cursor: pointer;
-}
-.inventory-pagination button:hover:not(:disabled) {
-    background: #1d4ed8;
-    color: #ffffff;
-}
-.inventory-pagination button:disabled {
-    background: #d1d5db;
-    color: #6b7280;
-    border-color: #d1d5db;
-    cursor: not-allowed;
-}
 
 .stock-row {
     cursor: pointer;
@@ -586,12 +556,6 @@ th {
 }
 .inventory-section[hidden] {
     display: none !important;
-}
-.inventory-section .inventory-pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
 }
 
 .summary-card[data-filter] {

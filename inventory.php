@@ -167,7 +167,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
             <button type="button" id="clear-stock-filters">Clear</button>
         </div>
 
-        <div class="inventory-table">
+        <div class="inventory-table" role="region" aria-label="Current stock table" tabindex="0">
             <table>
                 <thead>
                     <tr>
@@ -311,7 +311,6 @@ require_once __DIR__ . '/includes/inventory_dates.php';
             </table>
         </div>
 
-        <div class="inventory-pagination" data-table="current-stock-body"></div>
     </section>
 
     <section id="batch-history-section" class="inventory-section" hidden>
@@ -355,7 +354,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
             <button type="button" id="clear-batch-filters">Clear</button>
         </div>
 
-        <div class="inventory-table">
+        <div class="inventory-table" role="region" aria-label="Batch history table" tabindex="0">
             <table>
             <thead>
                 <tr>
@@ -420,7 +419,6 @@ require_once __DIR__ . '/includes/inventory_dates.php';
                 </tbody>
             </table>
         </div>
-        <div class="inventory-pagination" data-table="batch-history-body"></div>
     </section>
 
     <section id="stock-movement-section" class="inventory-section" hidden>
@@ -454,7 +452,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
             <button type="button" id="clear-movement-filters">Clear</button>
         </div>
 
-        <div class="inventory-table">
+        <div class="inventory-table" role="region" aria-label="Stock movements table" tabindex="0">
             <table>
                 <thead>
                     <tr>
@@ -496,51 +494,50 @@ require_once __DIR__ . '/includes/inventory_dates.php';
                 </tbody>
             </table>
         </div>
-        <div class="inventory-pagination" data-table="movement-history-body"></div>
     </section>
 
     <?php if ($canManageInventory): ?>
     <section id="archived-ingredients-section" class="inventory-section" hidden>
         <h2>Archived Ingredients</h2>
 
-        <table class="inventory-table">
-            <thead>
-                <tr>
-                    <th>Ingredient</th>
-                    <th>Unit</th>
-                    <th>Low Stock Threshold</th>
-                    <th>Cost Per Unit</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="archived-ingredients-body">
-                <?php foreach ($archivedIngredients as $ingredient): ?>
+        <div class="inventory-table" role="region" aria-label="Archived ingredients table" tabindex="0">
+            <table>
+                <thead>
                     <tr>
-                        <td><?= htmlspecialchars($ingredient['name']) ?></td>
-                        <td><?= htmlspecialchars($ingredient['unit']) ?></td>
-                        <td><?= $ingredient['low_stock_threshold'] ?></td>
-                        <td>₱<?= number_format($ingredient['cost_per_unit'], 2) ?></td>
-                        <td>
-                            <button type="button" class="restore-ingredient-btn"
-                                data-id="<?= $ingredient['id'] ?>"
-                                data-name="<?= htmlspecialchars($ingredient['name'], ENT_QUOTES) ?>">
-                                Restore
-                            </button>
-                        </td>
+                        <th>Ingredient</th>
+                        <th>Unit</th>
+                        <th>Low Stock Threshold</th>
+                        <th>Cost Per Unit</th>
+                        <th>Action</th>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-            <?php if (empty($archivedIngredients)): ?>
-                <tbody>
-                    <tr>
-                        <td colspan="5">No archived ingredients.</td>
-                    </tr>
+                </thead>
+                <tbody id="archived-ingredients-body">
+                    <?php foreach ($archivedIngredients as $ingredient): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($ingredient['name']) ?></td>
+                            <td><?= htmlspecialchars($ingredient['unit']) ?></td>
+                            <td><?= $ingredient['low_stock_threshold'] ?></td>
+                            <td>₱<?= number_format($ingredient['cost_per_unit'], 2) ?></td>
+                            <td>
+                                <button type="button" class="restore-ingredient-btn"
+                                    data-id="<?= $ingredient['id'] ?>"
+                                    data-name="<?= htmlspecialchars($ingredient['name'], ENT_QUOTES) ?>">
+                                    Restore
+                                </button>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
                 </tbody>
-            <?php endif; ?>
-        </table>
+                <?php if (empty($archivedIngredients)): ?>
+                    <tbody>
+                        <tr>
+                            <td colspan="5">No archived ingredients.</td>
+                        </tr>
+                    </tbody>
+                <?php endif; ?>
+            </table>
+        </div>
 
-        <div class="inventory-pagination"
-            data-table="archived-ingredients-body"></div>
     </section>
     <?php endif; ?>
     <?php if ($canManageInventory): ?>
@@ -577,7 +574,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
             </button>
         </div>
 
-        <div class="inventory-table">
+        <div class="inventory-table" role="region" aria-label="Reconciliation table" tabindex="0">
             <table>
                 <thead>
                     <tr>
@@ -634,8 +631,6 @@ require_once __DIR__ . '/includes/inventory_dates.php';
             </table>
         </div>
 
-        <div class="inventory-pagination"
-            data-table="reconciliation-body"></div>
     </section>
     <section id="reconciliation-history-section" class="inventory-section" hidden>
         <h2>Reconciliation History</h2>
@@ -655,7 +650,7 @@ require_once __DIR__ . '/includes/inventory_dates.php';
             <button type="button" id="clear-correction-filters">Clear</button>
         </div>
 
-        <div class="inventory-table">
+        <div class="inventory-table" role="region" aria-label="Reconciliation history table" tabindex="0">
             <table>
                 <thead>
                     <tr>
@@ -692,7 +687,6 @@ require_once __DIR__ . '/includes/inventory_dates.php';
             </table>
         </div>
 
-        <div class="inventory-pagination" data-table="reconciliation-history-body"></div>
     </section>
 
     <?php endif; ?>
