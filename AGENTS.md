@@ -8,3 +8,9 @@
 - Use `.ui-page`, `.ui-panel`, `.ui-field`, `.ui-dialog`, and `.ui-badge` for shared layouts and components. Use `.ui-choice` for selectable filters and `.ui-filter-bar` for grouped filters. Use labeled controls, visible keyboard focus, and status text alongside color. Keep transitions short and respect reduced-motion preferences.
 - Keep table headers legible and column widths stable during sorting. On narrow screens, wrap controls and scroll dense tables within their own panels. Keep page-specific layout in the page stylesheet.
 - Preserve action permissions, form names, event hooks, and print layouts when changing presentation. Check desktop, tablet, mobile, keyboard interaction, and dynamic states when updating shared components.
+
+## Login page
+
+- Use the existing Coffee-Up logo and a warm brand panel beside the white sign-in form. Stack the panels on narrow screens.
+- Keep visible field labels and a full-width positive Sign In button. Provide a keyboard-accessible eye icon that stays visible in both password states and inline field errors.
+- Keep invalid credentials feedback generic. Disable Sign In while a valid form submission is pending and restore it when the page is revisited. Preserve the existing authentication, session, CSRF, and redirect behavior.
