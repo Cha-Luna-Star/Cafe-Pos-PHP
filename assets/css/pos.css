@@ -152,14 +152,8 @@
     scroll-margin-top: 82px;
 }
 
-#cart-items {
-    max-height: min(35dvh, 320px);
-    overflow-y: auto;
-    scrollbar-gutter: stable;
-}
-
 .cart-item {
-    padding: 9px 2px;
+    padding: 9px 0;
     border-bottom: 1px solid var(--ui-border);
 }
 
