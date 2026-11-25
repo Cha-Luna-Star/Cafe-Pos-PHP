@@ -47,6 +47,11 @@ $navActivePage = $currentPage === 'order_details.php' ? 'orders.php' : $currentP
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
+        <?php if (isset($appHeaderDate)): ?>
+            <div class="app-header-actions app-header-date">
+                <time datetime="<?= $navEscape($appHeaderDate->format('Y-m-d')) ?>"><?= $navEscape($appHeaderDate->format('D, M j, Y')) ?></time>
+            </div>
+        <?php endif; ?>
         <div class="app-header-account">
             <strong><?= $navEscape($navUsername) ?></strong>
             <span><?= $navEscape($navRole) ?></span>

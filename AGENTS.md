@@ -14,3 +14,10 @@
 - Use the existing Coffee-Up logo and a warm brand panel beside the white sign-in form. Stack the panels on narrow screens.
 - Keep visible field labels and a full-width positive Sign In button. Provide a keyboard-accessible eye icon that stays visible in both password states and inline field errors.
 - Keep invalid credentials feedback generic. Disable Sign In while a valid form submission is pending and restore it when the page is revisited. Preserve the existing authentication, session, CSRF, and redirect behavior.
+
+## Dashboard
+
+- Keep the Manila date in the shared header. Link summary cards and alerts to their corresponding filtered pages and show stock-management shortcuts only to authorized roles.
+- Use white panels and a responsive grid for summary cards, charts, transactions, and alerts. Keep button and badge colors aligned with the shared UI.
+- Use server-aggregated SQL Server data. Report sales and average order value from completed orders, and label all-order counts and the selected period clearly.
+- Keep sales charts usable by pointer and keyboard and include a data table. Show explicit empty, loading, and error states. Bound ranked and recent lists and reuse existing report queries where possible.

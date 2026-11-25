@@ -1162,3 +1162,7 @@ document.getElementById("dismiss-inventory-notice").addEventListener("click", ()
 });
 
 restoreInventoryView();
+
+if (new URLSearchParams(window.location.search).get("action") === "stock-in") {
+    document.getElementById("stock-in-btn")?.click();
+}

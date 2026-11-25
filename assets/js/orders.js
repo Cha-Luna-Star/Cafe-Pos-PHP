@@ -121,7 +121,9 @@ document.addEventListener("DOMContentLoaded", () => {
         filterOrders();
     });
 
-    const requestedStatus = new URLSearchParams(window.location.search).get("status");
+    const requestedFilters = new URLSearchParams(window.location.search);
+    const requestedStatus = requestedFilters.get("status");
+    dateFilter.value = requestedFilters.get("date") ?? "";
     if (Array.from(statusFilter.options).some(option => option.value === requestedStatus)) {
         statusFilter.value = requestedStatus;
         filterOrders();

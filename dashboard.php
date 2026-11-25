@@ -26,125 +26,105 @@ $dashboardMoney = static fn($value): string => '&#8369;' . number_format((float)
     <script src="assets/js/dashboard.js" defer></script>
     <link rel="stylesheet" href="assets/css/ui.css">
 </head>
-<body>
+<body class="dashboard-page">
 
 <?php
 $appPageTitle = 'Dashboard';
+$appHeaderDate = $today;
 require __DIR__ . '/includes/sidebar.php';
 ?>
 
-<main class="ui-page main-content">
-    <div class="dashboard-actions">
-        <a data-tone="positive" class="ui-button" href="pos.php">New Order</a>
-        <a data-tone="outline" class="ui-button" href="orders.php">Order History</a>
-        <a data-tone="outline" class="ui-button" href="inventory.php">Inventory</a>
-    </div>
+<main class="ui-page dashboard">
+    <nav class="dashboard-actions" aria-label="Quick actions">
+        <a data-tone="positive" class="ui-button" href="pos.php"><?php $navIcon($navLinks['pos.php'][1]); ?> New Order</a>
+        <?php if ($canViewSales): ?>
+            <a data-tone="positive" class="ui-button" href="inventory.php?action=stock-in"><?php $navIcon($navLinks['inventory.php'][1]); ?> Stock In</a>
+        <?php endif; ?>
+        <a data-tone="info" class="ui-button" href="menu_management.php"><?php $navIcon($navLinks['menu_management.php'][1]); ?> Menu Management</a>
+        <a data-tone="outline" class="ui-button" href="orders.php"><?php $navIcon($navLinks['orders.php'][1]); ?> Order History</a>
+    </nav>
 
     <?php if ($dashboardError !== null): ?>
-        <p class="dashboard-error" role="alert"><?= $escapeDashboard($dashboardError) ?></p>
+        <p class="ui-panel dashboard-empty" role="alert"><?= $escapeDashboard($dashboardError) ?></p>
     <?php else: ?>
-        <section class="stats" aria-label="Summary">
-            <div class="ui-panel stat-card"><p>Today's Sales</p><h2><?= $dashboardMoney($todaySales) ?></h2></div>
-            <div class="ui-panel stat-card"><p>Today's Orders</p><h2><?= number_format($todayOrders) ?></h2></div>
-            <div class="ui-panel stat-card"><p>Active Menu Items</p><h2><?= number_format((int)$stock['menu_count']) ?></h2></div>
-            <div class="ui-panel stat-card"><p>Low Stock Ingredients</p><h2><?= number_format((int)$stock['low_ingredients']) ?></h2></div>
+        <?php
+        $todayOrdersUrl = 'orders.php?date=' . $todayDate;
+        $todayCompletedUrl = $todayOrdersUrl . '&status=Completed';
+        $todaySalesUrl = $canViewSales ? 'sales_reports.php?from=' . $todayDate . '&to=' . $todayDate : $todayCompletedUrl;
+        $cards = [
+            ["Today's Sales", $dashboardMoney($todaySales), 'Completed orders', $todaySalesUrl, 'sales'],
+            ['Total Orders', number_format($todayOrders), 'All orders today', $todayOrdersUrl, 'orders'],
+            ['Average Order Value', $averageOrder === null ? '&mdash;' : $dashboardMoney($averageOrder),
+                $averageOrder === null ? 'No completed orders today' : 'Completed orders today', $todayCompletedUrl, 'average'],
+            ['Low Stock Items', number_format((int)$stock['low_items']), 'Products and ingredients', 'inventory.php?filter=low-stock', 'stock'],
+        ];
+        $cardIcons = [
+            'sales' => '<path d="M3 6h18v12H3zM6 12h.01M18 12h.01"/><circle cx="12" cy="12" r="2.5"/>',
+            'orders' => $navLinks['orders.php'][1],
+            'average' => '<path d="M4 19V5m0 14h16M8 14l4-5 3 3 5-6"/>',
+            'stock' => $navLinks['inventory.php'][1],
+        ];
+        $statusTones = ['Completed' => 'positive', 'Pending' => 'warning', 'Cancelled' => 'danger'];
+        $statusTotal = array_sum($statusCounts);
+        ?>
+        <section class="dashboard-stats" aria-label="Today at a glance">
+            <?php foreach ($cards as [$label, $value, $hint, $url, $icon]): ?>
+                <a class="ui-panel dashboard-stat" href="<?= $escapeDashboard($url) ?>">
+                    <span class="dashboard-stat-icon" data-icon="<?= $icon ?>"><?php $navIcon($cardIcons[$icon]); ?></span>
+                    <span class="dashboard-stat-label"><?= $escapeDashboard($label) ?></span>
+                    <strong><?= $value ?></strong>
+                    <small><?= $escapeDashboard($hint) ?></small>
+                </a>
+            <?php endforeach; ?>
         </section>
 
-        <div class="dashboard-panels">
-            <section class="ui-panel dashboard-panel" aria-labelledby="attention-heading">
-                <h2 id="attention-heading">Needs Attention</h2>
-                <ul class="dashboard-alerts">
-                    <li><a href="orders.php?status=Pending">Pending orders <strong><?= number_format($pendingCount) ?></strong></a></li>
-                    <li><a href="inventory.php?filter=out-of-stock">Out-of-stock items <strong><?= number_format((int)$stock['out_of_stock']) ?></strong></a></li>
-                    <li><a href="inventory.php?filter=low-stock">Low-stock items <strong><?= number_format((int)$stock['low_items']) ?></strong></a></li>
-                    <li><a href="inventory.php?filter=expired">Expired batches with stock <strong><?= number_format($expiredCount) ?></strong></a></li>
-                </ul>
-                <?php if ($pendingOrders): ?>
-                    <h3>Oldest Pending Orders</h3>
-                    <ul class="dashboard-alerts pending-orders">
-                        <?php foreach ($pendingOrders as $order): ?>
-                            <li><a href="order_details.php?id=<?= (int)$order['id'] ?>">Order #<?= (int)$order['id'] ?> <strong><?= $dashboardMoney($order['total']) ?></strong></a></li>
-                        <?php endforeach; ?>
-                    </ul>
-                <?php endif; ?>
-            </section>
-
-            <section class="ui-panel dashboard-panel" aria-labelledby="recent-heading">
-                <h2 id="recent-heading">Recent Orders</h2>
-                <?php if (!$recentOrders): ?>
-                    <p>No orders yet.</p>
-                <?php else: ?>
-                    <div class="dashboard-table">
-                        <table>
-                            <thead><tr><th scope="col">Order</th><th scope="col">Placed</th><th scope="col">Status</th><th scope="col">Total</th></tr></thead>
-                            <tbody>
-                                <?php foreach ($recentOrders as $order): ?>
-                                    <tr>
-                                        <th scope="row"><a href="order_details.php?id=<?= (int)$order['id'] ?>">#<?= (int)$order['id'] ?></a></th>
-                                        <td><?= $escapeDashboard($order['placed_at'] ?? 'Unavailable') ?></td>
-                                        <td><?= $escapeDashboard($order['status']) ?></td>
-                                        <td><?= $dashboardMoney($order['total']) ?></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php endif; ?>
-            </section>
-
+        <div class="dashboard-grid">
             <?php if ($canViewSales): ?>
-                <section class="ui-panel dashboard-panel dashboard-sales" aria-labelledby="trend-heading">
-                    <div class="dashboard-panel-heading">
-                        <h2 id="trend-heading">Sales and Order Trends</h2>
+                <section class="ui-panel dashboard-panel dashboard-trends" aria-labelledby="trend-heading">
+                    <div class="dashboard-heading">
+                        <div>
+                            <h2 id="trend-heading">Sales and order trends</h2>
+                            <p>Completed sales in PHP and orders placed</p>
+                        </div>
                         <?php if ($chartStart !== null): ?>
-                            <a href="sales_reports.php?from=<?= $chartStart->format('Y-m-d') ?>&amp;to=<?= $chartEndDate ?>">Open Sales Reports</a>
+                            <a class="ui-button ui-button-sm" data-tone="outline" href="sales_reports.php?from=<?= $chartStart->format('Y-m-d') ?>&amp;to=<?= $chartEndDate ?>">Sales Reports</a>
                         <?php endif; ?>
                     </div>
-
-                    <nav class="dashboard-ranges" aria-label="Trend date range">
-                        <?php foreach ($rangeLabels as $value => $label): ?>
-                            <a class="ui-choice" href="dashboard.php?range=<?= $value ?>"
-                                <?= $range === $value ? 'aria-current="page"' : '' ?>><?= $label ?></a>
+                    <nav class="dashboard-ranges" aria-label="Sales range">
+                        <?php foreach ($rangeLabels as $key => $label): ?>
+                            <a class="ui-choice" data-dashboard-range href="dashboard.php?range=<?= $key ?>"
+                                <?= $range === $key ? 'aria-current="page"' : '' ?>><?= $label ?></a>
                         <?php endforeach; ?>
                     </nav>
-
-                    <form method="get" action="dashboard.php" class="dashboard-date-filter">
+                    <form method="get" action="dashboard.php" class="dashboard-date" data-dashboard-date>
                         <input type="hidden" name="range" value="date">
-                        <label for="trend-date">Specific Date</label>
+                        <label for="trend-date">Specific date</label>
                         <input class="ui-field" type="date" id="trend-date" name="date"
-                            value="<?= $isHourly ? $chartEndDate : $todayDate ?>" max="<?= $todayDate ?>" required>
-                        <button data-tone="positive" class="ui-button" type="submit">Show Date</button>
+                            value="<?= $chartEndDate ?>" max="<?= $todayDate ?>" required>
+                        <button class="ui-button" data-tone="positive" type="submit">Apply</button>
                     </form>
+                    <p class="dashboard-loading" role="status" hidden>Loading dashboard data?</p>
                     <?php if ($rangeError !== null): ?>
                         <p class="dashboard-error" role="alert"><?= $escapeDashboard($rangeError) ?></p>
-                    <?php elseif ($isHourly): ?>
-                        <p class="dashboard-chart-caption"><?= $chartEnd->format('F j, Y') ?> by hour</p>
                     <?php endif; ?>
 
-                    <?php if (!$chartPeriods): ?>
-                        <p>No orders to chart yet.</p>
+                    <?php if (!array_sum(array_column($chartPeriods, 'orders'))): ?>
+                        <p class="dashboard-empty">No orders in this period.</p>
                     <?php else: ?>
-                        <script type="application/json" id="dashboard-chart-data"><?= json_encode(
-                            $chartPeriods,
-                            JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
-                        ) ?></script>
-                        <div class="dashboard-charts">
-                            <section aria-labelledby="chart-sales">
-                                <h3 id="chart-sales">Sales Trend</h3>
-                                <p class="dashboard-chart-caption">Completed sales in PHP</p>
-                                <canvas class="dashboard-chart" data-trend="sales" aria-hidden="true"></canvas>
-                            </section>
-                            <section aria-labelledby="chart-orders">
-                                <h3 id="chart-orders">Orders Placed</h3>
-                                <p class="dashboard-chart-caption">All order statuses</p>
-                                <canvas class="dashboard-chart" data-trend="orders" aria-hidden="true"></canvas>
-                            </section>
-                        </div>
-                        <details class="dashboard-chart-data-view">
-                            <summary>View sales and order totals</summary>
+                        <script type="application/json" id="dashboard-chart-data"><?= json_encode($chartPeriods, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_INVALID_UTF8_SUBSTITUTE) ?></script>
+                        <section class="dashboard-chart-section" aria-label="Completed sales">
+                            <canvas class="dashboard-chart" data-trend="sales" tabindex="0" aria-label="Sales trend. Use the left and right arrow keys to inspect a period." aria-describedby="dashboard-chart-value"></canvas>
+                            <p class="dashboard-chart-value" id="dashboard-chart-value">Select a point to see its sales total.</p>
+                        </section>
+                        <details class="dashboard-chart-details">
+                            <summary>Orders placed chart</summary>
+                            <canvas class="dashboard-chart" data-trend="orders" aria-hidden="true"></canvas>
+                        </details>
+                        <details class="dashboard-chart-details">
+                            <summary>View chart data</summary>
                             <div class="dashboard-table">
                                 <table>
-                                    <thead><tr><th scope="col">Period</th><th scope="col">Completed Sales</th><th scope="col">Orders Placed</th></tr></thead>
+                                    <thead><tr><th scope="col">Period</th><th scope="col">Sales</th><th scope="col">Orders</th></tr></thead>
                                     <tbody>
                                         <?php foreach ($chartPeriods as $period): ?>
                                             <tr>
@@ -157,40 +137,122 @@ require __DIR__ . '/includes/sidebar.php';
                                 </table>
                             </div>
                         </details>
-                        <section class="dashboard-best-selling" aria-labelledby="chart-best-selling">
-                            <h3 id="chart-best-selling">Most-Sold Menu Items</h3>
-                            <p class="dashboard-chart-caption">Units sold on completed orders</p>
-                            <?php if (!$dashboardBestSellers): ?>
-                                <p>No completed item sales in this range.</p>
-                            <?php elseif (count($dashboardBestSellers) === 1): ?>
-                                <?php
-                                $item = $dashboardBestSellers[0];
-                                $units = (int)$item['units_sold'];
-                                ?>
-                                <p class="dashboard-single-seller">
-                                    <?= $escapeDashboard($item['item_name']) ?>
-                                    <strong><?= number_format($units) ?> <?= $units === 1 ? 'unit sold' : 'units sold' ?></strong>
-                                </p>
-                            <?php else: ?>
-                                <?php $topUnits = max(1, max(array_column($dashboardBestSellers, 'units_sold'))); ?>
-                                <dl class="dashboard-chart-values">
+                    <?php endif; ?>
+                </section>
+            <?php endif; ?>
+
+            <section class="ui-panel dashboard-panel" aria-labelledby="status-heading">
+                <div class="dashboard-heading">
+                    <div>
+                        <h2 id="status-heading">Order status</h2>
+                        <p><?= $canViewSales ? $escapeDashboard($rangeLabels[$range] ?? $chartEnd->format('M j, Y')) : 'Today' ?></p>
+                    </div>
+                </div>
+                <?php if ($statusTotal > 0): ?>
+                    <?php $completedEnd = 100 * $statusCounts['Completed'] / $statusTotal;
+                    $pendingEnd = $completedEnd + 100 * $statusCounts['Pending'] / $statusTotal; ?>
+                    <div class="dashboard-doughnut" style="--completed-end: <?= number_format($completedEnd, 4, '.', '') ?>%; --pending-end: <?= number_format($pendingEnd, 4, '.', '') ?>%;" aria-hidden="true">
+                        <div><strong><?= number_format($statusTotal) ?></strong><span>Orders</span></div>
+                    </div>
+                    <ul class="dashboard-list dashboard-status-list" aria-label="<?= number_format($statusTotal) ?> orders by status">
+                        <?php foreach ($statusCounts as $status => $count): ?>
+                            <li><span class="dashboard-status-dot" data-tone="<?= $statusTones[$status] ?>"></span><?= $status ?><strong><?= number_format($count) ?></strong></li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php else: ?>
+                    <p class="dashboard-empty">No orders to break down yet.</p>
+                <?php endif; ?>
+            </section>
+
+            <section class="ui-panel dashboard-panel" aria-labelledby="recent-heading">
+                <div class="dashboard-heading">
+                    <h2 id="recent-heading">Recent transactions</h2>
+                    <a class="ui-button ui-button-sm" data-tone="outline" href="orders.php">View Orders</a>
+                </div>
+                <?php if (!$recentOrders): ?>
+                    <p class="dashboard-empty">No orders yet.</p>
+                <?php else: ?>
+                    <div class="dashboard-table" role="region" aria-label="Recent transactions table" tabindex="0">
+                        <table>
+                            <thead><tr><th scope="col">Order</th><th scope="col">Placed</th><th scope="col">Payment</th><th scope="col">Status</th><th scope="col">Total</th></tr></thead>
+                            <tbody>
+                                <?php foreach ($recentOrders as $order): ?>
+                                    <tr>
+                                        <th scope="row"><a href="order_details.php?id=<?= (int)$order['id'] ?>">#<?= (int)$order['id'] ?></a></th>
+                                        <td><?= $escapeDashboard($order['placed_at'] ?? 'Unavailable') ?></td>
+                                        <td><?= $escapeDashboard($order['payment_method'] ?? 'Pending') ?></td>
+                                        <td><span class="ui-badge" data-tone="<?= $statusTones[$order['status']] ?? '' ?>"><?= $escapeDashboard($order['status']) ?></span></td>
+                                        <td><?= $dashboardMoney($order['total']) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
+            </section>
+
+            <section class="ui-panel dashboard-panel" aria-labelledby="alerts-heading">
+                <div class="dashboard-heading"><h2 id="alerts-heading">Inventory alerts</h2></div>
+                <ul class="dashboard-list">
+                    <?php foreach ([
+                        ['low-stock', 'Low-stock items', $stock['low_items'], 'warning'],
+                        ['out-of-stock', 'Out-of-stock items', $stock['out_of_stock'], 'danger'],
+                        ['expiring-soon', 'Batches expiring within 7 days', $expiringSoonCount, 'warning'],
+                        ['expired', 'Expired batches with stock', $expiredCount, 'danger'],
+                    ] as [$filter, $label, $count, $tone]): ?>
+                        <li><a href="inventory.php?filter=<?= $filter ?>"><?= $label ?><strong class="ui-badge" data-tone="<?= $count ? $tone : '' ?>"><?= number_format((int)$count) ?></strong></a></li>
+                    <?php endforeach; ?>
+                </ul>
+                <div class="dashboard-pending">
+                    <h3><a href="orders.php?status=Pending">Pending orders (<?= number_format($pendingCount) ?>)</a></h3>
+                    <?php if ($pendingOrders): ?>
+                        <ul class="dashboard-list">
+                            <?php foreach ($pendingOrders as $order): ?>
+                                <li><a href="order_details.php?id=<?= (int)$order['id'] ?>">Order #<?= (int)$order['id'] ?><strong><?= $dashboardMoney($order['total']) ?></strong></a></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php endif; ?>
+                </div>
+            </section>
+
+            <?php if ($canViewSales): ?>
+                <section class="ui-panel dashboard-panel dashboard-best-sellers" aria-labelledby="best-heading">
+                    <div class="dashboard-heading">
+                        <div>
+                            <h2 id="best-heading">Best-selling products</h2>
+                            <p>Completed orders in the selected period ? Item revenue before order-level discounts</p>
+                        </div>
+                    </div>
+                    <?php if (!$dashboardBestSellers): ?>
+                        <p class="dashboard-empty">No completed product sales in this period.</p>
+                    <?php else: ?>
+                        <?php $topQuantity = max(1, (int)$dashboardBestSellers[0]['units_sold']); ?>
+                        <div class="dashboard-table" role="region" aria-label="Best-selling products table" tabindex="0">
+                            <table>
+                                <thead><tr><th scope="col">Product</th><th scope="col">Quantity sold</th><th scope="col">Revenue</th></tr></thead>
+                                <tbody>
                                     <?php foreach ($dashboardBestSellers as $item): ?>
-                                        <?php $width = max(0, (int)$item['units_sold']) / $topUnits * 100; ?>
-                                        <div class="dashboard-chart-row">
-                                            <dt><?= $escapeDashboard($item['item_name']) ?></dt>
-                                            <dd class="dashboard-chart-track" aria-hidden="true"><span style="width: <?= number_format($width, 2, '.', '') ?>%"></span></dd>
-                                            <dd><?= number_format((int)$item['units_sold']) ?></dd>
-                                        </div>
+                                        <tr>
+                                            <th scope="row"><?= $escapeDashboard($item['item_name']) ?></th>
+                                            <td>
+                                                <div class="dashboard-quantity">
+                                                    <span><?= number_format((int)$item['units_sold']) ?></span>
+                                                    <span class="dashboard-quantity-track" aria-hidden="true">
+                                                        <span style="width: <?= number_format(100 * (int)$item['units_sold'] / $topQuantity, 2, '.', '') ?>%"></span>
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td><?= $dashboardMoney($item['revenue']) ?></td>
+                                        </tr>
                                     <?php endforeach; ?>
-                                </dl>
-                            <?php endif; ?>
-                        </section>
+                                </tbody>
+                            </table>
+                        </div>
                     <?php endif; ?>
                 </section>
             <?php endif; ?>
         </div>
     <?php endif; ?>
 </main>
-
 </body>
 </html>
