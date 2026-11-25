@@ -91,10 +91,9 @@ require __DIR__ . '/includes/sidebar.php';
                 $imageName = trim(preg_replace('/[^a-z0-9]+/', '_', strtolower($item['name'])), '_');
                 $imagePath = 'assets/images/' . $imageName . '.png';
                 $hasImage = $imageName !== '' && is_file(__DIR__ . '/' . $imagePath);
-                $available = (int)$item['available'] === 1;
                 $inStock = (int)$item['sellable_quantity'] > 0;
-                $status = !$available ? 'Unavailable' : ($inStock ? 'Available' : 'Out of stock');
-                $tone = !$available ? '' : ($inStock ? 'positive' : 'danger');
+                $status = $inStock ? 'Available' : 'Out of stock';
+                $tone = $inStock ? 'positive' : 'danger';
 
                 $json = htmlspecialchars(
                     json_encode($itemData, JSON_HEX_APOS | JSON_HEX_QUOT),
@@ -121,11 +120,10 @@ require __DIR__ . '/includes/sidebar.php';
                         <button data-tone="positive" class="ui-button" type="button"
                                 data-item="<?= $json ?>"
                                 data-menu-id="<?= (int)$item['id'] ?>"
-                                data-available="<?= $available ? 'true' : 'false' ?>"
-                                data-stock="<?= $available ? (int)$item['sellable_quantity'] : 0 ?>"
-                                <?= !$available || !$inStock ? 'disabled' : '' ?>
+                                data-stock="<?= (int)$item['sellable_quantity'] ?>"
+                                <?= !$inStock ? 'disabled' : '' ?>
                                 onclick="addToCart(JSON.parse(this.dataset.item))">
-                            <?= $available && $inStock ? 'Add to Cart' : $status ?>
+                            <?= $inStock ? 'Add to Cart' : $status ?>
                         </button>
                     </div>
                 </div>

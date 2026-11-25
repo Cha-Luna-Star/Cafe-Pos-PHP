@@ -10,7 +10,7 @@ $categories = $connection->query("
 ")->fetchAll(PDO::FETCH_ASSOC);
 
 $stmt = $connection->prepare("
-    SELECT m.id, m.name, m.price, m.category_id, m.discount, m.has_temp_option, m.has_sizes, m.available,
+    SELECT m.id, m.name, m.price, m.category_id, m.discount, m.has_temp_option, m.has_sizes,
         CASE
             WHEN COALESCE(m.stock_qty, 0) <= 0 THEN 0
             WHEN m.stock_qty < batches.available_qty THEN m.stock_qty
@@ -23,7 +23,7 @@ $stmt = $connection->prepare("
         WHERE menu_item_id = m.id AND quantity > 0
             AND (expiration_date IS NULL OR expiration_date >= CONVERT(date, ?, 23))
     ) batches
-    WHERE m.is_archived = 0
+    WHERE m.is_archived = 0 AND m.available = 1
     ORDER BY m.name
 ");
 $stmt->execute([inventoryToday()->format('Y-m-d')]);

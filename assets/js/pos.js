@@ -304,14 +304,13 @@ function renderCart() {
 
     for (const button of menuButtons) {
         const id = Number(button.dataset.menuId);
-        const available = button.dataset.available === "true";
         const inStock = stockByItem.get(id) > 0;
-        button.disabled = !available || remainingStock(id) === 0;
-        button.textContent = !available ? "Unavailable" : !inStock ? "Out of stock"
+        button.disabled = remainingStock(id) === 0;
+        button.textContent = !inStock ? "Out of stock"
             : button.disabled ? "All stock in cart" : "Add to Cart";
         const badge = button.closest(".menu-card").querySelector(".menu-card-status");
-        badge.dataset.tone = !available ? "" : inStock ? "positive" : "danger";
-        badge.textContent = !available ? "Unavailable" : inStock ? "Available" : "Out of stock";
+        badge.dataset.tone = inStock ? "positive" : "danger";
+        badge.textContent = inStock ? "Available" : "Out of stock";
     }
     checkoutButton.disabled = cart.length === 0 || checkoutBusy;
     updateCashSummary();

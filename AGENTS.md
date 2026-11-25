@@ -24,7 +24,7 @@
 
 ## New Order (POS)
 
-- Show non-archived products with their local images and availability labels. Use a neutral placeholder for items without photos, and keep unavailable and out-of-stock products disabled.
+- Show available, non-archived products with their local images and stock labels. Use a neutral placeholder for items without photos, and keep out-of-stock products visible and disabled.
 - Use a responsive menu grid and a sticky cart when screen width permits. Keep size, temperature, quantity, and removal controls inline and use the shared button tones and visible focus styles.
 - Show subtotal, applied order discount, included VAT, total, and cash change. Display the prices charged by checkout and keep the server authoritative for pricing, stock, and payment.
 - Validate payment details before confirmation, lock checkout during submission, preserve the cart on failure, and reset it after a successful order. Keep the receipt printable.
