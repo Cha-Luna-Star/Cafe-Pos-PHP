@@ -39,3 +39,7 @@ Run database/auth_read_procedures.sql before deploying the login and session cha
 ## Menu Management read migration
 
 Run database/menu_read_procedures.sql after database/pos_read_procedures.sql. Menu Management shares GetMenuCategories with New Order. GetManagedMenuItems loads the list and preserves the default stock threshold for older databases. CountMenuCategory validates submitted categories and HasProductLowStockThreshold checks whether the optional column exists.
+
+## Checkout read migration
+
+Run database/checkout_read_procedures.sql against CafePOS or CafePOS_Test. The eight procedures handle checkout lookups, usable stock, and ordered batch reads. PHP still owns the checkout transaction and writes.

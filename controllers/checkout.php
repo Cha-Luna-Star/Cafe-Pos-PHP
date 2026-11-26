@@ -86,14 +86,6 @@ try {
     }
 
     $today = inventoryToday()->format('Y-m-d');
-    $ingredientBatchAvailable = "(
-        NULLIF(LTRIM(RTRIM(expiration_date)), '') IS NULL OR (
-            DATALENGTH(expiration_date) = 20
-            AND expiration_date = CONVERT(char(10), TRY_CONVERT(date, expiration_date, 23), 23)
-            AND TRY_CONVERT(date, expiration_date, 23) >= CONVERT(date, ?, 23)
-        )
-    )";
-
     $throwDatabaseConnectionError = true;
     require_once __DIR__ . '/../config/database.php';
     $connection->beginTransaction();
@@ -104,11 +96,7 @@ try {
     $menuStock = [];
     $subtotal = 0;
 
-    $stmt = $connection->query("
-        SELECT id, name
-        FROM dbo.ingredients
-        WHERE name IN ('Cups (Hot)', 'Cups (Cold)', 'Ice')
-    ");
+    $stmt = $connection->query('EXEC dbo.GetCheckoutSupplies');
 
     $specialIngredients = [];
 
@@ -135,13 +123,7 @@ try {
     ksort($menuIds, SORT_NUMERIC);
     $menuItems = [];
     foreach (array_keys($menuIds) as $id) {
-        $stmt = $connection->prepare("
-            SELECT id, name, price, stock_qty, has_sizes, has_temp_option
-            FROM dbo.menu_items WITH (UPDLOCK, HOLDLOCK)
-            WHERE id = ?
-              AND available = 1
-              AND is_archived = 0
-        ");
+        $stmt = $connection->prepare('EXEC dbo.GetCheckoutMenuItem ?');
         $stmt->execute([$id]);
         $menu = $stmt->fetch(PDO::FETCH_ASSOC);
         $stmt->closeCursor();
@@ -190,13 +172,7 @@ try {
         $adjustment = 0;
 
         if ((int)$menu['has_sizes'] === 1 && $size !== 'Regular') {
-            $stmt = $connection->prepare("
-                SELECT TOP 1 price_adjustment
-                FROM dbo.size_modifiers
-                WHERE name = ?
-                AND (menu_item_id = ? OR menu_item_id IS NULL)
-                ORDER BY CASE WHEN menu_item_id = ? THEN 0 ELSE 1 END
-            ");
+            $stmt = $connection->prepare('EXEC dbo.GetCheckoutSizeModifier ?, ?, ?');
             $stmt->execute([$size, $id, $id]);
             $modifier = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -239,11 +215,7 @@ $validatedItems[] = [
     'subtotal' => $lineTotal
 ];
 
-        $stmt = $connection->prepare("
-            SELECT ingredient_id, quantity_needed
-            FROM dbo.recipe_items
-            WHERE menu_item_id = ?
-        ");
+        $stmt = $connection->prepare('EXEC dbo.GetCheckoutRecipe ?');
         $stmt->execute([$id]);
 
         $iceRequired = false;
@@ -284,11 +256,7 @@ $validatedItems[] = [
     foreach ($ingredientNeeds as $ingredientId => $needed) {
         $needed = round($needed, 3);
 
-        $stmt = $connection->prepare("
-            SELECT name, unit, stock_qty
-            FROM dbo.ingredients WITH (UPDLOCK, HOLDLOCK)
-            WHERE id = ? AND is_archived = 0
-        ");
+        $stmt = $connection->prepare('EXEC dbo.GetCheckoutIngredient ?');
         $stmt->execute([$ingredientId]);
 
         $ingredient = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -310,13 +278,7 @@ $validatedItems[] = [
             failCheckout("Not enough {$ingredient['name']}. Need $requiredQuantity, with $recordedQuantity recorded in Inventory.");
         }
 
-        $stmt = $connection->prepare("
-            SELECT COALESCE(SUM(quantity), 0)
-            FROM dbo.inventory_batches WITH (UPDLOCK, HOLDLOCK)
-            WHERE ingredient_id = ?
-            AND quantity > 0
-            AND $ingredientBatchAvailable
-        ");
+        $stmt = $connection->prepare('EXEC dbo.GetCheckoutIngredientStock ?, ?');
         $stmt->execute([$ingredientId, $today]);
 
         $batchStock = (float)$stmt->fetchColumn();
@@ -398,21 +360,7 @@ $validatedItems[] = [
         if ($stmt->rowCount() !== 1) {
             failCheckout('Insufficient menu stock.');
         }
-        $stmt = $connection->prepare("
-            SELECT id, quantity
-            FROM dbo.product_batches WITH (UPDLOCK, HOLDLOCK)
-            WHERE menu_item_id = ?
-            AND quantity > 0
-            AND (
-                expiration_date IS NULL
-                OR expiration_date >= CONVERT(date, ?, 23)
-            )
-            ORDER BY
-                CASE WHEN expiration_date IS NULL THEN 1 ELSE 0 END,
-                expiration_date ASC,
-                received_date ASC,
-                id ASC
-        ");
+        $stmt = $connection->prepare('EXEC dbo.GetCheckoutProductBatches ?, ?');
 
         $stmt->execute([$id, $today]);
         $batches = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -488,13 +436,7 @@ $validatedItems[] = [
         ");
         $stmt->execute([$ingredientId, $needed, $orderId]);
 
-        $stmt = $connection->prepare("
-            SELECT id, quantity
-            FROM dbo.inventory_batches WITH (UPDLOCK, HOLDLOCK)
-            WHERE ingredient_id = ? AND quantity > 0
-                AND $ingredientBatchAvailable
-            ORDER BY TRY_CONVERT(date, received_date, 23) ASC, id ASC
-        ");
+        $stmt = $connection->prepare('EXEC dbo.GetCheckoutIngredientBatches ?, ?');
         $stmt->execute([$ingredientId, $today]);
         $batches = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
