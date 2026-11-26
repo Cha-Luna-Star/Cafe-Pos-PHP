@@ -39,25 +39,12 @@ if (($from !== '' && !$start) || ($to !== '' && !$end) || ($start && $end && $st
     return;
 }
 
-$conditions = [];
-$params = [];
-if ($search !== '') {
-    $conditions[] = '(CHARINDEX(?, username) > 0 OR CHARINDEX(?, details) > 0)';
-    array_push($params, $search, $search);
-}
-if ($action !== '') {
-    $conditions[] = 'action = ?';
-    $params[] = $action;
-}
-if ($start) {
-    $conditions[] = 'created_at >= CONVERT(datetime2(7), ?, 126)';
-    $params[] = $start->format('Y-m-d') . 'T00:00:00';
-}
-if ($end) {
-    $conditions[] = 'created_at <= CONVERT(datetime2(7), ?, 126)';
-    $params[] = $end->format('Y-m-d') . 'T23:59:59.9999999';
-}
-$where = $conditions ? 'WHERE ' . implode(' AND ', $conditions) : '';
+$params = [
+    $search,
+    $action,
+    $start ? $start->format('Y-m-d') . 'T00:00:00' : null,
+    $end ? $end->format('Y-m-d') . 'T23:59:59.9999999' : null,
+];
 
 $pageSize = 25;
 $page = filter_var($_GET['page'] ?? 1, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: 1;
@@ -66,26 +53,20 @@ try {
     $throwDatabaseConnectionError = true;
     require_once __DIR__ . '/../config/database.php';
 
-    $actions = $connection->query('SELECT DISTINCT action FROM dbo.audit_log ORDER BY action')
+    $actions = $connection->query('EXEC dbo.GetAuditActions')
         ->fetchAll(PDO::FETCH_COLUMN);
 
-    $stmt = $connection->prepare("SELECT COUNT_BIG(*) FROM dbo.audit_log $where");
+    $stmt = $connection->prepare('EXEC dbo.CountAuditEntries ?, ?, ?, ?');
     $stmt->execute($params);
     $totalEntries = (int)$stmt->fetchColumn();
     $stmt->closeCursor();
     $pageCount = max(1, intdiv(max(0, $totalEntries - 1), $pageSize) + 1);
     $page = min($page, $pageCount);
 
-    $stmt = $connection->prepare("
-        SELECT id, user_id, username, action, details,
-            CONVERT(char(19), created_at, 120) AS event_time
-        FROM dbo.audit_log
-        $where
-        ORDER BY created_at DESC, id DESC
-        OFFSET CAST(? AS bigint) ROWS FETCH NEXT CAST(? AS int) ROWS ONLY
-    ");
+    $stmt = $connection->prepare('EXEC dbo.GetAuditEntries ?, ?, ?, ?, ?, ?');
     $stmt->execute([...$params, ($page - 1) * $pageSize, $pageSize]);
     $auditEntries = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt->closeCursor();
 } catch (Throwable $e) {
     error_log('Audit log failed: ' . $e->getMessage());
     http_response_code(500);

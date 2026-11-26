@@ -23,3 +23,7 @@ Run database/inventory_read_procedures.sql against CafePOS and any group test da
 ## Dashboard read migration
 
 Run database/dashboard_read_procedures.sql after database/inventory_read_procedures.sql and database/sales_reporting.sql. Dashboard procedures return daily totals, chart periods, recent and pending orders, and stock alerts. The expiry alert uses vw_InventoryBatches.
+
+## Audit Log read migration
+
+Run database/audit_read_procedures.sql against CafePOS or CafePOS_Test. GetAuditActions supplies the filter choices. CountAuditEntries counts rows matching the optional filters, and GetAuditEntries returns the requested page in newest-first order.
