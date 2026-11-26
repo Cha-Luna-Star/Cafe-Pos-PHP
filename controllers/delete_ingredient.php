@@ -43,11 +43,7 @@ try {
     require_once __DIR__ . '/../config/database.php';
     $connection->beginTransaction();
 
-    $stmt = $connection->prepare("
-        SELECT name, stock_qty
-        FROM dbo.ingredients WITH (UPDLOCK, HOLDLOCK)
-        WHERE id = ?
-    ");
+    $stmt = $connection->prepare('EXEC dbo.GetIngredientForDeletion @ItemId = ?');
 
     $stmt->execute([$id]);
     $ingredient = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -61,18 +57,14 @@ try {
         throw new RuntimeException('Ingredient still has stock.');
     }
 
-    $tables = [
-        'recipe_items',
-        'inventory_batches',
-        'ingredient_usage'
+    $checks = [
+        'EXEC dbo.CountIngredientRecipeReferences @ItemId = ?',
+        'EXEC dbo.CountIngredientBatchReferences @ItemId = ?',
+        'EXEC dbo.CountIngredientUsageReferences @ItemId = ?',
     ];
 
-    foreach ($tables as $table) {
-        $stmt = $connection->prepare("
-            SELECT COUNT(*)
-            FROM dbo.$table WITH (UPDLOCK, HOLDLOCK)
-            WHERE ingredient_id = ?
-        ");
+    foreach ($checks as $procedure) {
+        $stmt = $connection->prepare($procedure);
 
         $stmt->execute([$id]);
         $count = $stmt->fetchColumn();
@@ -85,11 +77,7 @@ try {
         }
     }
 
-    $stmt = $connection->prepare("
-        SELECT COUNT(*)
-        FROM dbo.stock_movements WITH (UPDLOCK, HOLDLOCK)
-        WHERE item_type = 'Ingredient' AND item_id = ?
-    ");
+    $stmt = $connection->prepare('EXEC dbo.CountIngredientMovementReferences @ItemId = ?');
 
     $stmt->execute([$id]);
     $count = $stmt->fetchColumn();

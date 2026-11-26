@@ -63,3 +63,7 @@ Run database/batch_expiration_read_procedures.sql after database/stock_in_read_p
 ## Ingredient archiving read migration
 
 Run database/ingredient_archive_read_procedures.sql after database/stock_adjustment_read_procedures.sql. Ingredient archiving reuses GetAdjustmentIngredient and calls procedures to check for remaining batches, recipe references, and pending order usage.
+
+## Ingredient deletion read migration
+
+Run database/ingredient_delete_read_procedures.sql after database/ingredient_archive_read_procedures.sql. The deletion checks reuse CountIngredientRecipeReferences and call procedures to read recorded stock and count batch, usage, and movement records under the existing transaction locks.
