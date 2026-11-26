@@ -32,10 +32,7 @@ function validateAuthSession(): void
         try {
             $throwDatabaseConnectionError = true;
             require_once __DIR__ . '/../config/database.php';
-            $hasStatus = hasStaffAccountStatus($connection);
-            $versionColumn = $hasStatus ? 'session_version' : '0 AS session_version';
-            $activeCondition = $hasStatus ? 'AND is_active = 1' : '';
-            $stmt = $connection->prepare("SELECT password, $versionColumn FROM dbo.users WHERE id = ? $activeCondition");
+            $stmt = $connection->prepare('EXEC dbo.GetSessionAccount @UserId = ?');
             $stmt->execute([$_SESSION['user_id']]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             $stmt->closeCursor();

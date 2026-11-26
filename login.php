@@ -28,14 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $throwDatabaseConnectionError = true;
             require_once __DIR__ . '/config/database.php';
 
-            $hasStatus = hasStaffAccountStatus($connection);
-            $versionColumn = $hasStatus ? 'session_version' : '0 AS session_version';
-            $activeCondition = $hasStatus ? 'AND is_active = 1' : '';
-            $stmt = $connection->prepare("
-                SELECT id, username, password, role, $versionColumn
-                FROM dbo.users
-                WHERE username = ? $activeCondition
-            ");
+            $stmt = $connection->prepare('EXEC dbo.GetLoginAccount @Username = ?');
             $stmt->execute([$username]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             $stmt->closeCursor();
@@ -63,9 +56,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($update->rowCount() === 1) {
                     $storedHash = $newHash;
                 } else {
-                    $current = $connection->prepare('SELECT password FROM dbo.users WHERE id = ?');
+                    $current = $connection->prepare('EXEC dbo.GetCurrentAccountPassword @UserId = ?');
                     $current->execute([$user['id']]);
                     $currentHash = $current->fetchColumn();
+                    $current->closeCursor();
                     $verified = is_string($currentHash) && password_verify($password, $currentHash);
                     $storedHash = $currentHash;
                 }

@@ -31,3 +31,7 @@ Run database/audit_read_procedures.sql against CafePOS or CafePOS_Test. GetAudit
 ## Staff Accounts read migration
 
 Run database/staff_read_procedures.sql against CafePOS and CafePOS_Test before deploying the Staff Accounts changes. GetStaffAccounts accepts optional username and role filters. HasStaffAccountStatus checks whether account status and session version columns are installed. Install this script before deploying to keep login and session checks working.
+
+## Login and session read migration
+
+Run database/auth_read_procedures.sql before deploying the login and session changes. GetLoginAccount and GetSessionAccount return the account fields PHP needs to verify an active login or session. GetCurrentAccountPassword supports the existing password rehash race check.
