@@ -43,11 +43,7 @@ try {
     require_once __DIR__ . '/../config/database.php';
     $connection->beginTransaction();
 
-    $stmt = $connection->prepare("
-        SELECT name, stock_qty
-        FROM dbo.ingredients WITH (UPDLOCK, HOLDLOCK)
-        WHERE id = ? AND is_archived = 0
-    ");
+    $stmt = $connection->prepare('EXEC dbo.GetAdjustmentIngredient @ItemId = ?');
 
     $stmt->execute([$id]);
     $ingredient = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -61,11 +57,7 @@ try {
         throw new RuntimeException('Ingredient still has stock.');
     }
 
-    $stmt = $connection->prepare("
-        SELECT COUNT(*)
-        FROM dbo.inventory_batches WITH (UPDLOCK, HOLDLOCK)
-        WHERE ingredient_id = ? AND quantity > 0
-    ");
+    $stmt = $connection->prepare('EXEC dbo.CountRemainingIngredientBatches @ItemId = ?');
 
     $stmt->execute([$id]);
     $count = $stmt->fetchColumn();
@@ -75,11 +67,7 @@ try {
         throw new RuntimeException('Ingredient still has remaining batches.');
     }
 
-    $stmt = $connection->prepare("
-        SELECT COUNT(*)
-        FROM dbo.recipe_items WITH (UPDLOCK, HOLDLOCK)
-        WHERE ingredient_id = ?
-    ");
+    $stmt = $connection->prepare('EXEC dbo.CountIngredientRecipeReferences @ItemId = ?');
 
     $stmt->execute([$id]);
     $count = $stmt->fetchColumn();
@@ -89,12 +77,7 @@ try {
         throw new RuntimeException('Ingredient is still used in recipes.');
     }
 
-    $stmt = $connection->prepare("
-        SELECT TOP (1) 1
-        FROM dbo.ingredient_usage iu
-        JOIN dbo.orders o ON o.id = iu.order_id
-        WHERE iu.ingredient_id = ? AND o.status = 'Pending'
-    ");
+    $stmt = $connection->prepare('EXEC dbo.FindIngredientPendingOrderUsage @ItemId = ?');
     $stmt->execute([$id]);
     $usedByPendingOrder = $stmt->fetchColumn() !== false;
     $stmt->closeCursor();

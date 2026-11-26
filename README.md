@@ -59,3 +59,7 @@ Run database/stock_reconciliation_read_procedures.sql against CafePOS or CafePOS
 ## Batch Expiration Correction read migration
 
 Run database/batch_expiration_read_procedures.sql after database/stock_in_read_procedures.sql. Batch expiration correction reuses GetStockInIngredient and uses GetBatchForExpirationCorrection to read the batch under the existing transaction locks.
+
+## Ingredient archiving read migration
+
+Run database/ingredient_archive_read_procedures.sql after database/stock_adjustment_read_procedures.sql. Ingredient archiving reuses GetAdjustmentIngredient and calls procedures to check for remaining batches, recipe references, and pending order usage.
