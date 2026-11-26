@@ -41,28 +41,7 @@ try {
         $start->format('Y-m-d') . 'T00:00:00',
         $end->format('Y-m-d') . 'T23:59:59.9999999'
     ];
-    $completedInRange = "o.status = 'Completed'
-        AND o.created_at >= CONVERT(datetime2(7), ?, 126)
-        AND o.created_at <= CONVERT(datetime2(7), ?, 126)";
-
-    $stmt = $connection->prepare("
-        WITH completed_sales AS (
-            SELECT
-                CAST(created_at AS date) AS sale_date,
-                COALESCE(NULLIF(TRIM(payment_method), ''), 'Unspecified') AS payment_method,
-                CAST(total AS decimal(19,2)) AS total
-            FROM dbo.orders o
-            WHERE $completedInRange
-        )
-        SELECT
-            CONVERT(char(10), sale_date, 23) AS sale_date,
-            payment_method,
-            COUNT_BIG(*) AS order_count,
-            COALESCE(SUM(total), 0) AS sales
-        FROM completed_sales
-        GROUP BY GROUPING SETS ((), (sale_date), (payment_method))
-        ORDER BY sale_date DESC, sales DESC, payment_method
-    ");
+    $stmt = $connection->prepare("EXEC dbo.GetSalesReportTotals @From = ?, @To = ?");
     $stmt->execute($reportDates);
 
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
