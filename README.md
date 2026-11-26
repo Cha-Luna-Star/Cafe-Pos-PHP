@@ -11,3 +11,7 @@ Run database/sales_reporting.sql against the CafePOS database before running thi
 ## Order history database migration
 
 Run database/order_read_procedures.sql against CafePOS (or CafePOS_Test for group testing) before using Order History or opening receipts. It creates GetOrderHistory, GetOrderReceipt, and GetOrderReceiptItems without changing order records.
+
+## New Order menu migration
+
+Run database/pos_read_procedures.sql against CafePOS or CafePOS_Test to install the category, sellable menu, and size modifier procedures.
