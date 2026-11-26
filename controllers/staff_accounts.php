@@ -55,32 +55,16 @@ if (!is_string($staffSearch) || strlen($staffSearch) > 400 ||
 }
 
 $staffSearch = trim($staffSearch);
-$conditions = [];
-$params = [];
-if ($staffSearch !== '') {
-    $conditions[] = 'CHARINDEX(?, username) > 0';
-    $params[] = $staffSearch;
-}
-if ($staffRole !== '') {
-    $conditions[] = 'role = ?';
-    $params[] = $staffRole;
-}
-$where = $conditions ? 'WHERE ' . implode(' AND ', $conditions) : '';
 
 try {
     $throwDatabaseConnectionError = true;
     require_once __DIR__ . '/../config/database.php';
 
     $staffStatusAvailable = hasStaffAccountStatus($connection);
-    $activeColumn = $staffStatusAvailable ? 'is_active' : '1 AS is_active';
-    $stmt = $connection->prepare("
-        SELECT id, username, role, $activeColumn
-        FROM dbo.users
-        $where
-        ORDER BY username, id
-    ");
-    $stmt->execute($params);
+    $stmt = $connection->prepare('EXEC dbo.GetStaffAccounts @Search = ?, @Role = ?');
+    $stmt->execute([$staffSearch, $staffRole]);
     $staffAccounts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt->closeCursor();
 } catch (Throwable $e) {
     error_log('Staff accounts failed: ' . $e->getMessage());
     http_response_code(500);

@@ -27,3 +27,7 @@ Run database/dashboard_read_procedures.sql after database/inventory_read_procedu
 ## Audit Log read migration
 
 Run database/audit_read_procedures.sql against CafePOS or CafePOS_Test. GetAuditActions supplies the filter choices. CountAuditEntries counts rows matching the optional filters, and GetAuditEntries returns the requested page in newest-first order.
+
+## Staff Accounts read migration
+
+Run database/staff_read_procedures.sql against CafePOS and CafePOS_Test before deploying the Staff Accounts changes. GetStaffAccounts accepts optional username and role filters. HasStaffAccountStatus checks whether account status and session version columns are installed. Install this script before deploying to keep login and session checks working.
