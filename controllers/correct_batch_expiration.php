@@ -37,19 +37,12 @@ if ($itemId === false || $batchId === false || !is_string($date) || !parseInvent
 try {
     $connection->beginTransaction();
 
-    $stmt = $connection->prepare("
-        SELECT name FROM dbo.ingredients WITH (UPDLOCK, HOLDLOCK)
-        WHERE id = ? AND is_archived = 0
-    ");
+    $stmt = $connection->prepare('EXEC dbo.GetStockInIngredient @ItemId = ?');
     $stmt->execute([$itemId]);
     $name = $stmt->fetchColumn();
     $stmt->closeCursor();
 
-    $stmt = $connection->prepare("
-        SELECT expiration_date, CONVERT(char(10), TRY_CONVERT(date, received_date, 23), 23) AS received_date
-        FROM dbo.inventory_batches WITH (UPDLOCK, HOLDLOCK)
-        WHERE id = ? AND ingredient_id = ? AND quantity > 0
-    ");
+    $stmt = $connection->prepare('EXEC dbo.GetBatchForExpirationCorrection @BatchId = ?, @IngredientId = ?');
     $stmt->execute([$batchId, $itemId]);
     $batch = $stmt->fetch(PDO::FETCH_ASSOC);
     $stmt->closeCursor();

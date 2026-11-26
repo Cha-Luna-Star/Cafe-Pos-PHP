@@ -55,3 +55,7 @@ Run database/stock_adjustment_read_procedures.sql against CafePOS or CafePOS_Tes
 ## Stock Reconciliation read migration
 
 Run database/stock_reconciliation_read_procedures.sql against CafePOS or CafePOS_Test. Its four procedures read recorded stock and batch totals for ingredients and products under the existing reconciliation transaction locks.
+
+## Batch Expiration Correction read migration
+
+Run database/batch_expiration_read_procedures.sql after database/stock_in_read_procedures.sql. Batch expiration correction reuses GetStockInIngredient and uses GetBatchForExpirationCorrection to read the batch under the existing transaction locks.
