@@ -55,9 +55,7 @@ foreach ([$recorded, $batch] as $quantity) {
     }
 }
 
-[$table, $batchTable, $foreignKey] = $type === 'Ingredient'
-    ? ['dbo.ingredients', 'dbo.inventory_batches', 'ingredient_id']
-    : ['dbo.menu_items', 'dbo.product_batches', 'menu_item_id'];
+$table = $type === 'Ingredient' ? 'dbo.ingredients' : 'dbo.menu_items';
 
 try {
     $throwDatabaseConnectionError = true;
@@ -65,12 +63,11 @@ try {
 
     $connection->beginTransaction();
 
-    $stmt = $connection->prepare("
-        SELECT TRY_CONVERT(decimal(18,3), stock_qty) AS recorded_stock, is_archived,
-            CASE WHEN stock_qty >= 0 THEN 1 ELSE 0 END AS valid_stock
-        FROM $table WITH (UPDLOCK, HOLDLOCK)
-        WHERE id = ?
-    ");
+    $stmt = $connection->prepare(
+        $type === 'Ingredient'
+            ? 'EXEC dbo.GetReconciliationIngredientStock @ItemId = ?'
+            : 'EXEC dbo.GetReconciliationProductStock @ItemId = ?'
+    );
     $stmt->execute([$id]);
     $item = $stmt->fetch(PDO::FETCH_ASSOC);
     $stmt->closeCursor();
@@ -80,14 +77,11 @@ try {
         reconciliationResponse(409, 'This item is no longer available for reconciliation.');
     }
 
-    $stmt = $connection->prepare("
-        SELECT TRY_CONVERT(decimal(18,3), COALESCE(SUM(TRY_CONVERT(decimal(18,3), quantity)), 0)) AS batch_stock,
-            COUNT_BIG(*) - COUNT_BIG(CASE WHEN quantity >= 0
-                AND TRY_CONVERT(decimal(18,3), quantity) IS NOT NULL
-                AND ABS(quantity - ROUND(quantity, 3)) <= 0.00000001 THEN 1 END) AS invalid_batches
-        FROM $batchTable WITH (UPDLOCK, HOLDLOCK)
-        WHERE $foreignKey = ?
-    ");
+    $stmt = $connection->prepare(
+        $type === 'Ingredient'
+            ? 'EXEC dbo.GetReconciliationIngredientBatches @ItemId = ?'
+            : 'EXEC dbo.GetReconciliationProductBatches @ItemId = ?'
+    );
     $stmt->execute([$id]);
     $batches = $stmt->fetch(PDO::FETCH_ASSOC);
     $stmt->closeCursor();

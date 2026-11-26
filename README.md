@@ -51,3 +51,7 @@ Run database/stock_in_read_procedures.sql against CafePOS or CafePOS_Test. GetSt
 ## Stock Adjustment read migration
 
 Run database/stock_adjustment_read_procedures.sql against CafePOS or CafePOS_Test. The four procedures look up ingredient and product stock and batches using the existing adjustment transaction locks.
+
+## Stock Reconciliation read migration
+
+Run database/stock_reconciliation_read_procedures.sql against CafePOS or CafePOS_Test. Its four procedures read recorded stock and batch totals for ingredients and products under the existing reconciliation transaction locks.
