@@ -35,3 +35,7 @@ Run database/staff_read_procedures.sql against CafePOS and CafePOS_Test before d
 ## Login and session read migration
 
 Run database/auth_read_procedures.sql before deploying the login and session changes. GetLoginAccount and GetSessionAccount return the account fields PHP needs to verify an active login or session. GetCurrentAccountPassword supports the existing password rehash race check.
+
+## Menu Management read migration
+
+Run database/menu_read_procedures.sql after database/pos_read_procedures.sql. Menu Management shares GetMenuCategories with New Order. GetManagedMenuItems loads the list and preserves the default stock threshold for older databases. CountMenuCategory validates submitted categories and HasProductLowStockThreshold checks whether the optional column exists.

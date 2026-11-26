@@ -67,7 +67,7 @@ try {
     $throwDatabaseConnectionError = true;
     require_once __DIR__ . '/../config/database.php';
     $categoryStmt = $connection->prepare(
-        "SELECT COUNT(*) FROM dbo.categories WHERE id = ?"
+        'EXEC dbo.CountMenuCategory @CategoryId = ?'
     );
     $categoryStmt->execute([$categoryId]);
 
