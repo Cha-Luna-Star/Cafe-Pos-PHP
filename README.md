@@ -43,3 +43,7 @@ Run database/menu_read_procedures.sql after database/pos_read_procedures.sql. Me
 ## Checkout read migration
 
 Run database/checkout_read_procedures.sql against CafePOS or CafePOS_Test. The eight procedures handle checkout lookups, usable stock, and ordered batch reads. PHP still owns the checkout transaction and writes.
+
+## Stock-in read migration
+
+Run database/stock_in_read_procedures.sql against CafePOS or CafePOS_Test. GetStockInIngredient and GetStockInProduct find active items under the original stock-in transaction locks.

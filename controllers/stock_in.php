@@ -89,17 +89,9 @@ try {
     $connection->beginTransaction();
 
     if ($type === 'Ingredient') {
-        $stmt = $connection->prepare("
-            SELECT name
-            FROM dbo.ingredients WITH (UPDLOCK, HOLDLOCK)
-            WHERE id = ? AND is_archived = 0
-        ");
+        $stmt = $connection->prepare('EXEC dbo.GetStockInIngredient @ItemId = ?');
     } else {
-        $stmt = $connection->prepare("
-            SELECT name
-            FROM dbo.menu_items WITH (UPDLOCK, HOLDLOCK)
-            WHERE id = ? AND is_archived = 0
-        ");
+        $stmt = $connection->prepare('EXEC dbo.GetStockInProduct @ItemId = ?');
     }
 
     $stmt->execute([$id]);
