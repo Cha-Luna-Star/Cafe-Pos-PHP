@@ -19,3 +19,7 @@ Run database/pos_read_procedures.sql against CafePOS or CafePOS_Test to install 
 ## Inventory read migration
 
 Run database/inventory_read_procedures.sql against CafePOS and any group test database. Its seven read procedures cover Current Stock, archived ingredients, batches, movements, and reconciliation. GetInventoryBatches reads the shared vw_InventoryBatches view, which combines ingredient and product batches.
+
+## Dashboard read migration
+
+Run database/dashboard_read_procedures.sql after database/inventory_read_procedures.sql and database/sales_reporting.sql. Dashboard procedures return daily totals, chart periods, recent and pending orders, and stock alerts. The expiry alert uses vw_InventoryBatches.

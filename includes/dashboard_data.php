@@ -6,7 +6,6 @@ if (!isset($canViewSales)) {
 }
 
 require_once __DIR__ . '/../includes/inventory_dates.php';
-require_once __DIR__ . '/../includes/product_stock.php';
 require_once __DIR__ . '/../includes/sales_items.php';
 
 $dashboardError = null;
@@ -42,22 +41,12 @@ $chartPeriods = [];
 $dashboardBestSellers = [];
 $statusColumns = ['Completed' => 'completed', 'Pending' => 'pending', 'Cancelled' => 'cancelled'];
 $statusCounts = array_fill_keys(array_keys($statusColumns), 0);
-$statusSelect = implode(', ', array_map(
-    static fn(string $status, string $column): string => "COUNT_BIG(CASE WHEN status = '$status' THEN 1 END) AS $column",
-    array_keys($statusColumns),
-    $statusColumns
-));
 
 try {
     $throwDatabaseConnectionError = true;
     require_once __DIR__ . '/../config/database.php';
 
-    $stmt = $connection->prepare("
-        SELECT COUNT_BIG(*) AS orders, $statusSelect,
-            SUM(CASE WHEN status = 'Completed' THEN CAST(COALESCE(total, 0) AS decimal(19,2)) ELSE 0 END) AS sales
-        FROM dbo.orders
-        WHERE created_at >= CONVERT(date, ?, 23) AND created_at < CONVERT(date, ?, 23)
-    ");
+    $stmt = $connection->prepare('EXEC dbo.GetDashboardToday ?, ?');
     $stmt->execute([$todayDate, $tomorrowDate]);
     $totals = $stmt->fetch(PDO::FETCH_ASSOC);
     $stmt->closeCursor();
@@ -70,25 +59,12 @@ try {
     }
 
     if ($canViewSales) {
-        $periodExpression = match ($range) {
-            'date', 'daily' => 'DATEPART(hour, created_at)',
-            'all-time' => 'CONVERT(char(7), created_at, 23)',
-            default => 'CONVERT(char(10), created_at, 23)'
-        };
-        $startCondition = $isMonthly ? '' : 'AND created_at >= CONVERT(date, ?, 23)';
-        $stmt = $connection->prepare("
-            SELECT $periodExpression AS period, COUNT_BIG(*) AS orders, $statusSelect,
-                SUM(CASE WHEN status = 'Completed' THEN CAST(COALESCE(total, 0) AS decimal(19,2)) ELSE 0 END) AS sales
-            FROM dbo.orders
-            WHERE created_at < CONVERT(date, ?, 23) $startCondition
-            GROUP BY $periodExpression
-            ORDER BY period
-        ");
-        $params = [$chartStop->format('Y-m-d')];
-        if (!$isMonthly) {
-            $params[] = $chartStart->format('Y-m-d');
-        }
-        $stmt->execute($params);
+        $stmt = $connection->prepare('EXEC dbo.GetDashboardPeriods ?, ?, ?');
+        $stmt->execute([
+            $chartStop->format('Y-m-d'),
+            $isMonthly ? null : $chartStart->format('Y-m-d'),
+            $isHourly ? 'hour' : ($isMonthly ? 'month' : 'day'),
+        ]);
         $periodTotals = $stmt->fetchAll(PDO::FETCH_UNIQUE | PDO::FETCH_ASSOC);
         $stmt->closeCursor();
 
@@ -117,47 +93,14 @@ try {
         $dashboardBestSellers = bestSellingMenuItems($connection, $chartStart->format('Y-m-d'), $chartEndDate);
     }
 
-    $recentOrders = $connection->query("
-        SELECT TOP (6) id, status, total, payment_method, CONVERT(char(16), created_at, 120) AS placed_at
-        FROM dbo.orders
-        ORDER BY created_at DESC, id DESC
-    ")->fetchAll(PDO::FETCH_ASSOC);
+    $recentOrders = $connection->query('EXEC dbo.GetDashboardRecentOrders')->fetchAll(PDO::FETCH_ASSOC);
 
-    $pendingOrders = $connection->query("
-        SELECT TOP (3) id, total, COUNT_BIG(*) OVER () AS total_pending
-        FROM dbo.orders
-        WHERE status = 'Pending'
-        ORDER BY created_at ASC, id ASC
-    ")->fetchAll(PDO::FETCH_ASSOC);
+    $pendingOrders = $connection->query('EXEC dbo.GetDashboardPendingOrders')->fetchAll(PDO::FETCH_ASSOC);
     $pendingCount = (int)($pendingOrders[0]['total_pending'] ?? 0);
 
-    $productThreshold = hasProductLowStockThreshold($connection)
-        ? 'low_stock_threshold'
-        : DEFAULT_PRODUCT_LOW_STOCK_THRESHOLD;
-    $stock = $connection->query("
-        WITH active_stock AS (
-            SELECT COALESCE(stock_qty, 0) AS stock_qty, low_stock_threshold AS threshold
-            FROM dbo.ingredients WHERE is_archived = 0
-            UNION ALL
-            SELECT COALESCE(stock_qty, 0), $productThreshold
-            FROM dbo.menu_items WHERE is_archived = 0
-        )
-        SELECT
-            COUNT_BIG(CASE WHEN stock_qty > 0 AND stock_qty <= threshold THEN 1 END) AS low_items,
-            COUNT_BIG(CASE WHEN stock_qty <= 0 THEN 1 END) AS out_of_stock
-        FROM active_stock
-    ")->fetch(PDO::FETCH_ASSOC);
+    $stock = $connection->query('EXEC dbo.GetDashboardStock')->fetch(PDO::FETCH_ASSOC);
 
-    $expirationGroups = $connection->query("
-        SELECT expiration_date, COUNT_BIG(*) AS batch_count
-        FROM (
-            SELECT expiration_date FROM dbo.inventory_batches WHERE quantity > 0 AND expiration_date IS NOT NULL
-            UNION ALL
-            SELECT CONVERT(nvarchar(30), expiration_date, 23) FROM dbo.product_batches
-            WHERE quantity > 0 AND expiration_date IS NOT NULL
-        ) AS remaining_batches
-        GROUP BY expiration_date
-    ");
+    $expirationGroups = $connection->query('EXEC dbo.GetDashboardExpirationGroups');
     $expiredCount = $expiringSoonCount = 0;
     while ($batch = $expirationGroups->fetch(PDO::FETCH_ASSOC)) {
         $expirationStatus = batchExpirationStatus($batch['expiration_date'], $today);
