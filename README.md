@@ -15,3 +15,7 @@ Run database/order_read_procedures.sql against CafePOS (or CafePOS_Test for grou
 ## New Order menu migration
 
 Run database/pos_read_procedures.sql against CafePOS or CafePOS_Test to install the category, sellable menu, and size modifier procedures.
+
+## Inventory read migration
+
+Run database/inventory_read_procedures.sql against CafePOS and any group test database. Its seven read procedures cover Current Stock, archived ingredients, batches, movements, and reconciliation. GetInventoryBatches reads the shared vw_InventoryBatches view, which combines ingredient and product batches.
