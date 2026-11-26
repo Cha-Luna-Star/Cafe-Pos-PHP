@@ -47,3 +47,7 @@ Run database/checkout_read_procedures.sql against CafePOS or CafePOS_Test. The e
 ## Stock-in read migration
 
 Run database/stock_in_read_procedures.sql against CafePOS or CafePOS_Test. GetStockInIngredient and GetStockInProduct find active items under the original stock-in transaction locks.
+
+## Stock Adjustment read migration
+
+Run database/stock_adjustment_read_procedures.sql against CafePOS or CafePOS_Test. The four procedures look up ingredient and product stock and batches using the existing adjustment transaction locks.

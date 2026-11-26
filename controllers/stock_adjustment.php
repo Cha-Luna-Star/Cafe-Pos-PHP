@@ -92,11 +92,9 @@ try {
     require_once __DIR__ . '/../config/database.php';
     $connection->beginTransaction();
 
-    $stmt = $connection->prepare("
-        SELECT name, stock_qty
-        FROM $table WITH (UPDLOCK, HOLDLOCK)
-        WHERE id = ? AND is_archived = 0
-    ");
+    $stmt = $connection->prepare($type === 'Ingredient'
+        ? 'EXEC dbo.GetAdjustmentIngredient @ItemId = ?'
+        : 'EXEC dbo.GetAdjustmentProduct @ItemId = ?');
 
     $stmt->execute([$id]);
     $item = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -140,13 +138,9 @@ try {
             'Added: ' . $reason, $_SESSION['user_id']
         ]);
     } else {
-        $stmt = $connection->prepare("
-            SELECT id, quantity, CONVERT(nvarchar(4000), expiration_date, 23) AS expiration_date
-            FROM $batchTable WITH (UPDLOCK, HOLDLOCK)
-            WHERE $foreignKey = ?
-                AND id = ?
-                AND quantity > 0
-        ");
+        $stmt = $connection->prepare($type === 'Ingredient'
+            ? 'EXEC dbo.GetAdjustmentIngredientBatch @ItemId = ?, @BatchId = ?'
+            : 'EXEC dbo.GetAdjustmentProductBatch @ItemId = ?, @BatchId = ?');
 
         $stmt->execute([$id, $batchId]);
         $batches = $stmt->fetchAll(PDO::FETCH_ASSOC);
