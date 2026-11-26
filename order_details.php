@@ -16,23 +16,7 @@ if (!$orderId || $orderId <= 0) {
     exit("Invalid order ID.");
 }
 
-$stmt = $connection->prepare("
-    SELECT
-        o.id,
-        o.order_type,
-        o.status,
-        o.total,
-        o.created_at,
-        o.payment_method,
-        o.amount_tendered,
-        o.change_amount,
-        o.tax,
-        o.ref_number,
-        u.username
-    FROM dbo.orders o
-    LEFT JOIN dbo.users u ON o.created_by = u.id
-    WHERE o.id = ?
-");
+$stmt = $connection->prepare('EXEC dbo.GetOrderReceipt ?');
 
 $stmt->execute([$orderId]);
 $order = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -42,17 +26,7 @@ if (!$order) {
     exit("Order not found.");
 }
 
-$stmt = $connection->prepare("
-    SELECT
-        oi.quantity,
-        oi.size,
-        oi.subtotal,
-        m.name
-    FROM dbo.order_items oi
-    LEFT JOIN dbo.menu_items m ON oi.menu_item_id = m.id
-    WHERE oi.order_id = ?
-    ORDER BY oi.id
-");
+$stmt = $connection->prepare('EXEC dbo.GetOrderReceiptItems ?');
 
 $stmt->execute([$orderId]);
 $items = $stmt->fetchAll(PDO::FETCH_ASSOC);

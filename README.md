@@ -7,3 +7,7 @@ Run database/sales_reporting.sql against the CafePOS database before running thi
 - dbo.vw_CompletedOrders exposes completed orders for reporting.
 - dbo.GetSalesReportTotals takes inclusive start and end timestamps and returns the overall total, daily totals, and totals by payment method.
 - dbo.GetBestSellingMenuItems takes the same range and returns the top ten products by quantity sold, with item revenue before order-level discounts. Sales Reports and Dashboard share this procedure.
+
+## Order history database migration
+
+Run database/order_read_procedures.sql against CafePOS (or CafePOS_Test for group testing) before using Order History or opening receipts. It creates GetOrderHistory, GetOrderReceipt, and GetOrderReceiptItems without changing order records.

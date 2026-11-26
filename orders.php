@@ -13,19 +13,7 @@ if (empty($_SESSION['csrf_token'])) {
 
 require_once __DIR__ . '/config/database.php';
 
-$stmt = $connection->query("
-    SELECT
-        o.id,
-        o.order_type,
-        o.status,
-        o.total,
-        o.created_at,
-        o.payment_method,
-        u.username
-    FROM dbo.orders o
-    LEFT JOIN dbo.users u ON o.created_by = u.id
-    ORDER BY o.created_at DESC, o.id DESC
-");
+$stmt = $connection->query('EXEC dbo.GetOrderHistory');
 
 $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
