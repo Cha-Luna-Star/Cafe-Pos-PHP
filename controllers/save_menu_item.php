@@ -87,23 +87,15 @@ try {
     }
 
     $connection->beginTransaction();
+    $useThreshold = $canSetProductThreshold && $threshold !== null;
     $params = [$name, (float)$price, $categoryId, $available, $hasTemp, $hasSizes];
     if ($id > 0) {
-        $thresholdUpdate = '';
-        if ($canSetProductThreshold && $threshold !== null) {
-            $thresholdUpdate = ', low_stock_threshold = ?';
+        if ($useThreshold) {
             $params[] = $threshold;
         }
-        $stmt = $connection->prepare("
-            UPDATE dbo.menu_items
-            SET name = ?,
-                price = ?,
-                category_id = ?,
-                available = ?,
-                has_temp_option = ?,
-                has_sizes = ?$thresholdUpdate
-            WHERE id = ?
-        ");
+        $stmt = $connection->prepare($useThreshold
+            ? 'EXEC dbo.UpdateMenuItemWithThreshold ?, ?, ?, ?, ?, ?, ?, ?'
+            : 'EXEC dbo.UpdateMenuItem ?, ?, ?, ?, ?, ?, ?');
 
         $params[] = $id;
         $stmt->execute($params);
@@ -117,20 +109,12 @@ try {
         $auditAction = "Menu Item Updated";
         $message = "Item updated successfully.";
     } else {
-        $thresholdColumn = '';
-        $thresholdPlaceholder = '';
-        if ($canSetProductThreshold && $threshold !== null) {
-            $thresholdColumn = ', low_stock_threshold';
-            $thresholdPlaceholder = ', ?';
+        if ($useThreshold) {
             $params[] = $threshold;
         }
-        $stmt = $connection->prepare("
-            INSERT INTO dbo.menu_items
-            (name, price, category_id, available, stock_qty,
-             discount, has_temp_option, has_sizes, is_archived$thresholdColumn)
-            OUTPUT INSERTED.id
-            VALUES (?, ?, ?, ?, 0, 0, ?, ?, 0$thresholdPlaceholder)
-        ");
+        $stmt = $connection->prepare($useThreshold
+            ? 'EXEC dbo.CreateMenuItemWithThreshold ?, ?, ?, ?, ?, ?, ?'
+            : 'EXEC dbo.CreateMenuItem ?, ?, ?, ?, ?, ?');
 
         $stmt->execute($params);
 

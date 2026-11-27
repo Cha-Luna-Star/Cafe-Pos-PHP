@@ -46,11 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($verified && password_needs_rehash($storedHash, PASSWORD_ARGON2ID)) {
                 $newHash = password_hash($password, PASSWORD_ARGON2ID);
-                $update = $connection->prepare("
-                    UPDATE dbo.users
-                    SET password = ?
-                    WHERE id = ? AND password COLLATE Latin1_General_100_BIN2 = ?
-                ");
+                $update = $connection->prepare('EXEC dbo.RehashLoginPassword ?, ?, ?');
                 $update->execute([$newHash, $user['id'], $storedHash]);
 
                 if ($update->rowCount() === 1) {

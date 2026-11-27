@@ -87,10 +87,7 @@ try {
         throw new RuntimeException('Ingredient has stock movement history.');
     }
 
-    $stmt = $connection->prepare("
-        DELETE FROM dbo.ingredients
-        WHERE id = ?
-    ");
+    $stmt = $connection->prepare('EXEC dbo.DeleteIngredient ?');
 
     $stmt->execute([$id]);
 

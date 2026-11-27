@@ -75,3 +75,15 @@ Run database/ingredient_save_read_procedures.sql against CafePOS or CafePOS_Test
 ## Order status read migration
 
 Run database/order_status_read_procedures.sql against CafePOS or CafePOS_Test. Its six procedures read the order status, sale movements, order quantities, and stock records needed for restoration. PHP continues to own the transaction and write operations.
+
+## CRUD write migration
+
+After the read migrations, run these scripts in order against CafePOS or CafePOS_Test.
+
+1. database/account_write_procedures.sql
+2. database/catalog_write_procedures.sql
+3. database/inventory_write_procedures.sql
+4. database/menu_write_procedures.sql
+5. database/order_write_procedures.sql
+
+PHP calls stored procedures for application reads and writes. The reporting and inventory views are reused by read procedures. The write procedures retain generated IDs and affected-row checks where callers depend on them. PHP still coordinates validation, authorization, and transactions for multi-step workflows.

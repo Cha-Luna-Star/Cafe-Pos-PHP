@@ -144,44 +144,21 @@ try {
             $batchId = (int)$movement['batch_id'];
             $quantity = (float)$movement['quantity'];
 
-            if ($type === 'Product') {
-                $batchTable = 'dbo.product_batches';
-                $stockTable = 'dbo.menu_items';
-                $foreignKey = 'menu_item_id';
-            } else {
-                $batchTable = 'dbo.inventory_batches';
-                $stockTable = 'dbo.ingredients';
-                $foreignKey = 'ingredient_id';
-            }
-
-            $stmt = $connection->prepare("
-                UPDATE $batchTable
-                SET quantity = quantity + ?
-                WHERE id = ? AND $foreignKey = ? AND quantity >= 0
-            ");
+            $stmt = $connection->prepare($type === 'Ingredient' ? 'EXEC dbo.RestoreOrderBatchIngredient ?, ?, ?' : 'EXEC dbo.RestoreOrderBatchProduct ?, ?, ?');
             $stmt->execute([$quantity, $batchId, $id]);
 
             if ($stmt->rowCount() !== 1) {
                 throw new RuntimeException('Unable to restore batch stock.');
             }
 
-            $stmt = $connection->prepare("
-                UPDATE $stockTable
-                SET stock_qty = stock_qty + ?
-                WHERE id = ?
-            ");
+            $stmt = $connection->prepare($type === 'Ingredient' ? 'EXEC dbo.RestoreOrderStockIngredient ?, ?' : 'EXEC dbo.RestoreOrderStockProduct ?, ?');
             $stmt->execute([$quantity, $id]);
 
             if ($stmt->rowCount() !== 1) {
                 throw new RuntimeException('Unable to restore inventory stock.');
             }
 
-            $stmt = $connection->prepare("
-                INSERT INTO dbo.stock_movements
-                (item_type, item_id, batch_id, movement_type,
-                quantity, remarks, user_id)
-                VALUES (?, ?, ?, 'Cancellation', ?, ?, ?)
-            ");
+            $stmt = $connection->prepare('EXEC dbo.WriteCancellationMovement ?, ?, ?, ?, ?, ?');
             $stmt->execute([
                 $type,
                 $id,
@@ -193,22 +170,14 @@ try {
         }
     }
 
-    $stmt = $connection->prepare("
-        UPDATE dbo.orders
-        SET status = ?
-        WHERE id = ? AND status = 'Pending'
-    ");
+    $stmt = $connection->prepare('EXEC dbo.SetPendingOrderStatus ?, ?');
     $stmt->execute([$action, $orderId]);
 
     if ($stmt->rowCount() !== 1) {
         throw new RuntimeException('Unable to update order.');
     }
 
-    $stmt = $connection->prepare("
-        INSERT INTO dbo.audit_log
-        (user_id, username, action, details, created_at)
-        VALUES (?, ?, ?, ?, SYSDATETIME())
-    ");
+    $stmt = $connection->prepare('EXEC dbo.WriteAuditEvent ?, ?, ?, ?');
 
     $stmt->execute([
         $_SESSION['user_id'],

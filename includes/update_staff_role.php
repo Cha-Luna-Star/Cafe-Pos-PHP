@@ -24,12 +24,7 @@ try {
     }
 
     $connection->beginTransaction();
-    $stmt = $connection->prepare("
-        UPDATE dbo.users
-        SET role = ?, session_version = session_version + 1
-        OUTPUT INSERTED.username, DELETED.role AS previous_role
-        WHERE id = ? AND role = ? AND role IN ('Cashier', 'Manager')
-    ");
+    $stmt = $connection->prepare('EXEC dbo.SetStaffAccountRole ?, ?, ?');
     $stmt->execute([$newRole, $id, $currentRole]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     $stmt->closeCursor();

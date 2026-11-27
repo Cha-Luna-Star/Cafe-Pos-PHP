@@ -22,12 +22,7 @@ try {
 
     $active = $action === 'reactivate' ? 1 : 0;
     $connection->beginTransaction();
-    $stmt = $connection->prepare("
-        UPDATE dbo.users
-        SET is_active = ?, session_version = session_version + 1
-        OUTPUT INSERTED.username
-        WHERE id = ? AND role IN ('Cashier', 'Manager') AND is_active <> ?
-    ");
+    $stmt = $connection->prepare('EXEC dbo.SetStaffAccountStatus ?, ?, ?');
     $stmt->execute([$active, $id, $active]);
     $username = $stmt->fetchColumn();
     $stmt->closeCursor();

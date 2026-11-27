@@ -18,12 +18,7 @@ if ($id === false || $id === (int)$_SESSION['user_id'] || !is_string($password) 
 try {
     $hash = password_hash($password, PASSWORD_ARGON2ID);
     $connection->beginTransaction();
-    $stmt = $connection->prepare("
-        UPDATE dbo.users
-        SET password = ?
-        OUTPUT INSERTED.username
-        WHERE id = ? AND role IN ('Cashier', 'Manager')
-    ");
+    $stmt = $connection->prepare('EXEC dbo.ResetStaffPassword ?, ?');
     $stmt->execute([$hash, $id]);
     $username = $stmt->fetchColumn();
     $stmt->closeCursor();

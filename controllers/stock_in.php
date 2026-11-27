@@ -107,26 +107,14 @@ try {
     }
 
     if ($type === 'Ingredient') {
-        $stmt = $connection->prepare("
-            INSERT INTO dbo.inventory_batches
-            (ingredient_id, quantity, cost_per_unit,
-             received_date, expiration_date, supplier, notes, created_at)
-            OUTPUT INSERTED.id
-            VALUES (?, ?, ?, ?, ?, ?, ?, SYSDATETIME())
-        ");
+        $stmt = $connection->prepare('EXEC dbo.CreateIngredientDelivery ?, ?, ?, ?, ?, ?, ?');
 
         $stmt->execute([
             $id, $quantity, $cost, $received,
             $expiration, $supplier, $notes
         ]);
     } else {
-        $stmt = $connection->prepare("
-            INSERT INTO dbo.product_batches
-            (menu_item_id, quantity, cost_per_unit,
-             received_date, expiration_date, supplier, notes)
-            OUTPUT INSERTED.id
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ");
+        $stmt = $connection->prepare('EXEC dbo.CreateProductDelivery ?, ?, ?, ?, ?, ?, ?');
 
         $stmt->execute([
             $id, $quantity, $cost, $received,
@@ -137,24 +125,11 @@ try {
     $batchId = (int)$stmt->fetchColumn();
     $stmt->closeCursor();
 
-    $table = $type === 'Ingredient'
-        ? 'dbo.ingredients'
-        : 'dbo.menu_items';
-
-    $stmt = $connection->prepare("
-        UPDATE $table
-        SET stock_qty = COALESCE(stock_qty, 0) + ?
-        WHERE id = ?
-    ");
+    $stmt = $connection->prepare($type === 'Ingredient' ? 'EXEC dbo.AddRecordedStockIngredient ?, ?' : 'EXEC dbo.AddRecordedStockProduct ?, ?');
 
     $stmt->execute([$quantity, $id]);
 
-    $stmt = $connection->prepare("
-        INSERT INTO dbo.stock_movements
-        (item_type, item_id, batch_id, movement_type,
-         quantity, remarks, user_id)
-        VALUES (?, ?, ?, 'Stock In', ?, ?, ?)
-    ");
+    $stmt = $connection->prepare('EXEC dbo.WriteDeliveryMovement ?, ?, ?, ?, ?, ?');
 
     $stmt->execute([
         $type,

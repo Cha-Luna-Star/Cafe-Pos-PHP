@@ -24,11 +24,7 @@ try {
     require_once __DIR__ . '/../config/database.php';
 
     $connection->beginTransaction();
-    $stmt = $connection->prepare("
-        INSERT INTO dbo.users (username, password, role)
-        OUTPUT INSERTED.id
-        VALUES (?, ?, ?)
-    ");
+    $stmt = $connection->prepare('EXEC dbo.CreateStaffAccount ?, ?, ?');
     $stmt->execute([$username, $hash, $role]);
     $newUserId = $stmt->fetchColumn();
     $stmt->closeCursor();
@@ -36,10 +32,7 @@ try {
         throw new RuntimeException('The new staff account ID was unavailable.');
     }
 
-    $stmt = $connection->prepare("
-        INSERT INTO dbo.audit_log (user_id, username, action, details, created_at)
-        VALUES (?, ?, 'User Created', ?, SYSDATETIME())
-    ");
+    $stmt = $connection->prepare('EXEC dbo.WriteStaffCreationAudit ?, ?, ?');
     $stmt->execute([
         $_SESSION['user_id'],
         $_SESSION['username'] ?? '',

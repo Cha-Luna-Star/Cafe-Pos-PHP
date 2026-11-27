@@ -87,13 +87,7 @@ try {
             throw new RuntimeException('Ingredient not found.');
         }
 
-        $stmt = $connection->prepare("
-            UPDATE dbo.ingredients
-            SET name = ?,
-                low_stock_threshold = ?,
-                cost_per_unit = ?
-            WHERE id = ?
-        ");
+        $stmt = $connection->prepare('EXEC dbo.UpdateIngredient ?, ?, ?, ?');
 
         $stmt->execute([
             $name,
@@ -105,19 +99,7 @@ try {
         $auditAction = 'Inventory Ingredient Updated';
         $message = 'Ingredient updated successfully.';
     } else {
-        $stmt = $connection->prepare("
-            INSERT INTO dbo.ingredients
-            (
-                name,
-                unit,
-                stock_qty,
-                low_stock_threshold,
-                cost_per_unit,
-                initial_quantity
-            )
-            OUTPUT INSERTED.id
-            VALUES (?, ?, 0, ?, ?, 0)
-        ");
+        $stmt = $connection->prepare('EXEC dbo.CreateIngredient ?, ?, ?, ?');
 
         $stmt->execute([
             $name,

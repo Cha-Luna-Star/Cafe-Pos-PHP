@@ -308,16 +308,7 @@ $validatedItems[] = [
         $change = 0;
     }
 
-    $stmt = $connection->prepare("
-        INSERT INTO dbo.orders
-        (
-            order_type, status, total, created_by,
-            created_at, payment_method, amount_tendered,
-            change_amount, tax, ref_number
-        )
-        OUTPUT INSERTED.id
-        VALUES (?, 'Pending', ?, ?, SYSDATETIME(), ?, ?, ?, ?, ?)
-    ");
+    $stmt = $connection->prepare('EXEC dbo.CreateCheckoutOrder ?, ?, ?, ?, ?, ?, ?, ?');
 
     $stmt->execute([
         $orderType,
@@ -333,11 +324,7 @@ $validatedItems[] = [
     $orderId = (int)$stmt->fetchColumn();
     $stmt->closeCursor();
 
-    $insertItem = $connection->prepare("
-        INSERT INTO dbo.order_items
-        (order_id, menu_item_id, quantity, size, subtotal)
-        VALUES (?, ?, ?, ?, ?)
-    ");
+    $insertItem = $connection->prepare('EXEC dbo.CreateCheckoutOrderItem ?, ?, ?, ?, ?');
 
     foreach ($validatedItems as $item) {
         $insertItem->execute([
@@ -350,11 +337,7 @@ $validatedItems[] = [
     }
 
     foreach ($menuQuantities as $id => $quantity) {
-        $stmt = $connection->prepare("
-            UPDATE dbo.menu_items
-            SET stock_qty = stock_qty - ?
-            WHERE id = ? AND stock_qty >= ?
-        ");
+        $stmt = $connection->prepare('EXEC dbo.DeductCheckoutProduct ?, ?, ?');
         $stmt->execute([$quantity, $id, $quantity]);
 
         if ($stmt->rowCount() !== 1) {
@@ -374,12 +357,7 @@ $validatedItems[] = [
 
             $deduct = min((int)$batch['quantity'], $remaining);
 
-            $update = $connection->prepare("
-                UPDATE dbo.product_batches
-                SET quantity = quantity - ?
-                WHERE id = ?
-                AND quantity >= ?
-            ");
+            $update = $connection->prepare('EXEC dbo.DeductCheckoutProductBatch ?, ?, ?');
 
             $update->execute([
                 $deduct,
@@ -391,12 +369,7 @@ $validatedItems[] = [
                 failCheckout('Unable to deduct product batch stock.');
             }
 
-            $movement = $connection->prepare("
-                INSERT INTO dbo.stock_movements
-                (item_type, item_id, batch_id, movement_type,
-                quantity, remarks, user_id)
-                VALUES ('Product', ?, ?, 'Sale', ?, ?, ?)
-            ");
+            $movement = $connection->prepare('EXEC dbo.WriteProductSaleMovement ?, ?, ?, ?, ?');
 
             $movement->execute([
                 $id,
@@ -418,22 +391,14 @@ $validatedItems[] = [
     foreach ($ingredientNeeds as $ingredientId => $needed) {
         $needed = round($needed, 3);
 
-        $stmt = $connection->prepare("
-            UPDATE dbo.ingredients
-            SET stock_qty = CASE WHEN stock_qty <= ? THEN 0 ELSE stock_qty - ? END
-            WHERE id = ? AND stock_qty + 0.000001 >= ?
-        ");
+        $stmt = $connection->prepare('EXEC dbo.DeductCheckoutIngredient ?, ?, ?, ?');
         $stmt->execute([$needed, $needed, $ingredientId, $needed]);
 
         if ($stmt->rowCount() !== 1) {
             failCheckout("Not enough {$ingredientsInOrder[$ingredientId]} to complete checkout.");
         }
 
-        $stmt = $connection->prepare("
-            INSERT INTO dbo.ingredient_usage
-            (ingredient_id, quantity_used, order_id, created_at)
-            VALUES (?, ?, ?, SYSDATETIME())
-        ");
+        $stmt = $connection->prepare('EXEC dbo.WriteCheckoutIngredientUsage ?, ?, ?');
         $stmt->execute([$ingredientId, $needed, $orderId]);
 
         $stmt = $connection->prepare('EXEC dbo.GetCheckoutIngredientBatches ?, ?');
@@ -449,19 +414,10 @@ $validatedItems[] = [
 
             $deduct = min((float)$batch['quantity'], $remaining);
 
-            $update = $connection->prepare("
-                UPDATE dbo.inventory_batches
-                SET quantity = quantity - ?
-                WHERE id = ?
-            ");
+            $update = $connection->prepare('EXEC dbo.DeductCheckoutIngredientBatch ?, ?');
             $update->execute([$deduct, $batch['id']]);
 
-            $movement = $connection->prepare("
-                INSERT INTO dbo.stock_movements
-                (item_type, item_id, batch_id, movement_type,
-                quantity, remarks, user_id)
-                VALUES ('Ingredient', ?, ?, 'Sale', ?, ?, ?)
-            ");
+            $movement = $connection->prepare('EXEC dbo.WriteIngredientSaleMovement ?, ?, ?, ?, ?');
 
             $movement->execute([
                 $ingredientId,
@@ -479,11 +435,7 @@ $validatedItems[] = [
         }
     }
 
-    $stmt = $connection->prepare("
-        INSERT INTO dbo.audit_log
-        (user_id, username, action, details, created_at)
-        VALUES (?, ?, ?, ?, SYSDATETIME())
-    ");
+    $stmt = $connection->prepare('EXEC dbo.WriteAuditEvent ?, ?, ?, ?');
 
     $stmt->execute([
         $_SESSION['user_id'],

@@ -76,18 +76,6 @@ try {
         throw new RuntimeException('A reason is required (maximum 500 characters).');
     }
 
-    $table = $type === 'Ingredient'
-        ? 'dbo.ingredients'
-        : 'dbo.menu_items';
-
-    $batchTable = $type === 'Ingredient'
-        ? 'dbo.inventory_batches'
-        : 'dbo.product_batches';
-
-    $foreignKey = $type === 'Ingredient'
-        ? 'ingredient_id'
-        : 'menu_item_id';
-
     $throwDatabaseConnectionError = true;
     require_once __DIR__ . '/../config/database.php';
     $connection->beginTransaction();
@@ -109,29 +97,16 @@ try {
     }
 
     if ($action === 'Add') {
-        $stmt = $connection->prepare("
-            INSERT INTO $batchTable
-            ($foreignKey, quantity, cost_per_unit, received_date, notes)
-            OUTPUT INSERTED.id
-            VALUES (?, ?, 0, CAST(GETDATE() AS DATE), ?)
-        ");
+        $stmt = $connection->prepare($type === 'Ingredient' ? 'EXEC dbo.CreateAdjustmentBatchIngredient ?, ?, ?' : 'EXEC dbo.CreateAdjustmentBatchProduct ?, ?, ?');
 
         $stmt->execute([$id, $quantity, 'Adjustment: ' . $reason]);
         $batchId = (int)$stmt->fetchColumn();
         $stmt->closeCursor();
 
-        $stmt = $connection->prepare("
-            UPDATE $table
-            SET stock_qty = COALESCE(stock_qty, 0) + ?
-            WHERE id = ?
-        ");
+        $stmt = $connection->prepare($type === 'Ingredient' ? 'EXEC dbo.AddRecordedStockIngredient ?, ?' : 'EXEC dbo.AddRecordedStockProduct ?, ?');
         $stmt->execute([$quantity, $id]);
 
-        $stmt = $connection->prepare("
-            INSERT INTO dbo.stock_movements
-            (item_type, item_id, batch_id, movement_type, quantity, remarks, user_id)
-            VALUES (?, ?, ?, 'Adjustment', ?, ?, ?)
-        ");
+        $stmt = $connection->prepare('EXEC dbo.WriteAdditionMovement ?, ?, ?, ?, ?, ?');
 
         $stmt->execute([
             $type, $id, $batchId, $quantity,
@@ -167,18 +142,10 @@ try {
 
             $deduct = min($remaining, (float)$batch['quantity']);
 
-            $update = $connection->prepare("
-                UPDATE $batchTable
-                SET quantity = quantity - ?
-                WHERE id = ?
-            ");
+            $update = $connection->prepare($type === 'Ingredient' ? 'EXEC dbo.DeductAdjustmentBatchIngredient ?, ?' : 'EXEC dbo.DeductAdjustmentBatchProduct ?, ?');
             $update->execute([$deduct, $batch['id']]);
 
-            $log = $connection->prepare("
-                INSERT INTO dbo.stock_movements
-                (item_type, item_id, batch_id, movement_type, quantity, remarks, user_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            ");
+            $log = $connection->prepare('EXEC dbo.WriteAdjustmentMovement ?, ?, ?, ?, ?, ?, ?');
 
             $log->execute([
                 $type,
@@ -198,11 +165,7 @@ try {
         }
 
 
-        $stmt = $connection->prepare("
-            UPDATE $table
-            SET stock_qty = stock_qty - ?
-            WHERE id = ?
-        ");
+        $stmt = $connection->prepare($type === 'Ingredient' ? 'EXEC dbo.DeductRecordedStockIngredient ?, ?' : 'EXEC dbo.DeductRecordedStockProduct ?, ?');
         $stmt->execute([$quantity, $id]);
     }
 

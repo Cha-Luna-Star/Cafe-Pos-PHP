@@ -57,7 +57,7 @@ try {
         expirationResponse(422, 'Expiration cannot precede delivery.');
     }
 
-    $stmt = $connection->prepare('UPDATE dbo.inventory_batches SET expiration_date = ? WHERE id = ? AND ingredient_id = ?');
+    $stmt = $connection->prepare('EXEC dbo.UpdateIngredientBatchExpiration ?, ?, ?');
     $stmt->execute([$date, $batchId, $itemId]);
     recordAuditEvent($connection, 'Batch Expiration Corrected',
         "Ingredient #$itemId ($name), batch #$batchId. Previous date: {$batch['expiration_date']}. New date: $date. Reason: $reason");

@@ -86,11 +86,7 @@ try {
         throw new RuntimeException('Ingredient is used by a pending order.');
     }
 
-    $stmt = $connection->prepare("
-        UPDATE dbo.ingredients
-        SET is_archived = 1
-        WHERE id = ?
-    ");
+    $stmt = $connection->prepare('EXEC dbo.ArchiveIngredient ?');
 
     $stmt->execute([$id]);
     recordAuditEvent($connection, 'Inventory Archived', "Archived ingredient #$id ({$ingredient['name']}).");

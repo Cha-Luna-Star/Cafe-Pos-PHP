@@ -43,12 +43,7 @@ try {
     $connection->beginTransaction();
 
     $archived = $action === 'archive' ? 1 : 0;
-    $stmt = $connection->prepare("
-        UPDATE dbo.menu_items
-        SET is_archived = ?
-        OUTPUT INSERTED.name, DELETED.is_archived AS previous_archived
-        WHERE id = ?
-    ");
+    $stmt = $connection->prepare('EXEC dbo.SetMenuItemArchiveStatus ?, ?');
 
     $stmt->execute([$archived, $id]);
     $item = $stmt->fetch(PDO::FETCH_ASSOC);

@@ -55,8 +55,6 @@ foreach ([$recorded, $batch] as $quantity) {
     }
 }
 
-$table = $type === 'Ingredient' ? 'dbo.ingredients' : 'dbo.menu_items';
-
 try {
     $throwDatabaseConnectionError = true;
     require __DIR__ . '/../config/database.php';
@@ -106,18 +104,10 @@ try {
         reconciliationResponse(409, 'Recorded stock already matches the batch total.');
     }
 
-    $stmt = $connection->prepare("
-        UPDATE $table
-        SET stock_qty = CAST(? AS decimal(18,3))
-        WHERE id = ?
-    ");
+    $stmt = $connection->prepare($type === 'Ingredient' ? 'EXEC dbo.SetReconciledStockIngredient ?, ?' : 'EXEC dbo.SetReconciledStockProduct ?, ?');
     $stmt->execute([$correctedStock, $id]);
 
-    $stmt = $connection->prepare("
-        INSERT INTO dbo.stock_reconciliations
-        (item_type, item_id, previous_stock, corrected_stock, reason, user_id)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ");
+    $stmt = $connection->prepare('EXEC dbo.WriteStockReconciliation ?, ?, ?, ?, ?, ?');
     $stmt->execute([$type, $id, $previousStock, $correctedStock, $reason, $userId]);
 
     $connection->commit();

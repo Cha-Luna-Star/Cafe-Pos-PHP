@@ -43,12 +43,7 @@ try {
     require_once __DIR__ . '/../config/database.php';
     $connection->beginTransaction();
 
-    $stmt = $connection->prepare("
-        UPDATE dbo.ingredients
-        SET is_archived = 0
-        OUTPUT INSERTED.name
-        WHERE id = ? AND is_archived = 1
-    ");
+    $stmt = $connection->prepare('EXEC dbo.RestoreIngredient ?');
     $stmt->execute([$id]);
     $name = $stmt->fetchColumn();
     $stmt->closeCursor();
