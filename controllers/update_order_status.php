@@ -38,11 +38,7 @@ try {
     require_once __DIR__ . '/../config/database.php';
     $connection->beginTransaction();
 
-    $stmt = $connection->prepare("
-        SELECT status
-        FROM dbo.orders WITH (UPDLOCK, HOLDLOCK)
-        WHERE id = ?
-    ");
+    $stmt = $connection->prepare('EXEC dbo.GetOrderStatusForUpdate @OrderId = ?');
     $stmt->execute([$orderId]);
     $status = $stmt->fetchColumn();
     $stmt->closeCursor();
@@ -56,22 +52,11 @@ try {
     }
 
     if ($action === 'Cancelled') {
-        $stmt = $connection->prepare("
-            SELECT item_type, item_id, batch_id, quantity
-            FROM dbo.stock_movements
-            WHERE movement_type = 'Sale'
-            AND remarks = ?
-            ORDER BY id
-        ");
+        $stmt = $connection->prepare('EXEC dbo.GetOrderSaleMovements @Reference = ?');
         $stmt->execute(['Order #' . $orderId]);
         $movements = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $stmt = $connection->prepare("
-            SELECT menu_item_id, SUM(quantity) AS quantity
-            FROM dbo.order_items
-            WHERE order_id = ?
-            GROUP BY menu_item_id
-        ");
+        $stmt = $connection->prepare('EXEC dbo.GetOrderProductTotals @OrderId = ?');
         $stmt->execute([$orderId]);
         $orderProducts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -80,12 +65,7 @@ try {
             $expectedProducts[(int)$product['menu_item_id']] = (float)$product['quantity'];
         }
 
-        $stmt = $connection->prepare("
-            SELECT ingredient_id, SUM(quantity_used) AS quantity
-            FROM dbo.ingredient_usage
-            WHERE order_id = ?
-            GROUP BY ingredient_id
-        ");
+        $stmt = $connection->prepare('EXEC dbo.GetOrderIngredientTotals @OrderId = ?');
         $stmt->execute([$orderId]);
         $orderIngredients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -135,11 +115,7 @@ try {
         ksort($expectedProducts, SORT_NUMERIC);
         ksort($expectedIngredients, SORT_NUMERIC);
 
-        $stmt = $connection->prepare("
-            SELECT id
-            FROM dbo.menu_items WITH (UPDLOCK, HOLDLOCK)
-            WHERE id = ? AND stock_qty >= 0
-        ");
+        $stmt = $connection->prepare('EXEC dbo.GetProductForOrderRestore @ItemId = ?');
         foreach (array_keys($expectedProducts) as $id) {
             $stmt->execute([$id]);
             $available = $stmt->fetchColumn() !== false;
@@ -149,11 +125,7 @@ try {
             }
         }
 
-        $stmt = $connection->prepare("
-            SELECT is_archived, stock_qty
-            FROM dbo.ingredients WITH (UPDLOCK, HOLDLOCK)
-            WHERE id = ?
-        ");
+        $stmt = $connection->prepare('EXEC dbo.GetIngredientForOrderRestore @ItemId = ?');
         foreach (array_keys($expectedIngredients) as $id) {
             $stmt->execute([$id]);
             $ingredient = $stmt->fetch(PDO::FETCH_ASSOC);

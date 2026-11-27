@@ -71,3 +71,7 @@ Run database/ingredient_delete_read_procedures.sql after database/ingredient_arc
 ## Ingredient save read migration
 
 Run database/ingredient_save_read_procedures.sql against CafePOS or CafePOS_Test. FindDuplicateIngredient checks names without counting the ingredient being edited. FindIngredientForEdit verifies that the requested record exists. Both keep the existing transaction locks.
+
+## Order status read migration
+
+Run database/order_status_read_procedures.sql against CafePOS or CafePOS_Test. Its six procedures read the order status, sale movements, order quantities, and stock records needed for restoration. PHP continues to own the transaction and write operations.
