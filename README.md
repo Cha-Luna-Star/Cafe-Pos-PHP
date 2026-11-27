@@ -67,3 +67,7 @@ Run database/ingredient_archive_read_procedures.sql after database/stock_adjustm
 ## Ingredient deletion read migration
 
 Run database/ingredient_delete_read_procedures.sql after database/ingredient_archive_read_procedures.sql. The deletion checks reuse CountIngredientRecipeReferences and call procedures to read recorded stock and count batch, usage, and movement records under the existing transaction locks.
+
+## Ingredient save read migration
+
+Run database/ingredient_save_read_procedures.sql against CafePOS or CafePOS_Test. FindDuplicateIngredient checks names without counting the ingredient being edited. FindIngredientForEdit verifies that the requested record exists. Both keep the existing transaction locks.

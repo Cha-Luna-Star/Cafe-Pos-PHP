@@ -66,11 +66,7 @@ try {
     require_once __DIR__ . '/../config/database.php';
     $connection->beginTransaction();
 
-    $stmt = $connection->prepare("
-        SELECT id
-        FROM dbo.ingredients WITH (UPDLOCK, HOLDLOCK)
-        WHERE LOWER(name) = LOWER(?) AND id <> ?
-    ");
+    $stmt = $connection->prepare('EXEC dbo.FindDuplicateIngredient @Name = ?, @ItemId = ?');
 
     $stmt->execute([$name, $id]);
     $existing = $stmt->fetchColumn();
@@ -81,11 +77,7 @@ try {
     }
 
     if ($id > 0) {
-        $stmt = $connection->prepare("
-            SELECT id
-            FROM dbo.ingredients WITH (UPDLOCK, HOLDLOCK)
-            WHERE id = ?
-        ");
+        $stmt = $connection->prepare('EXEC dbo.FindIngredientForEdit @ItemId = ?');
 
         $stmt->execute([$id]);
         $ingredientExists = $stmt->fetchColumn();
