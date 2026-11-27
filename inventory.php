@@ -746,7 +746,7 @@ require __DIR__ . '/includes/sidebar.php';
         <input class="ui-field" type="number" id="stock-cost" min="0" step="0.01" required>
 
         <label for="received-date">Date Received</label>
-        <input class="ui-field" type="date" id="received-date" required>
+        <input class="ui-field" type="date" id="received-date" max="<?= $today->format('Y-m-d') ?>" required>
 
         <label for="expiration-date">Expiration Date (Optional)</label>
         <input class="ui-field" type="date" id="expiration-date">

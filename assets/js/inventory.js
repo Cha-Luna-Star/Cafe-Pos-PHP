@@ -34,8 +34,16 @@ document.getElementById("stock-in-btn")?.addEventListener("click", () => {
     stockForm.reset();
     stockMessage.textContent = "";
     updateItems();
-    document.getElementById("received-date").value =
-        new Date().toLocaleDateString("en-CA");
+    const receivedDate = document.getElementById("received-date");
+    const parts = new Intl.DateTimeFormat("en", {
+        timeZone: "Asia/Manila",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+    }).formatToParts(new Date());
+    const date = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+    receivedDate.max = [date.year, date.month, date.day].join("-");
+    receivedDate.value = receivedDate.max;
     stockDialog.showModal();
 });
 

@@ -80,6 +80,10 @@ try {
         throw new RuntimeException('Received date is required.');
     }
 
+    if ($received > inventoryToday()->format('Y-m-d')) {
+        throw new RuntimeException('Received date cannot be in the future.');
+    }
+
     if ($expiration && $expiration < $received) {
         throw new RuntimeException('Expiration cannot precede delivery.');
     }
